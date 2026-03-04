@@ -1,6 +1,8 @@
 import {getHomePageData, urlFor} from '@/lib/sanity'
-import {HomeHero} from '@/components/home/HomeHero'
+import {HomeHero} from '../components/home/HomeHero'
 import styles from '@/components/home/homeHero.module.css'
+
+export const revalidate = 30
 
 export default async function HomePage() {
   const homePage = await getHomePageData()

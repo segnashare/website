@@ -2,6 +2,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import {getNewsroomPageData, getPosts, urlFor} from '@/lib/sanity'
 
+export const revalidate = 30
+
 function formatDate(value?: string) {
   if (!value) return null
   const date = new Date(value)

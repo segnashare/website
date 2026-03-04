@@ -9,7 +9,8 @@ export const sanityClient = createClient({
   projectId,
   dataset,
   apiVersion,
-  useCdn: process.env.NODE_ENV === 'production',
+  // Disable CDN to reduce propagation delay after CMS updates.
+  useCdn: false,
 })
 
 const builder = imageUrlBuilder(sanityClient)
