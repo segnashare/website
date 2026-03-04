@@ -15,9 +15,8 @@ export function HomeHero({homePage, backgroundImageUrl}: HomeHeroProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   useEffect(() => {
-    if (!isMenuOpen) return
     const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    document.body.style.overflow = isMenuOpen ? 'hidden' : ''
     return () => {
       document.body.style.overflow = previousOverflow
     }
@@ -26,6 +25,7 @@ export function HomeHero({homePage, backgroundImageUrl}: HomeHeroProps) {
   const navItems = homePage.navItems ?? []
   const leftNavItems = navItems.slice(0, 2)
   const rightNavItems = navItems.slice(2)
+
   const mobileMenuItems = useMemo(() => {
     if (navItems.length > 0) return navItems
     return [
@@ -49,7 +49,14 @@ export function HomeHero({homePage, backgroundImageUrl}: HomeHeroProps) {
     <main className={styles.hero}>
       {backgroundImageUrl ? (
         <div className={styles.backgroundLayer}>
-          <Image src={backgroundImageUrl} alt={homePage.heroImage?.alt ?? homePage.heroTitle} fill priority sizes="100vw" style={{objectFit: 'cover'}} />
+          <Image
+            src={backgroundImageUrl}
+            alt={homePage.heroImage?.alt ?? homePage.heroTitle}
+            fill
+            priority
+            sizes="100vw"
+            style={{objectFit: 'cover'}}
+          />
         </div>
       ) : null}
       <div className={styles.overlay} />
@@ -62,7 +69,7 @@ export function HomeHero({homePage, backgroundImageUrl}: HomeHeroProps) {
             </Link>
           ))}
         </nav>
-        <div className={`${styles.brand}`}>{brand}</div>
+        <div className={styles.brand}>{brand}</div>
         <div className={styles.desktopNavRight}>
           {rightNavItems.map((item) => (
             <Link key={item._key} href={item.href?.trim() ? item.href : '#'} className={styles.navLink}>
@@ -108,7 +115,12 @@ export function HomeHero({homePage, backgroundImageUrl}: HomeHeroProps) {
       <nav id={mobileNavId} className={`${styles.mobileMenuOverlay} ${isMenuOpen ? styles.mobileMenuOverlayOpen : ''}`}>
         <div className={styles.mobileMenuNav}>
           {mobileMenuItems.map((item) => (
-            <Link key={item._key} href={item.href?.trim() ? item.href : '#'} className={styles.mobileMenuLink} onClick={() => setIsMenuOpen(false)}>
+            <Link
+              key={item._key}
+              href={item.href?.trim() ? item.href : '#'}
+              className={styles.mobileMenuLink}
+              onClick={() => setIsMenuOpen(false)}
+            >
               {item.label}
             </Link>
           ))}
@@ -120,7 +132,13 @@ export function HomeHero({homePage, backgroundImageUrl}: HomeHeroProps) {
           </Link>
           <div className={styles.mobileSocial}>
             {socials.map((social) => (
-              <Link key={social._key} href={social.href} className={styles.mobileSocialLink} aria-label={social.label} onClick={() => setIsMenuOpen(false)}>
+              <Link
+                key={social._key}
+                href={social.href}
+                className={styles.mobileSocialLink}
+                aria-label={social.label}
+                onClick={() => setIsMenuOpen(false)}
+              >
                 {social.label}
               </Link>
             ))}
