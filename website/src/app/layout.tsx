@@ -9,7 +9,7 @@ const playfairDisplay = Playfair_Display({
 })
 
 export const metadata: Metadata = {
-  title: 'Segna Website',
+  title: 'Segna',
   description: 'Segna marketing site powered by Sanity.',
   icons: {
     icon: '/segna-icon.png',
