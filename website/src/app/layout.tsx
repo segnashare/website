@@ -11,6 +11,11 @@ const playfairDisplay = Playfair_Display({
 export const metadata: Metadata = {
   title: 'Segna Website',
   description: 'Segna marketing site powered by Sanity.',
+  icons: {
+    icon: '/segna-icon.png',
+    shortcut: '/segna-icon.png',
+    apple: '/segna-icon.png',
+  },
 }
 
 export default function RootLayout({children}: Readonly<{children: React.ReactNode}>) {
