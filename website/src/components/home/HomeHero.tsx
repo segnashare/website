@@ -3,6 +3,7 @@
 import {useEffect, useMemo, useState} from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import {motion, useReducedMotion} from 'framer-motion'
 import type {HomePageData} from '@/lib/sanity'
 import styles from './homeHero.module.css'
 
@@ -13,6 +14,8 @@ type HomeHeroProps = {
 
 export function HomeHero({homePage, backgroundImageUrl}: HomeHeroProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isIntroComplete, setIsIntroComplete] = useState(false)
+  const shouldReduceMotion = useReducedMotion()
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
@@ -21,6 +24,19 @@ export function HomeHero({homePage, backgroundImageUrl}: HomeHeroProps) {
       document.body.style.overflow = previousOverflow
     }
   }, [isMenuOpen])
+
+  useEffect(() => {
+    if (shouldReduceMotion) {
+      setIsIntroComplete(true)
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      setIsIntroComplete(true)
+    }, 2600)
+
+    return () => window.clearTimeout(timer)
+  }, [shouldReduceMotion])
 
   const navItems = homePage.navItems ?? []
   const leftNavItems = navItems.slice(0, 2)
@@ -44,6 +60,8 @@ export function HomeHero({homePage, backgroundImageUrl}: HomeHeroProps) {
   const contactHref = homePage.mobileMenuContact?.href || '#'
   const socials = homePage.mobileMenuSocialLinks ?? []
   const mobileNavId = 'mobile-nav'
+  const introLetters = 'Segna'.split('')
+  const contentAnimationState = shouldReduceMotion || isIntroComplete ? 'visible' : 'hidden'
 
   return (
     <main className={styles.hero}>
@@ -61,90 +79,209 @@ export function HomeHero({homePage, backgroundImageUrl}: HomeHeroProps) {
       ) : null}
       <div className={styles.overlay} />
 
-      <header className={styles.desktopHeader}>
-        <nav className={styles.desktopNavLeft}>
-          {leftNavItems.map((item) => (
-            <Link key={item._key} href={item.href?.trim() ? item.href : '#'} className={styles.navLink}>
-              {item.label}
-            </Link>
+      <motion.div
+        className={styles.introOverlay}
+        initial={{y: 0}}
+        animate={isIntroComplete ? {y: '-100%'} : {y: 0}}
+        transition={{duration: shouldReduceMotion ? 0 : 1.05, ease: [0.22, 1, 0.36, 1]}}
+        aria-hidden={isIntroComplete}
+      >
+        <motion.h1
+          className={styles.introWord}
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: {},
+            visible: {
+              transition: {
+                delayChildren: 0.18,
+                staggerChildren: 0.16,
+              },
+            },
+          }}
+        >
+          {introLetters.map((letter, index) => (
+            <motion.span
+              key={`${letter}-${index}`}
+              className={styles.introLetter}
+              variants={{
+                hidden: {opacity: 0, y: 18},
+                visible: {opacity: 1, y: 0},
+              }}
+              transition={{duration: 0.55, ease: 'easeOut'}}
+            >
+              {letter}
+            </motion.span>
           ))}
-        </nav>
-        <div className={styles.brand}>{brand}</div>
-        <div className={styles.desktopNavRight}>
-          {rightNavItems.map((item) => (
-            <Link key={item._key} href={item.href?.trim() ? item.href : '#'} className={styles.navLink}>
-              {item.label}
+        </motion.h1>
+      </motion.div>
+
+      <div className={styles.contentLayer}>
+        <motion.header
+          className={styles.desktopHeader}
+          initial="hidden"
+          animate={contentAnimationState}
+          variants={{
+            hidden: {
+              opacity: 0,
+              y: -78,
+            },
+            visible: {
+              opacity: 1,
+              y: 0,
+            },
+          }}
+          transition={{
+            duration: shouldReduceMotion ? 0 : 0.85,
+            ease: [0.16, 1, 0.3, 1],
+            delay: shouldReduceMotion ? 0 : 1.62,
+          }}
+        >
+          <nav className={styles.desktopNavLeft}>
+            {leftNavItems.map((item) => (
+              <Link key={item._key} href={item.href?.trim() ? item.href : '#'} className={styles.navLink}>
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+          <div className={styles.brand}>{brand}</div>
+          <div className={styles.desktopNavRight}>
+            {rightNavItems.map((item) => (
+              <Link key={item._key} href={item.href?.trim() ? item.href : '#'} className={styles.navLink}>
+                {item.label}
+              </Link>
+            ))}
+            <Link href={ctaUrl} className={styles.downloadButton}>
+              {ctaLabel}
             </Link>
-          ))}
-          <Link href={ctaUrl} className={styles.downloadButton}>
+          </div>
+        </motion.header>
+
+        <motion.header
+          className={styles.mobileHeader}
+          initial="hidden"
+          animate={contentAnimationState}
+          variants={{
+            hidden: {
+              opacity: 0,
+              y: -78,
+            },
+            visible: {
+              opacity: 1,
+              y: 0,
+            },
+          }}
+          transition={{
+            duration: shouldReduceMotion ? 0 : 0.85,
+            ease: [0.16, 1, 0.3, 1],
+            delay: shouldReduceMotion ? 0 : 1.62,
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setIsMenuOpen((value) => !value)}
+            aria-label="Toggle mobile navigation menu"
+            aria-controls={mobileNavId}
+            aria-expanded={isMenuOpen}
+            className={`${styles.menuButton} ${isMenuOpen ? styles.menuButtonOpen : ''}`}
+          >
+            <span className={styles.menuBars}>
+              <span className={`${styles.menuBar} ${styles.menuBarTop}`} />
+              <span className={`${styles.menuBar} ${styles.menuBarBottom}`} />
+            </span>
+          </button>
+
+          <div className={`${styles.brand} ${styles.mobileHeaderBrand}`}>{brand}</div>
+
+          <Link href={ctaUrl} className={styles.mobileHeaderCta}>
             {ctaLabel}
           </Link>
-        </div>
-      </header>
+        </motion.header>
 
-      <header className={styles.mobileHeader}>
-        <button
-          type="button"
-          onClick={() => setIsMenuOpen((value) => !value)}
-          aria-label="Toggle mobile navigation menu"
-          aria-controls={mobileNavId}
-          aria-expanded={isMenuOpen}
-          className={`${styles.menuButton} ${isMenuOpen ? styles.menuButtonOpen : ''}`}
-        >
-          <span className={styles.menuBars}>
-            <span className={`${styles.menuBar} ${styles.menuBarTop}`} />
-            <span className={`${styles.menuBar} ${styles.menuBarBottom}`} />
-          </span>
-        </button>
+        <section className={styles.heroContent}>
+          <motion.h1
+            className={styles.heroTitle}
+            initial="hidden"
+            animate={contentAnimationState}
+            variants={{
+              hidden: {
+                opacity: 0,
+                y: 90,
+              },
+              visible: {
+                opacity: 1,
+                y: 0,
+              },
+            }}
+            transition={{
+              duration: shouldReduceMotion ? 0 : 0.92,
+              ease: [0.16, 1, 0.3, 1],
+              delay: shouldReduceMotion ? 0 : 1.2,
+            }}
+          >
+            {homePage.heroTitle}
+          </motion.h1>
+        </section>
 
-        <div className={`${styles.brand} ${styles.mobileHeaderBrand}`}>{brand}</div>
+        <section className={styles.mobileTitleWrap}>
+          <motion.h1
+            className={styles.mobileTitle}
+            initial="hidden"
+            animate={contentAnimationState}
+            variants={{
+              hidden: {
+                opacity: 0,
+                y: 90,
+              },
+              visible: {
+                opacity: 1,
+                y: 0,
+              },
+            }}
+            transition={{
+              duration: shouldReduceMotion ? 0 : 0.92,
+              ease: [0.16, 1, 0.3, 1],
+              delay: shouldReduceMotion ? 0 : 1.2,
+            }}
+          >
+            {homePage.heroTitle}
+          </motion.h1>
+        </section>
 
-        <Link href={ctaUrl} className={styles.mobileHeaderCta}>
-          {ctaLabel}
-        </Link>
-      </header>
-
-      <section className={styles.heroContent}>
-        <h1 className={styles.heroTitle}>{homePage.heroTitle}</h1>
-      </section>
-
-      <section className={styles.mobileTitleWrap}>
-        <h1 className={styles.mobileTitle}>{homePage.heroTitle}</h1>
-      </section>
-
-      <nav id={mobileNavId} className={`${styles.mobileMenuOverlay} ${isMenuOpen ? styles.mobileMenuOverlayOpen : ''}`}>
-        <div className={styles.mobileMenuNav}>
-          {mobileMenuItems.map((item) => (
-            <Link
-              key={item._key}
-              href={item.href?.trim() ? item.href : '#'}
-              className={styles.mobileMenuLink}
-              onClick={() => setIsMenuOpen(false)}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </div>
-
-        <div className={styles.mobileMenuBottom}>
-          <Link href={contactHref} className={styles.mobileContact} onClick={() => setIsMenuOpen(false)}>
-            {contactLabel}
-          </Link>
-          <div className={styles.mobileSocial}>
-            {socials.map((social) => (
+        <nav id={mobileNavId} className={`${styles.mobileMenuOverlay} ${isMenuOpen ? styles.mobileMenuOverlayOpen : ''}`}>
+          <div className={styles.mobileMenuNav}>
+            {mobileMenuItems.map((item) => (
               <Link
-                key={social._key}
-                href={social.href}
-                className={styles.mobileSocialLink}
-                aria-label={social.label}
+                key={item._key}
+                href={item.href?.trim() ? item.href : '#'}
+                className={styles.mobileMenuLink}
                 onClick={() => setIsMenuOpen(false)}
               >
-                {social.label}
+                {item.label}
               </Link>
             ))}
           </div>
-        </div>
-      </nav>
+
+          <div className={styles.mobileMenuBottom}>
+            <Link href={contactHref} className={styles.mobileContact} onClick={() => setIsMenuOpen(false)}>
+              {contactLabel}
+            </Link>
+            <div className={styles.mobileSocial}>
+              {socials.map((social) => (
+                <Link
+                  key={social._key}
+                  href={social.href}
+                  className={styles.mobileSocialLink}
+                  aria-label={social.label}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {social.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </nav>
+      </div>
     </main>
   )
 }

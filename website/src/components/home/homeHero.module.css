@@ -23,6 +23,36 @@
   );
 }
 
+.contentLayer {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+}
+
+.introOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  display: grid;
+  place-items: center;
+  background: #000;
+  pointer-events: none;
+}
+
+.introWord {
+  margin: 0;
+  font-family: var(--font-playfair-display), Georgia, serif;
+  font-weight: 800;
+  font-size: clamp(3.2rem, 8vw, 6.2rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: #fff;
+}
+
+.introLetter {
+  display: inline-block;
+}
+
 .desktopHeader {
   position: relative;
   z-index: 2;
