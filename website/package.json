@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@portabletext/react": "^4.0.3",
     "@sanity/client": "latest",
     "@sanity/image-url": "latest",
     "@supabase/ssr": "^0.9.0",
