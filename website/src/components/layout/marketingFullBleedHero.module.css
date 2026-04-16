@@ -1,0 +1,106 @@
+.root {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/**
+ * Bande hero pleine largeur : ~50 % de la hauteur d’écran (contenu + visuel).
+ */
+.visualBand {
+  position: relative;
+  width: 100%;
+  height: 50vh;
+  min-height: 14rem;
+  overflow: hidden;
+  color: #fff;
+}
+
+.photoRoot {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.photoImg {
+  object-fit: cover;
+}
+
+.navShell {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.navShell > * {
+  pointer-events: auto;
+}
+
+/**
+ * Grille type « image 3 » / HomeExchange : texte dans la zone de gauche,
+ * droite laissée au visuel (multi-états ou photo).
+ */
+.heroInner {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  /* Colonne texte plus large pour limiter les retours à la ligne du sous-titre. */
+  grid-template-columns: minmax(0, 1.52fr) minmax(0, 0.48fr);
+  align-items: center;
+  column-gap: clamp(0.75rem, 2.5vw, 1.75rem);
+  /* Réserve le header ; le bloc texte est centré sur la hauteur utile du hero. */
+  padding-top: clamp(5rem, 11vh, 6.35rem);
+  padding-bottom: clamp(1rem, 2.5vh, 1.75rem);
+  /* Plus d’inset à gauche : le bloc avance vers le centre tout en restant aligné à gauche. */
+  padding-left: clamp(2.5rem, 10vw, 8rem);
+  padding-right: clamp(1rem, 4vw, 2.75rem);
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.heroInner > * {
+  pointer-events: auto;
+}
+
+.heroCopy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: clamp(0.55rem, 1.5vw, 0.95rem);
+  min-width: 0;
+}
+
+.heroVisualSpacer {
+  min-height: 0;
+}
+
+.subtitle {
+  margin: 0;
+  max-width: none;
+  width: 100%;
+  font-size: clamp(0.98rem, 1.35vw, 1.12rem);
+  line-height: 1.55;
+  color: rgb(255 255 255 / 0.92);
+}
+
+.ctaWrap {
+  margin-top: 0.15rem;
+}
+
+@media (max-width: 768px) {
+  .heroInner {
+    grid-template-columns: 1fr;
+    align-items: center;
+    padding-top: clamp(4.75rem, 14vw, 5.75rem);
+    padding-bottom: clamp(1rem, 3vh, 1.5rem);
+    padding-left: clamp(1.5rem, 7vw, 3.5rem);
+    padding-right: clamp(1.25rem, 5vw, 2rem);
+  }
+
+  .heroVisualSpacer {
+    display: none;
+  }
+}

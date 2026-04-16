@@ -1,6 +1,8 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import {getNewsroomPageData, getPosts, urlFor} from '@/lib/sanity'
+import {PageSections} from '@/components/cms/PageSections'
+import {PageUnifiedHero} from '@/components/layout/PageUnifiedHero'
+import {getHomePageData, getNewsroomPageData, getPosts, urlFor} from '@/lib/sanity'
 
 export const revalidate = 30
 
@@ -12,25 +14,44 @@ function formatDate(value?: string) {
 }
 
 export default async function NewsroomPage() {
-  const [newsroomPage, posts] = await Promise.all([getNewsroomPageData(), getPosts()])
+  const [newsroomPage, posts, homePage] = await Promise.all([
+    getNewsroomPageData(),
+    getPosts(),
+    getHomePageData(),
+  ])
+
+  const useHomeStagedSlice =
+    homePage?.heroPresentation === 'multi_state' &&
+    Array.isArray(homePage.heroStates) &&
+    homePage.heroStates.length > 0
+
+  const primary = homePage?.primaryCta
+  const cta =
+    primary?.label?.trim() && primary?.url?.trim()
+      ? {label: primary.label.trim(), href: primary.url.trim()}
+      : {label: 'Découvrir Segna', href: '/'}
 
   return (
-    <main className="container" style={{paddingBlock: '3rem 5rem'}}>
-      <div className="stack" style={{gap: '1.25rem'}}>
-        <Link href="/">Retour a l’accueil</Link>
-        <h1 style={{margin: 0}}>{newsroomPage?.heroTitle ?? 'Newsroom'}</h1>
-        {newsroomPage?.heroSubtitle ? <p style={{margin: 0}}>{newsroomPage.heroSubtitle}</p> : null}
-        {newsroomPage?.heroImage?.asset ? (
-          <Image
-            src={urlFor(newsroomPage.heroImage).width(1400).height(700).fit('crop').url()}
-            alt={newsroomPage.heroImage.alt ?? newsroomPage.heroTitle}
-            width={1400}
-            height={700}
-            priority
-          />
-        ) : null}
-        {newsroomPage?.introText ? <p style={{lineHeight: 1.7}}>{newsroomPage.introText}</p> : null}
+    <main>
+      <div className="container" style={{paddingBlock: '1rem 0'}}>
+        <Link href="/">Retour à l’accueil</Link>
       </div>
+
+      <PageUnifiedHero
+        title={newsroomPage?.heroTitle ?? 'Newsroom'}
+        subtitle={newsroomPage?.heroSubtitle}
+        cta={cta}
+        stagedStates={useHomeStagedSlice ? homePage!.heroStates! : null}
+        stagedTransitionMs={homePage?.heroStageTransitionMs}
+        staticImage={useHomeStagedSlice ? undefined : newsroomPage?.heroImage}
+      />
+
+      <div className="container" style={{paddingBlock: '2.5rem 5rem'}}>
+        {newsroomPage?.introText ? (
+          <p style={{margin: '0 0 2rem', lineHeight: 1.7, maxWidth: '42rem'}}>{newsroomPage.introText}</p>
+        ) : null}
+
+        <PageSections sections={newsroomPage?.sections} />
 
       {newsroomPage?.highlightedPost ? (
         <section style={{marginTop: '2.5rem'}}>
@@ -64,6 +85,7 @@ export default async function NewsroomPage() {
           {posts.length === 0 ? <p>Aucun post publie pour le moment.</p> : null}
         </div>
       </section>
+      </div>
     </main>
   )
 }

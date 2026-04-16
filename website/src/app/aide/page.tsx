@@ -38,7 +38,7 @@ export default async function AideHomePage() {
 
       {categories.length === 0 ? (
         <p className={styles.emptyState}>
-          Aucune catégorie pour le moment. Ajoutez des documents « Aide — catégorie » dans Sanity Studio.
+          Aucune section pour le moment. Ajoutez des documents « Aide — section » dans Sanity Studio.
         </p>
       ) : (
         <div className={styles.categoryGrid}>

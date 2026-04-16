@@ -1,0 +1,323 @@
+/* Section pleine largeur (hors gouttières du shell) */
+.root {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* Conteneur des deux colonnes : pleine largeur ou centré avec marges (fond = .root). */
+.contentShell {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.contentShellInset {
+  /* 80 % de la largeur du bloc plein écran → ~10 % de marge de chaque côté */
+  width: 80%;
+  max-width: 100%;
+  margin-inline: auto;
+  /* Même respiration haut / bas à l’intérieur du fond coloré (cadre média visuellement centré). */
+  padding-block: clamp(1.5rem, 4vw, 2.75rem);
+}
+
+/**
+ * Mode marges : la colonne texte peut imposer une ligne plus haute que le cadre média ;
+ * on centre le média sur l’axe vertical pour un vide symétrique au-dessus / en dessous.
+ * En pleine largeur (sans .contentShellInset), ce centrage n’est pas appliqué.
+ */
+.contentShellInset .mediaPane.mediaFrameLandscape,
+.contentShellInset .mediaPane.mediaFrameSquare,
+.contentShellInset .mediaPane.mediaFramePortrait {
+  align-self: center;
+}
+
+.grid {
+  display: grid;
+  /* Hauteur pilotée par le contenu (texte + cadre média) : évite les bandes de fond au-dessus / dessous de l’image ou de la vidéo. */
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .gridRatio33_67 {
+    grid-template-columns: 1fr 2fr;
+  }
+
+  .gridRatio67_33 {
+    grid-template-columns: 2fr 1fr;
+  }
+
+  .gridRatio50_50 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.pane {
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+.textPane {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  /* Un peu moins de marge latérale qu’avant : bloc un peu moins « centré flottant ». */
+  padding: clamp(2.5rem, 6vw, 5rem) clamp(2rem, 7vw + 0.75rem, 6.5rem);
+}
+
+@media (min-width: 768px) {
+  .textPane {
+    padding-inline: clamp(2.5rem, 9vw + 1rem, 8rem);
+  }
+}
+
+.textPaneStack {
+  width: 100%;
+  max-width: min(42.5rem, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: clamp(1.65rem, 4vw, 2.6rem);
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--font-playfair-display), Georgia, serif;
+  font-size: var(--segna-type-h2-size);
+  font-weight: var(--segna-type-h2-weight);
+  letter-spacing: var(--segna-type-h2-tracking);
+  line-height: var(--segna-type-h2-leading);
+}
+
+/**
+ * Onglets en largeur « contenu » : flex, soulignement uniquement sur l’onglet actif (::after).
+ */
+.tabRailGrid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0 clamp(1.35rem, 3.5vw, 2.25rem);
+  width: max-content;
+  max-width: 100%;
+}
+
+.tabRailGrid .tab {
+  position: relative;
+  margin: 0;
+  padding: 0 0 0.45rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  /* Forcer le texte visible (les <button> ont un style UA qui peut masquer la couleur héritée). */
+  appearance: none;
+  -webkit-appearance: none;
+  font-family: inherit;
+  font-size: clamp(1.08rem, 0.45vw + 0.95rem, 1.2rem);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
+  /* Inactif : grisé par la couleur, pas par opacity (évite les effets bizarres sur le tronçon voisin). */
+  color: rgb(255 255 255 / 0.42);
+  transition: color 0.18s ease, font-weight 0.18s ease;
+}
+
+.tabRailGrid .tab:hover:not(.tabActive) {
+  color: rgb(255 255 255 / 0.62);
+}
+
+.tabRailGrid .tab.tabActive {
+  color: #fff;
+  font-weight: 600;
+}
+
+.tabRailGrid .tab.tabActive::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  border-radius: 1px;
+  background: #fff;
+}
+
+.body {
+  font-size: clamp(1.125rem, 0.65vw + 1rem, 1.3rem);
+  line-height: 1.72;
+  max-width: 40rem;
+}
+
+.body :global(p) {
+  margin: 0 0 0.95em;
+}
+
+.body :global(p:last-child) {
+  margin-bottom: 0;
+}
+
+.body :global(ul),
+.body :global(ol) {
+  margin: 0.65em 0 0;
+  padding-left: 1.2rem;
+}
+
+.body :global(a) {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.35rem;
+  padding: 1rem 1.75rem;
+  border-radius: 999px;
+  font-size: clamp(1.02rem, 0.4vw + 0.92rem, 1.12rem);
+  font-weight: 600;
+  text-decoration: none;
+  background: #faf8f5;
+  color: #0a0a0a;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 0.18);
+}
+
+.mediaPane {
+  position: relative;
+  min-height: 280px;
+  background: #111;
+  overflow: hidden;
+}
+
+/* Ratios de cadre (largeur = colonne) — image & vidéo */
+.mediaPane.mediaFrameLandscape {
+  width: 100%;
+  min-height: 0;
+  aspect-ratio: 16 / 9;
+  max-height: min(40vh, 460px);
+}
+
+.mediaPane.mediaFrameSquare {
+  width: 100%;
+  min-height: 0;
+  aspect-ratio: 1 / 1;
+  max-height: min(52vh, 560px);
+}
+
+.mediaPane.mediaFramePortrait {
+  width: 100%;
+  min-height: 0;
+  aspect-ratio: 3 / 4;
+  max-height: min(82vh, 920px);
+}
+
+.mediaPaneRounded {
+  border-radius: clamp(10px, 1.2vw, 14px);
+  overflow: hidden;
+}
+
+.videoLazyPoster {
+  position: absolute;
+  inset: 0;
+}
+
+.videoPosterFallback {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(155deg, #242424 0%, #0f0f0f 55%, #1a1a1a 100%);
+}
+
+.videoPlayCue {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.82rem 1.35rem 0.82rem 1.05rem;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+    sans-serif;
+  font-size: clamp(0.98rem, 1.1vw, 1.12rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: rgb(12 12 12 / 0.58);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 6px 28px rgb(0 0 0 / 0.35);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.videoPlayCue:hover {
+  transform: translate(-50%, -50%) scale(1.03);
+  background: rgb(12 12 12 / 0.72);
+}
+
+.videoPlayCue:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.videoPlayTriangle {
+  display: block;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0.52em 0 0.52em 0.88em;
+  border-color: transparent transparent transparent #fff;
+  margin-left: 0.12em;
+}
+
+@media (min-width: 768px) {
+  .mediaPane {
+    min-height: 0;
+  }
+}
+
+.mediaFill {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.coverImage {
+  object-fit: cover;
+}
+
+.videoIframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.nativeVideo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}

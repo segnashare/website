@@ -384,6 +384,14 @@
   text-wrap: balance;
 }
 
+.subsectionHeading {
+  font-family: var(--font-playfair-display), ui-serif, Georgia, serif;
+  font-weight: 600;
+  font-size: clamp(1.15rem, 2.2vw, 1.4rem);
+  margin: 2rem 0 0.75rem;
+  color: var(--help-muted, #6b6b6b);
+}
+
 .sectionBlock {
   margin-bottom: 2.5rem;
 }

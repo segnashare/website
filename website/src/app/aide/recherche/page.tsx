@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import {HelpBreadcrumbs} from '@/components/help/HelpBreadcrumbs'
 import styles from '@/components/help/help.module.css'
-import {getHelpCenterSettings, searchHelpArticles} from '@/lib/sanity-help'
+import {getHelpCenterSettings, helpArticleHref, searchHelpArticles} from '@/lib/sanity-help'
 
 export const revalidate = 60
 
@@ -48,10 +48,8 @@ export default async function HelpSearchPage({searchParams}: PageProps) {
 
       <div>
         {hits.map((hit) => {
-          const catSlug = hit.category?.slug?.current
-          const artSlug = hit.slug?.current
-          if (!catSlug || !artSlug) return null
-          const href = `/aide/${catSlug}/${artSlug}`
+          const href = helpArticleHref(hit)
+          if (!href) return null
           return (
             <div key={hit._id} className={styles.resultRow}>
               <Link href={href} className={styles.resultTitle}>

@@ -21,6 +21,13 @@ export type HelpCategoryListItem = {
   description?: string
 }
 
+export type HelpSectionListItem = {
+  _id: string
+  title: string
+  slug?: {current?: string}
+  description?: string
+}
+
 export type HelpArticleRef = {
   _id: string
   title: string
@@ -34,7 +41,23 @@ export type HelpCategoryPageData = {
   _id: string
   title: string
   slug?: {current?: string}
+  /** Sous-sections (niveau 2) */
+  sections: HelpSectionListItem[]
+  /** Articles sans sous-section (comportement historique) */
+  rootArticles: HelpArticleRef[]
+}
+
+export type HelpSubsectionPageData = {
+  _id: string
+  title: string
+  slug?: {current?: string}
+  description?: string
   articles: HelpArticleRef[]
+  category?: {
+    _id: string
+    title?: string
+    slug?: {current?: string}
+  }
 }
 
 export type HelpArticlePageData = {
@@ -50,6 +73,11 @@ export type HelpArticlePageData = {
     title?: string
     slug?: {current?: string}
   }
+  section?: {
+    _id: string
+    title?: string
+    slug?: {current?: string}
+  } | null
 }
 
 export type HelpSearchHit = {
@@ -61,6 +89,10 @@ export type HelpSearchHit = {
     title?: string
     slug?: {current?: string}
   }
+  section?: {
+    title?: string
+    slug?: {current?: string}
+  } | null
 }
 
 const settingsProjection = `{
@@ -92,13 +124,31 @@ export async function getHelpCategoriesForHome(): Promise<HelpCategoryListItem[]
   )
 }
 
+/** Toutes les sections d’aide (liens vers /aide/{slug}) — ex. bloc sur page « Comment ça marche ». */
+export async function getHelpCategoriesForHub(): Promise<HelpCategoryListItem[]> {
+  return sanityClient.fetch(
+    `*[_type == "helpCategory"]|order(sortOrder asc, title asc){
+      _id,
+      title,
+      slug,
+      description
+    }`,
+  )
+}
+
 export async function getHelpCategoryBySlug(categorySlug: string): Promise<HelpCategoryPageData | null> {
   return sanityClient.fetch(
     `*[_type == "helpCategory" && slug.current == $categorySlug][0]{
       _id,
       title,
       slug,
-      "articles": *[_type == "helpArticle" && category._ref == ^._id]|order(sortOrder asc, title asc){
+      "sections": *[_type == "helpSection" && category._ref == ^._id]|order(sortOrder asc, title asc){
+        _id,
+        title,
+        slug,
+        description
+      },
+      "rootArticles": *[_type == "helpArticle" && category._ref == ^._id && !defined(section)]|order(sortOrder asc, title asc){
         _id,
         title,
         slug,
@@ -111,8 +161,70 @@ export async function getHelpCategoryBySlug(categorySlug: string): Promise<HelpC
   )
 }
 
-export async function getHelpArticleBySlugs(
+export async function getHelpSubsectionBySlugs(
   categorySlug: string,
+  subsectionSlug: string
+): Promise<HelpSubsectionPageData | null> {
+  return sanityClient.fetch(
+    `*[_type == "helpSection" && slug.current == $subsectionSlug && category->slug.current == $categorySlug][0]{
+      _id,
+      title,
+      slug,
+      description,
+      category->{
+        _id,
+        title,
+        slug
+      },
+      "articles": *[_type == "helpArticle" && section._ref == ^._id]|order(sortOrder asc, title asc){
+        _id,
+        title,
+        slug,
+        excerpt,
+        isFeatured,
+        sortOrder
+      }
+    }`,
+    {categorySlug, subsectionSlug}
+  )
+}
+
+/** Article à la racine de la section : /aide/{section}/{article} */
+export async function getHelpRootArticleBySlugs(
+  categorySlug: string,
+  articleSlug: string
+): Promise<HelpArticlePageData | null> {
+  const article = await sanityClient.fetch(
+    `*[_type == "helpArticle" && slug.current == $articleSlug && !defined(section)][0]{
+      _id,
+      title,
+      slug,
+      excerpt,
+      isFeatured,
+      lastUpdated,
+      body,
+      category->{
+        _id,
+        title,
+        slug
+      },
+      section->{
+        _id,
+        title,
+        slug
+      }
+    }`,
+    {articleSlug}
+  )
+  if (!article) return null
+  if (article.category?.slug?.current !== categorySlug) return null
+  return article as HelpArticlePageData
+}
+
+/** Article sous sous-section : /aide/{section}/{subsection}/{article} */
+export async function getHelpNestedArticleBySlugs(
+  categorySlug: string,
+  subsectionSlug: string,
   articleSlug: string
 ): Promise<HelpArticlePageData | null> {
   const article = await sanityClient.fetch(
@@ -128,12 +240,19 @@ export async function getHelpArticleBySlugs(
         _id,
         title,
         slug
+      },
+      section->{
+        _id,
+        title,
+        slug
       }
     }`,
     {articleSlug}
   )
   if (!article) return null
   if (article.category?.slug?.current !== categorySlug) return null
+  if (article.section?.slug?.current !== subsectionSlug) return null
+  if (!article.section) return null
   return article as HelpArticlePageData
 }
 
@@ -157,8 +276,22 @@ export async function searchHelpArticles(query: string): Promise<HelpSearchHit[]
       category->{
         title,
         slug
+      },
+      section->{
+        title,
+        slug
       }
     }`,
     {pattern}
   )
+}
+
+/** URL publique d’un article d’aide */
+export function helpArticleHref(hit: Pick<HelpSearchHit, 'category' | 'section' | 'slug'>): string | null {
+  const catSlug = hit.category?.slug?.current
+  const artSlug = hit.slug?.current
+  if (!catSlug || !artSlug) return null
+  const subSlug = hit.section?.slug?.current
+  if (subSlug) return `/aide/${catSlug}/${subSlug}/${artSlug}`
+  return `/aide/${catSlug}/${artSlug}`
 }

@@ -1,0 +1,79 @@
+/* Même enveloppe 80 % que le puzzle catalogue (titre + chapô) */
+.section {
+  width: 80%;
+  max-width: 100%;
+  margin-inline: auto;
+  box-sizing: border-box;
+}
+
+.surfaceDark {
+  color: #faf8f5;
+}
+
+.scrollBlock {
+  margin-top: clamp(1.25rem, 2.8vw, 2rem);
+}
+
+/**
+ * Déborde uniquement vers la droite jusqu’au bord viewport.
+ * Le bord gauche reste celui de la section (80 %) → première carte alignée sur le titre (image 1),
+ * sans breakout 100vw + JS qui plaquait la rangée au bord écran (image 2).
+ */
+.scrollViewport {
+  box-sizing: border-box;
+  min-width: 0;
+  width: calc(100% + (100vw - 100%) / 2);
+  max-width: none;
+  overflow-x: hidden;
+}
+
+.track {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 0;
+  padding: 0 0 0.35rem;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.trackRow {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: stretch;
+  gap: clamp(1.05rem, 3.2vw, 1.75rem);
+  width: max-content;
+  min-height: 0;
+}
+
+.track::-webkit-scrollbar {
+  display: none;
+}
+
+.slide {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  min-height: 0;
+  isolation: isolate;
+}
+
+.slidePortrait {
+  width: clamp(248px, 35vw, 348px);
+  aspect-ratio: 3 / 4;
+}
+
+.slideSquare {
+  width: clamp(272px, 39.5vw, 374px);
+  aspect-ratio: 1 / 1;
+}
+
+.slideLandscape {
+  width: clamp(348px, 59vw, 520px);
+  aspect-ratio: 16 / 9;
+}

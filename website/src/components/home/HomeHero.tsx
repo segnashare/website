@@ -5,6 +5,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import {motion, useReducedMotion} from 'framer-motion'
 import type {HomePageData} from '@/lib/sanity'
+import {CtaHrefLink} from './heroShared'
+import {useNavScrollElevated} from './useNavScrollElevated'
 import styles from './homeHero.module.css'
 
 type HomeHeroProps = {
@@ -39,8 +41,6 @@ export function HomeHero({homePage, backgroundImageUrl}: HomeHeroProps) {
   }, [shouldReduceMotion])
 
   const navItems = homePage.navItems ?? []
-  const leftNavItems = navItems.slice(0, 2)
-  const rightNavItems = navItems.slice(2)
 
   const mobileMenuItems = useMemo(() => {
     if (navItems.length > 0) return navItems
@@ -53,18 +53,35 @@ export function HomeHero({homePage, backgroundImageUrl}: HomeHeroProps) {
     ]
   }, [navItems])
 
-  const brand = homePage.brandName?.trim() || 'Segna'
-  const ctaLabel = homePage.primaryCta?.label || 'Download'
-  const ctaUrl = homePage.primaryCta?.url || '#'
-  const contactLabel = homePage.mobileMenuContact?.label || 'Contact'
-  const contactHref = homePage.mobileMenuContact?.href || '#'
-  const socials = homePage.mobileMenuSocialLinks ?? []
+  const logoUrl = homePage.segnaLogo?.asset?.url
+  const logoMime = homePage.segnaLogo?.asset?.mimeType
+  const logoName = homePage.segnaLogo?.asset?.originalFilename
+  const showSvgLogo = Boolean(
+    logoUrl &&
+      (logoMime === 'image/svg+xml' ||
+        logoUrl.toLowerCase().includes('.svg') ||
+        logoName?.toLowerCase().endsWith('.svg')),
+  )
+  const brandMark = showSvgLogo && logoUrl ? (
+    <img src={logoUrl} alt="Segna" className={styles.brandLogo} />
+  ) : (
+    <span className={styles.brand}>Segna</span>
+  )
+  const primaryLabel = homePage.primaryCta?.label || 'Essai gratuit'
+  const primaryHref = homePage.primaryCta?.url?.trim() || '#'
+  const secondaryLabel = homePage.secondaryCta?.label?.trim()
+  const secondaryHref = homePage.secondaryCta?.url?.trim() || '#'
+  const showSecondaryCta = Boolean(secondaryLabel)
+  const showNavDivider =
+    navItems.length > 0 && (showSecondaryCta || Boolean(homePage.primaryCta?.label?.trim()))
   const mobileNavId = 'mobile-nav'
   const introLetters = 'Segna'.split('')
   const contentAnimationState = shouldReduceMotion || isIntroComplete ? 'visible' : 'hidden'
+  const navElevated = useNavScrollElevated()
+  const navRootClass = `${styles.navChromeRoot} ${navElevated ? styles.navChromeRootScrolled : ''}`
 
   return (
-    <main className={styles.hero}>
+    <div className={styles.hero}>
       {backgroundImageUrl ? (
         <div className={styles.backgroundLayer}>
           <Image
@@ -117,86 +134,86 @@ export function HomeHero({homePage, backgroundImageUrl}: HomeHeroProps) {
       </motion.div>
 
       <div className={styles.contentLayer}>
-        <motion.header
-          className={styles.desktopHeader}
-          initial="hidden"
-          animate={contentAnimationState}
-          variants={{
-            hidden: {
-              opacity: 0,
-              y: -78,
-            },
-            visible: {
-              opacity: 1,
-              y: 0,
-            },
-          }}
-          transition={{
-            duration: shouldReduceMotion ? 0 : 0.85,
-            ease: [0.16, 1, 0.3, 1],
-            delay: shouldReduceMotion ? 0 : 1.62,
-          }}
-        >
-          <nav className={styles.desktopNavLeft}>
-            {leftNavItems.map((item) => (
-              <Link key={item._key} href={item.href?.trim() ? item.href : '#'} className={styles.navLink}>
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-          <div className={styles.brand}>{brand}</div>
-          <div className={styles.desktopNavRight}>
-            {rightNavItems.map((item) => (
-              <Link key={item._key} href={item.href?.trim() ? item.href : '#'} className={styles.navLink}>
-                {item.label}
-              </Link>
-            ))}
-            <Link href={ctaUrl} className={styles.downloadButton}>
-              {ctaLabel}
-            </Link>
-          </div>
-        </motion.header>
-
-        <motion.header
-          className={styles.mobileHeader}
-          initial="hidden"
-          animate={contentAnimationState}
-          variants={{
-            hidden: {
-              opacity: 0,
-              y: -78,
-            },
-            visible: {
-              opacity: 1,
-              y: 0,
-            },
-          }}
-          transition={{
-            duration: shouldReduceMotion ? 0 : 0.85,
-            ease: [0.16, 1, 0.3, 1],
-            delay: shouldReduceMotion ? 0 : 1.62,
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => setIsMenuOpen((value) => !value)}
-            aria-label="Toggle mobile navigation menu"
-            aria-controls={mobileNavId}
-            aria-expanded={isMenuOpen}
-            className={`${styles.menuButton} ${isMenuOpen ? styles.menuButtonOpen : ''}`}
+        <div className={navRootClass}>
+          <div className={styles.desktopNavSpacer} aria-hidden />
+          <motion.header
+            className={styles.desktopHeader}
+            initial="hidden"
+            animate={contentAnimationState}
+            variants={{
+              hidden: {opacity: 0},
+              visible: {opacity: 1},
+            }}
+            transition={{
+              duration: shouldReduceMotion ? 0 : 0.85,
+              ease: [0.16, 1, 0.3, 1],
+              delay: shouldReduceMotion ? 0 : 1.62,
+            }}
           >
-            <span className={styles.menuBars}>
-              <span className={`${styles.menuBar} ${styles.menuBarTop}`} />
-              <span className={`${styles.menuBar} ${styles.menuBarBottom}`} />
-            </span>
-          </button>
+            <div className={styles.desktopBrand}>
+              <Link href="/" className={styles.desktopLogoLink} aria-label="Accueil — Segna">
+                <span className={styles.brandWrap}>{brandMark}</span>
+              </Link>
+            </div>
+            <nav className={styles.desktopNavCluster} aria-label="Navigation principale">
+              <ul className={styles.desktopNavLinks}>
+                {navItems.map((item) => (
+                  <li key={item._key}>
+                    <Link href={item.href?.trim() ? item.href : '#'} className={styles.navLink}>
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              {showNavDivider ? (
+                <span className={styles.navDivider} role="separator" aria-hidden="true" />
+              ) : null}
+              {showSecondaryCta ? (
+                <CtaHrefLink href={secondaryHref} className={styles.secondaryCta}>
+                  {secondaryLabel}
+                </CtaHrefLink>
+              ) : null}
+              <CtaHrefLink href={primaryHref} className={styles.downloadButton}>
+                {primaryLabel}
+              </CtaHrefLink>
+            </nav>
+          </motion.header>
 
-          <div className={`${styles.brand} ${styles.mobileHeaderBrand}`}>{brand}</div>
+          <motion.header
+            className={styles.mobileHeader}
+            initial="hidden"
+            animate={contentAnimationState}
+            variants={{
+              hidden: {opacity: 0},
+              visible: {opacity: 1},
+            }}
+            transition={{
+              duration: shouldReduceMotion ? 0 : 0.85,
+              ease: [0.16, 1, 0.3, 1],
+              delay: shouldReduceMotion ? 0 : 1.62,
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setIsMenuOpen((value) => !value)}
+              aria-label="Toggle mobile navigation menu"
+              aria-controls={mobileNavId}
+              aria-expanded={isMenuOpen}
+              className={`${styles.menuButton} ${isMenuOpen ? styles.menuButtonOpen : ''}`}
+            >
+              <span className={styles.menuBars}>
+                <span className={`${styles.menuBar} ${styles.menuBarTop}`} />
+                <span className={`${styles.menuBar} ${styles.menuBarBottom}`} />
+              </span>
+            </button>
 
-          <Link href={ctaUrl} className={styles.mobileHeaderCta}>
-            {ctaLabel}
-          </Link>
-        </motion.header>
+            <div className={`${styles.brandWrap} ${styles.mobileHeaderBrand}`}>{brandMark}</div>
+
+            <CtaHrefLink href={primaryHref} className={styles.mobileHeaderCta}>
+              {primaryLabel}
+            </CtaHrefLink>
+          </motion.header>
+        </div>
 
         <section className={styles.heroContent}>
           <motion.h1
@@ -262,26 +279,19 @@ export function HomeHero({homePage, backgroundImageUrl}: HomeHeroProps) {
             ))}
           </div>
 
-          <div className={styles.mobileMenuBottom}>
-            <Link href={contactHref} className={styles.mobileContact} onClick={() => setIsMenuOpen(false)}>
-              {contactLabel}
-            </Link>
-            <div className={styles.mobileSocial}>
-              {socials.map((social) => (
-                <Link
-                  key={social._key}
-                  href={social.href}
-                  className={styles.mobileSocialLink}
-                  aria-label={social.label}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {social.label}
-                </Link>
-              ))}
+          {showSecondaryCta ? (
+            <div className={styles.mobileMenuCtas}>
+              <CtaHrefLink
+                href={secondaryHref}
+                className={styles.mobileMenuSecondaryCta}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                {secondaryLabel}
+              </CtaHrefLink>
             </div>
-          </div>
+          ) : null}
         </nav>
       </div>
-    </main>
+    </div>
   )
 }

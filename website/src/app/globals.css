@@ -1,5 +1,23 @@
 :root {
   color-scheme: light;
+
+  /**
+   * Hiérarchie titres site
+   * H1 — uniquement les heros (accueil multi-états, photo plein écran, marketing full-bleed).
+   * H2 — titres de modules sous le hero (puzzle catalogue, tryptique, bandeau, split, prose, etc.) + taille du texte de citation.
+   */
+  --segna-type-h1-size-single: clamp(3rem, 5.9vw, 5.4rem);
+  --segna-type-h1-size-staged: clamp(2.35rem, 4.2vw, 4.15rem);
+  --segna-type-h1-weight: 800;
+  --segna-type-h1-leading: 0.98;
+  --segna-type-h1-leading-staged: 1.02;
+  --segna-type-h1-tracking: -0.03em;
+
+  --segna-type-h2-size: clamp(1.8rem, 3.35vw, 3rem);
+  --segna-type-h2-size-sm: clamp(1.5rem, 4.8vw, 2.2rem);
+  --segna-type-h2-weight: 800;
+  --segna-type-h2-leading: 1.06;
+  --segna-type-h2-tracking: -0.03em;
 }
 
 * {
