@@ -122,7 +122,8 @@ export function StagedHeroCycle({
   useEffect(() => {
     if (reduce || safeStates.length < 2) return
 
-    let advanceId: ReturnType<typeof setTimeout> | undefined
+    /* `window.setTimeout` renvoie un `number` (DOM) ; éviter `ReturnType<typeof setTimeout>` qui peut être `NodeJS.Timeout` côté build Vercel/Node. */
+    let advanceId: number | undefined
 
     const clearAdvance = () => {
       if (advanceId != null) {
