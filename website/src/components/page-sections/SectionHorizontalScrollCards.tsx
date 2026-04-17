@@ -87,20 +87,19 @@ export function SectionHorizontalScrollCards({section}: Props) {
 
   const isDark = section.surfaceTheme === 'dark'
   const introTone = isDark ? 'dark' : 'light'
-  const customBg = section.backgroundColor?.trim()
-  const surfaceStyle = customBg
-    ? {backgroundColor: customBg}
-    : isDark
-      ? {backgroundColor: '#0a0a0a'}
-      : undefined
+  const surfaceStyle = {
+    backgroundColor: isDark ? '#0a0a0a' : '#ffffff',
+  }
 
   return (
     <section
-      className={`${styles.section}${isDark ? ` ${styles.surfaceDark}` : ''}`}
+      className={`${styles.fullBleed}${isDark ? ` ${styles.surfaceDark}` : ` ${styles.surfaceLight}`}`}
       style={surfaceStyle}
       data-motion={section.motionPreset ?? 'none'}
     >
-      <CatalogPuzzleIntroFit heading={heading} lead={section.lead?.trim()} introTone={introTone} />
+      <div className={styles.inner}>
+        <CatalogPuzzleIntroFit heading={heading} lead={section.lead?.trim()} introTone={introTone} />
+      </div>
 
       <div className={styles.scrollBlock}>
         <div className={styles.scrollViewport}>

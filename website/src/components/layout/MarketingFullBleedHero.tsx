@@ -63,7 +63,7 @@ export function MarketingFullBleedHero({marketing, headerNav, cta}: Props) {
             />
           </div>
         ) : null}
-        <div className={`${m.navShell} ${styles.marketingNavShellFix}`}>
+        <div className={m.navShell}>
           <SiteNavChrome header={headerNav} mobileNavId={mobileNavId} />
         </div>
 

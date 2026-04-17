@@ -289,9 +289,8 @@ export type HorizontalScrollCardsSection = {
   _type: 'horizontalScrollCardsSection'
   heading?: string
   lead?: string
-  /** Fond blanc + texte foncé, ou fond noir + texte clair (titres intro). */
+  /** `light` = bandeau clair ; `dark` = bandeau sombre (texte intro inversé). */
   surfaceTheme?: 'light' | 'dark'
-  backgroundColor?: string
   motionPreset?: MotionPreset
   items?: HorizontalScrollCard[] | null
 }
@@ -420,7 +419,6 @@ export type MarketingPageData = {
   heroImage?: SanityImage
   heroCtaLabel?: string
   heroCtaHref?: string
-  introText?: string
   sections?: PageSection[]
   seo?: SeoMetadata | null
 }
@@ -864,7 +862,6 @@ export async function getMarketingPageBySlug(slug: string): Promise<MarketingPag
       heroPresentation,
       heroStageTransitionMs,
       ${homeHeroStatesGroq},
-      introText,
       ${documentPageSectionsGroq}
     }`,
     {slug: normalized},

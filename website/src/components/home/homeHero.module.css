@@ -29,33 +29,6 @@
   min-height: 100vh;
 }
 
-/**
- * Nav home / marketing : barre fixe + état clair au scroll.
- * Ne pas appliquer `transform` sur le même nœud que `position: fixed` (Framer) — voir SiteNavChrome.
- */
-.navChromeRoot {
-  pointer-events: none;
-  --nav-desktop-slot-h: calc(1.5rem + clamp(2.1rem, 3vw, 2.9rem) + 0.85rem);
-}
-
-.navChromeRoot .desktopHeader,
-.navChromeRoot .mobileHeader {
-  pointer-events: auto;
-}
-
-.marketingNavShellFix > .navChromeRoot {
-  pointer-events: none;
-}
-
-.marketingNavShellFix > .navChromeRoot :is(.desktopHeader, .mobileHeader) {
-  pointer-events: auto;
-}
-
-.desktopNavSpacer {
-  display: none;
-  pointer-events: none;
-}
-
 .introOverlay {
   position: fixed;
   inset: 0;
@@ -91,11 +64,6 @@
   align-items: center;
   justify-content: space-between;
   gap: clamp(1rem, 3vw, 2rem);
-  transition:
-    background-color 0.32s ease,
-    box-shadow 0.32s ease,
-    backdrop-filter 0.32s ease,
-    -webkit-backdrop-filter 0.32s ease;
 }
 
 .desktopBrand {
@@ -148,7 +116,6 @@
   min-height: 1.35rem;
   background: rgb(255 255 255 / 0.5);
   flex-shrink: 0;
-  transition: background-color 0.28s ease;
 }
 
 .secondaryCta {
@@ -159,7 +126,6 @@
   text-decoration: none;
   white-space: nowrap;
   opacity: 0.98;
-  transition: color 0.28s ease, opacity 0.28s ease;
 }
 
 .secondaryCta:hover {
@@ -173,7 +139,6 @@
   font-weight: 500;
   letter-spacing: 0.01em;
   opacity: 0.98;
-  transition: color 0.28s ease, opacity 0.28s ease;
 }
 
 .brandWrap {
@@ -189,7 +154,6 @@
   text-align: center;
   font-size: clamp(2.1rem, 3vw, 2.9rem);
   line-height: 1;
-  transition: color 0.28s ease;
 }
 
 .brandLogo {
@@ -198,7 +162,6 @@
   width: auto;
   max-width: min(200px, 42vw);
   object-fit: contain;
-  transition: filter 0.28s ease;
 }
 
 .downloadButton {
@@ -214,7 +177,6 @@
   font-weight: 600;
   flex-shrink: 0;
   text-decoration: none;
-  transition: background-color 0.28s ease, border-color 0.28s ease, color 0.28s ease;
 }
 
 .heroContent {
@@ -272,56 +234,6 @@
   transition-property: transform, background-color;
   transition-duration: 200ms;
   transition-timing-function: ease;
-}
-
-@media (min-width: 1025px) {
-  .desktopNavSpacer {
-    display: block;
-    width: 100%;
-    height: var(--nav-desktop-slot-h);
-    flex-shrink: 0;
-  }
-
-  .navChromeRoot .desktopHeader {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 120;
-    padding: 1.5rem clamp(1rem, 4vw, 2.75rem) 0.85rem;
-    background: transparent;
-  }
-
-  .navChromeRootScrolled .desktopHeader {
-    background: rgb(255 255 255 / 0.97);
-    backdrop-filter: blur(12px) saturate(1.15);
-    -webkit-backdrop-filter: blur(12px) saturate(1.15);
-    box-shadow: 0 1px 0 rgb(0 0 0 / 0.06);
-  }
-
-  .navChromeRootScrolled .navLink,
-  .navChromeRootScrolled .secondaryCta {
-    color: #111;
-    opacity: 0.9;
-  }
-
-  .navChromeRootScrolled .navDivider {
-    background: rgb(0 0 0 / 0.14);
-  }
-
-  .navChromeRootScrolled .brand {
-    color: #111;
-  }
-
-  .navChromeRootScrolled .brandLogo {
-    filter: brightness(0);
-  }
-
-  .navChromeRootScrolled .downloadButton {
-    background: #111;
-    border-color: #111;
-    color: #fff;
-  }
 }
 
 .menuBarTop {
@@ -445,7 +357,6 @@
   white-space: nowrap;
   margin-left: 0.5rem;
   transform: translateY(2px);
-  transition: background-color 0.28s ease, border-color 0.28s ease, color 0.28s ease;
 }
 
 .fallback {
@@ -474,36 +385,6 @@
     column-gap: 0.75rem;
     padding: 0.9rem 1.15rem;
     background: transparent;
-    transition:
-      background-color 0.32s ease,
-      box-shadow 0.32s ease,
-      backdrop-filter 0.32s ease,
-      -webkit-backdrop-filter 0.32s ease;
-  }
-
-  .navChromeRootScrolled .mobileHeader {
-    background: rgb(255 255 255 / 0.97);
-    backdrop-filter: blur(12px) saturate(1.15);
-    -webkit-backdrop-filter: blur(12px) saturate(1.15);
-    box-shadow: 0 1px 0 rgb(0 0 0 / 0.06);
-  }
-
-  .navChromeRootScrolled .menuBar {
-    background: #111;
-  }
-
-  .navChromeRootScrolled .mobileHeaderBrand .brand {
-    color: #111;
-  }
-
-  .navChromeRootScrolled .mobileHeaderBrand .brandLogo {
-    filter: brightness(0);
-  }
-
-  .navChromeRootScrolled .mobileHeaderCta {
-    background: #111;
-    border-color: #111;
-    color: #fff;
   }
 
   .mobileHeaderBrand {
@@ -548,10 +429,6 @@
 /* —— Nav sur fond clair (ex. pages marketing) —— */
 .surfaceLight .desktopHeader {
   color: #111;
-}
-
-.surfaceLight .navChromeRootScrolled .desktopHeader {
-  background: rgb(255 255 255 / 0.98);
 }
 
 .surfaceLight .navLink {

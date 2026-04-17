@@ -35,9 +35,9 @@
   color: #6f6a66;
 }
 
-/* Bandeau scroll horizontal : fond sombre → titres intro lisibles */
+/* Bandeau scroll horizontal : fond sombre → intro lisible (priorité sur .heading seul) */
 .introOnDark .heading {
-  color: #faf8f5;
+  color: #ffffff;
 }
 
 .introOnDark .lead {

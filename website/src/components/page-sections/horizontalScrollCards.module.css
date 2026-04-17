@@ -1,5 +1,17 @@
-/* Même enveloppe 80 % que le puzzle catalogue (titre + chapô) */
-.section {
+/* Bandeau pleine largeur écran (fond), comme split feature — le contenu titre + scroll reste dans .inner */
+.fullBleed {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  box-sizing: border-box;
+  overflow: hidden;
+  padding-block: clamp(1.5rem, 4vw, 2.75rem);
+}
+
+.inner {
   width: 80%;
   max-width: 100%;
   margin-inline: auto;
@@ -10,21 +22,28 @@
   color: #faf8f5;
 }
 
+.surfaceLight {
+  color: #14110f;
+}
+
 .scrollBlock {
   margin-top: clamp(1.25rem, 2.8vw, 2rem);
+  width: 100%;
+  min-width: 0;
+  /* Clip au bord droit du bandeau plein écran : les cartes « passent » sous le bord du viewport. */
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 /**
- * Déborde uniquement vers la droite jusqu’au bord viewport.
- * Le bord gauche reste celui de la section (80 %) → première carte alignée sur le titre (image 1),
- * sans breakout 100vw + JS qui plaquait la rangée au bord écran (image 2).
+ * Même retrait gauche que `.inner` (80 % centré → 10 % de marge de chaque côté sur le parent 100vw).
+ * La fenêtre de scroll va jusqu’au bord droit du bandeau, pas seulement jusqu’à la fin du bloc 80 %.
  */
 .scrollViewport {
   box-sizing: border-box;
   min-width: 0;
-  width: calc(100% + (100vw - 100%) / 2);
-  max-width: none;
-  overflow-x: hidden;
+  width: 100%;
+  padding-inline-start: 10%;
 }
 
 .track {

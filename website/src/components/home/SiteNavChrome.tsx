@@ -5,7 +5,6 @@ import Link from 'next/link'
 import {motion, useReducedMotion} from 'framer-motion'
 import type {WebsiteHeaderNavData} from '@/lib/sanity'
 import {CtaHrefLink} from './heroShared'
-import {useNavScrollElevated} from './useNavScrollElevated'
 import styles from './homeHero.module.css'
 
 type Props = {
@@ -17,7 +16,6 @@ export function SiteNavChrome({header, mobileNavId}: Props) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const shouldReduceMotion = useReducedMotion()
   const contentAnimationState = 'visible' as const
-  const navElevated = useNavScrollElevated()
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
@@ -62,19 +60,15 @@ export function SiteNavChrome({header, mobileNavId}: Props) {
   const showNavDivider =
     navItems.length > 0 && (showSecondaryCta || Boolean(header?.primaryCta?.label?.trim()))
 
-  const navRootClass = `${styles.navChromeRoot} ${navElevated ? styles.navChromeRootScrolled : ''}`
-
   return (
-    <div className={navRootClass}>
-      <div className={styles.desktopNavSpacer} aria-hidden />
+    <>
       <motion.header
         className={styles.desktopHeader}
         initial="hidden"
         animate={contentAnimationState}
         variants={{
-          /* Pas de `y` ici : un `transform` sur le même nœud que `position: fixed` casse le fixe au viewport. */
-          hidden: {opacity: 0},
-          visible: {opacity: 1},
+          hidden: {opacity: 0, y: -40},
+          visible: {opacity: 1, y: 0},
         }}
         transition={{duration: shouldReduceMotion ? 0 : 0.65, ease: [0.16, 1, 0.3, 1]}}
       >
@@ -112,8 +106,8 @@ export function SiteNavChrome({header, mobileNavId}: Props) {
         initial="hidden"
         animate={contentAnimationState}
         variants={{
-          hidden: {opacity: 0},
-          visible: {opacity: 1},
+          hidden: {opacity: 0, y: -40},
+          visible: {opacity: 1, y: 0},
         }}
         transition={{duration: shouldReduceMotion ? 0 : 0.65, ease: [0.16, 1, 0.3, 1]}}
       >
@@ -164,6 +158,6 @@ export function SiteNavChrome({header, mobileNavId}: Props) {
           </div>
         ) : null}
       </nav>
-    </div>
+    </>
   )
 }
