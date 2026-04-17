@@ -7,7 +7,7 @@
    * H2 — titres de modules sous le hero (puzzle catalogue, tryptique, bandeau, split, prose, etc.) + taille du texte de citation.
    */
   --segna-type-h1-size-single: clamp(3rem, 5.9vw, 5.4rem);
-  --segna-type-h1-size-staged: clamp(2.35rem, 4.2vw, 4.15rem);
+  --segna-type-h1-size-staged: clamp(2.65rem, 4.85vw, 4.75rem);
   --segna-type-h1-weight: 800;
   --segna-type-h1-leading: 0.98;
   --segna-type-h1-leading-staged: 1.02;

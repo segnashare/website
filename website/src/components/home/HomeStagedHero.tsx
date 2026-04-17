@@ -16,7 +16,7 @@ type Props = {
 
 function SearchLoupeIcon() {
   return (
-    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
       <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="2" />
       <path d="M20 20l-4.2-4.2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
@@ -65,15 +65,28 @@ export function HomeStagedHero({homePage}: Props) {
     homePage.heroStagedSearchPlaceholder?.trim() || 'Que souhaitez-vous porter ?'
   const searchButtonLabel = homePage.heroStagedSearchButtonLabel?.trim() || 'Rechercher'
 
-  return (
-    <div className={styles.hero}>
-      {states.length > 0 ? (
-        <StagedHeroCycle states={states} transitionMs={transitionMs} layout="hero" />
-      ) : null}
-      <div className={staged.overlayStaged} aria-hidden="true" />
+  const stagedSizes =
+    '(max-width: 1024px) min(82vw, 420px), min(92vw, 2400px)'
 
-      <div className={styles.contentLayer}>
-        <SiteNavChrome header={homePage} mobileNavId={mobileNavId} />
+  return (
+    <div className={`${styles.hero} ${styles.heroStagedStack} ${staged.stagedHeroRoot}`}>
+      <div className={staged.stagedHeroBackdrop}>
+        <div className={staged.stagedHeroBackdropInset}>
+          {states.length > 0 ? (
+            <StagedHeroCycle
+              states={states}
+              transitionMs={transitionMs}
+              layout="hero"
+              sizes={stagedSizes}
+              className={staged.stagedHeroCycleMount}
+            />
+          ) : null}
+          <div className={staged.overlayStaged} aria-hidden="true" />
+        </div>
+      </div>
+
+      <div className={`${styles.contentLayer} ${staged.stagedHeroContentLayer}`}>
+        <SiteNavChrome header={homePage} mobileNavId={mobileNavId} mobileSurface="dark" />
 
         <section className={staged.stagedHeroLower}>
           <div className={staged.stagedHeroColumn}>
@@ -112,11 +125,18 @@ export function HomeStagedHero({homePage}: Props) {
                   aria-label={searchPlaceholder}
                   autoComplete="off"
                 />
-                <button type="button" className={staged.searchBubble}>
+                <button
+                  type="button"
+                  className={staged.searchBubble}
+                  aria-label={searchButtonLabel}
+                  title={searchButtonLabel}
+                >
                   <span className={staged.searchBubbleIcon}>
                     <SearchLoupeIcon />
                   </span>
-                  {searchButtonLabel}
+                  <span className={staged.searchBubbleLabel} aria-hidden="true">
+                    {searchButtonLabel}
+                  </span>
                 </button>
               </div>
               <StagedHeroInfoRow items={homePage.heroStagedInfoItems} />

@@ -60,6 +60,11 @@
   }
 }
 
+/* Desktop : grille puzzle. Téléphone : défilement horizontal (voir @media). */
+.scrollStrip {
+  min-width: 0;
+}
+
 /* Grille 4 rangées × 2 colonnes : gauche 1+1+(2), droite (3)+1 */
 .grid {
   display: grid;
@@ -187,33 +192,83 @@
   color: #c5c0bc;
 }
 
-@media (max-width: 720px) {
-  .grid {
-    grid-template-columns: 1fr;
-    grid-template-rows: none;
-    grid-auto-rows: minmax(480px, auto);
-    min-height: 0;
-    gap: clamp(0.28rem, 0.75vw, 0.45rem);
+@media (max-width: 767px) {
+  /* Même principe que horizontalScrollCards : bandeau plein écran, 1re carte alignée au chapô (~10 %). */
+  .scrollStrip {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    max-width: none;
+    box-sizing: border-box;
+    overflow-x: hidden;
   }
 
+  .grid {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: stretch;
+    gap: clamp(1.05rem, 3.2vw, 1.75rem);
+    min-height: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    /* Alignement snap sur la même grille que le chapô (~10 % + marge fin). */
+    scroll-padding-inline-start: 10%;
+    scroll-padding-inline-end: clamp(1rem, 4vw, 2.75rem);
+    padding: 0 0 0.4rem;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  /* Espace défilant (comme du padding sur la piste) : pas de padding sur le scrollport,
+     sinon WebKit/Blink laisse une zone fixe et le contenu « disparaît » avant le bord écran. */
+  .grid::before,
+  .grid::after {
+    content: '';
+    flex: 0 0 auto;
+    align-self: stretch;
+    min-height: 1px;
+  }
+
+  .grid::before {
+    width: 10%;
+  }
+
+  .grid::after {
+    width: clamp(1rem, 4vw, 2.75rem);
+  }
+
+  .grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Les 2 cartes du bas gauche deviennent des slides sœurs dans la piste flex. */
   .leftSplit {
-    grid-column: 1;
-    grid-row: auto;
-    grid-template-columns: 1fr 1fr;
-    min-height: 520px;
+    display: contents;
+  }
+
+  .grid .card {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    width: clamp(272px, 78vw, 340px);
+    aspect-ratio: 1 / 1;
+    min-height: 0;
   }
 
   .posLeftTop,
   .posLeftMiddle,
+  .posLeftBottomLeft,
+  .posLeftBottomRight,
   .posRightTall,
   .posRightBottom {
-    grid-column: 1;
-    grid-row: auto;
-    min-height: 480px;
+    grid-column: unset;
+    grid-row: unset;
   }
 
   .posRightTall {
-    min-height: min(128vh, 1040px);
-    order: -1;
+    order: 0;
   }
 }

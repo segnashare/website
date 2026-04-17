@@ -35,15 +35,11 @@
   box-sizing: border-box;
 }
 
-/**
- * Même retrait gauche que `.inner` (80 % centré → 10 % de marge de chaque côté sur le parent 100vw).
- * La fenêtre de scroll va jusqu’au bord droit du bandeau, pas seulement jusqu’à la fin du bloc 80 %.
- */
+/* Pleine largeur : le scroller (.track) va jusqu’au bord ; le retrait initial est sur .trackRow (voir commentaire .trackRow). */
 .scrollViewport {
   box-sizing: border-box;
   min-width: 0;
   width: 100%;
-  padding-inline-start: 10%;
 }
 
 .track {
@@ -53,7 +49,9 @@
   box-sizing: border-box;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  scroll-padding-inline: 0;
+  /* Cohérent avec le retrait sur .trackRow : le snap ne ramène pas la 1re carte contre le bord physique. */
+  scroll-padding-inline-start: 10%;
+  scroll-padding-inline-end: 0;
   padding: 0 0 0.35rem;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-x;
@@ -62,6 +60,11 @@
   -ms-overflow-style: none;
 }
 
+/**
+ * Retrait aligné sur le titre (.inner = 80 % → ~10 % depuis le bord viewport).
+ * Ce padding fait partie du contenu défilant : au scroll, les cartes passent sous le bord écran,
+ * au lieu d’être coupées au bord d’un parent plus étroit (effet « disparition magique »).
+ */
 .trackRow {
   display: flex;
   flex-flow: row nowrap;
@@ -69,6 +72,8 @@
   gap: clamp(1.05rem, 3.2vw, 1.75rem);
   width: max-content;
   min-height: 0;
+  box-sizing: border-box;
+  padding-inline-start: 10%;
 }
 
 .track::-webkit-scrollbar {

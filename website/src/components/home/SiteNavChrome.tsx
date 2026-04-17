@@ -10,9 +10,11 @@ import styles from './homeHero.module.css'
 type Props = {
   header: WebsiteHeaderNavData | null
   mobileNavId: string
+  /** Barre mobile : transparent (sur image), clair, ou noir (hero marketing clair). */
+  mobileSurface?: 'transparent' | 'light' | 'dark'
 }
 
-export function SiteNavChrome({header, mobileNavId}: Props) {
+export function SiteNavChrome({header, mobileNavId, mobileSurface = 'transparent'}: Props) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const shouldReduceMotion = useReducedMotion()
   const contentAnimationState = 'visible' as const
@@ -62,6 +64,7 @@ export function SiteNavChrome({header, mobileNavId}: Props) {
 
   return (
     <>
+      <div className={styles.desktopNavSpacer} aria-hidden />
       <motion.header
         className={styles.desktopHeader}
         initial="hidden"
@@ -102,7 +105,7 @@ export function SiteNavChrome({header, mobileNavId}: Props) {
       </motion.header>
 
       <motion.header
-        className={styles.mobileHeader}
+        className={`${styles.mobileHeader} ${mobileSurface === 'light' ? styles.mobileHeaderOnLight : ''} ${mobileSurface === 'dark' ? styles.mobileHeaderOnDark : ''}`}
         initial="hidden"
         animate={contentAnimationState}
         variants={{

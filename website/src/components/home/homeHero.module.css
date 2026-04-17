@@ -5,6 +5,23 @@
   overflow: hidden;
 }
 
+/* HomeStagedHero : le wrapper réutilise `.hero` (100vh) ; en pile mobile ça laissait un vide blanc énorme sous le visu. */
+@media (max-width: 1024px) {
+  /*
+   * Le header mobile est `position: fixed` mais vit sous `.contentLayer` (z-index local).
+   * Sans z-index sur `.hero`, les sections suivantes (tryptique, Framer `transform`, etc.)
+   * peuvent composer au-dessus et masquer la barre au scroll.
+   */
+  .hero {
+    z-index: 30;
+  }
+
+  .hero.heroStagedStack {
+    min-height: unset;
+    overflow: visible;
+  }
+}
+
 .backgroundLayer {
   position: absolute;
   inset: 0;
@@ -51,6 +68,10 @@
 
 .introLetter {
   display: inline-block;
+}
+
+.desktopNavSpacer {
+  display: none;
 }
 
 .desktopHeader {
@@ -399,6 +420,38 @@
   .mobileHeaderCta {
     justify-self: end;
   }
+
+  .mobileHeaderOnLight {
+    background: #fff;
+    box-shadow: none;
+  }
+
+  .mobileHeaderOnLight .menuBar {
+    background: #111;
+  }
+
+  .mobileHeaderOnLight .mobileHeaderBrand {
+    color: #111;
+  }
+
+  .mobileHeaderOnDark {
+    background: #0f1116;
+    box-shadow: none;
+  }
+
+  .mobileHeaderOnDark .menuBar {
+    background: #fff;
+  }
+
+  .mobileHeaderOnDark .mobileHeaderBrand {
+    color: #fff;
+  }
+
+  .mobileHeaderOnDark .mobileHeaderCta {
+    border-color: rgb(255 255 255 / 0.55);
+    background: transparent;
+    color: #fff;
+  }
 }
 
 @media (max-width: 380px) {
@@ -423,6 +476,25 @@
   .mobileHeader,
   .mobileTitleWrap {
     display: none;
+  }
+
+  /**
+   * Header desktop fixe : réserve la hauteur dans le flux (alignée sur `calc(100vh - 6.3rem)`).
+   * `aria-hidden` augmente la spécificité pour garder `pointer-events: none` sous `.navShell > *`.
+   */
+  .desktopNavSpacer[aria-hidden='true'] {
+    display: block;
+    height: 6.3rem;
+    flex-shrink: 0;
+    pointer-events: none;
+  }
+
+  .desktopHeader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
   }
 }
 
@@ -456,7 +528,7 @@
 @media (max-width: 1024px) {
   .surfaceLight .mobileHeader {
     background: #fff;
-    box-shadow: 0 1px 0 rgb(0 0 0 / 0.06);
+    box-shadow: none;
   }
 
   .surfaceLight .menuBar {
@@ -465,5 +537,40 @@
 
   .surfaceLight .mobileHeaderBrand {
     color: #111;
+  }
+}
+
+/* Téléphone uniquement : barre type verre dépoli, marque + menu en noir. */
+@media (max-width: 767px) {
+  .mobileHeader,
+  .mobileHeaderOnLight,
+  .mobileHeaderOnDark,
+  .surfaceLight .mobileHeader {
+    /* Blanc plus couvrant qu’avant (0.82) pour limiter la lecture du contenu qui défile derrière. */
+    background: rgb(255 255 255 / 0.94);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: none;
+  }
+
+  .mobileHeader .menuBar {
+    background: #111;
+  }
+
+  .mobileHeaderBrand,
+  .mobileHeaderOnDark .mobileHeaderBrand,
+  .mobileHeaderOnLight .mobileHeaderBrand,
+  .surfaceLight .mobileHeaderBrand {
+    color: #111;
+  }
+
+  .mobileHeaderBrand .brandLogo {
+    filter: brightness(0);
+  }
+
+  .mobileHeaderOnDark .mobileHeaderCta {
+    border: 1px solid #111;
+    background: #111;
+    color: #fff;
   }
 }

@@ -86,6 +86,27 @@
   gap: clamp(1.65rem, 4vw, 2.6rem);
 }
 
+@media (max-width: 767px) {
+  /* Compense le gap flex + le margin-top du bouton : seule la zone texte → CTA se resserre. */
+  .body + .cta {
+    margin-top: clamp(-1.35rem, -3.8vw, -0.65rem);
+  }
+
+  /*
+   * Mode « marges » (.contentShellInset = 80 % de largeur) : le cadre média a déjà ~10 vw de chaque côté.
+   * Sans ajustement, .textPane réutilise le même padding-inline qu’en pleine largeur → texte trop resserré.
+   * On retire ces ~10 vw pour retrouver le même retrait depuis le bord de l’écran qu’en pleine largeur.
+   */
+  .contentShellInset .textPane {
+    padding-inline: max(
+        0.75rem,
+        calc(clamp(2rem, 7vw + 0.75rem, 6.5rem) - 10vw),
+        env(safe-area-inset-left, 0px)
+      )
+      max(0.75rem, calc(clamp(2rem, 7vw + 0.75rem, 6.5rem) - 10vw), env(safe-area-inset-right, 0px));
+  }
+}
+
 .heading {
   margin: 0;
   font-family: var(--font-playfair-display), Georgia, serif;

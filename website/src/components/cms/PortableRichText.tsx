@@ -3,6 +3,7 @@ import Link from 'next/link'
 import {PortableText, type PortableTextComponents} from '@portabletext/react'
 import type {PortableTextBlock} from '@portabletext/types'
 import {urlFor} from '@/lib/sanity'
+import './portableRichText.module.css'
 
 type PortableRichTextProps = {
   value: PortableTextBlock[]
@@ -42,6 +43,7 @@ const components: PortableTextComponents = {
     code: ({children}) => <code>{children}</code>,
     underline: ({children}) => <span style={{textDecoration: 'underline'}}>{children}</span>,
     'strike-through': ({children}) => <s>{children}</s>,
+    quoteHighlight: ({children}) => <span className="segnaQuoteHighlight">{children}</span>,
     link: ({value, children}) => {
       const href = typeof value?.href === 'string' ? value.href : ''
       if (!href) return <span>{children}</span>

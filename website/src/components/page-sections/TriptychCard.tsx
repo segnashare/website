@@ -76,8 +76,12 @@ function TriptychCardCycle({
   const [bgDisplay, setBgDisplay] = useState(() => normalizeStagedBg(states[0]?.backgroundColor))
   const [isNarrow, setIsNarrow] = useState(false)
   const prevIndexRef = useRef(0)
+  const indexRef = useRef(0)
+  const statesRef = useRef<TriptychCardCycleState[]>([])
   const reduce = useReducedMotion()
   const safeStates = states.length > 0 ? states : []
+  indexRef.current = index
+  statesRef.current = safeStates
   const state = safeStates[index] ?? safeStates[0]
   const tSec = Math.max(0.2, Math.min(2.5, transitionMs / 1000))
 
@@ -122,19 +126,59 @@ function TriptychCardCycle({
 
   useEffect(() => {
     if (reduce || safeStates.length < 2) return
-    const current = safeStates[index]
-    const ms = current?.durationMs ?? 5000
-    const id = window.setTimeout(() => {
-      setIndex((i) => (i + 1) % safeStates.length)
-    }, ms)
-    return () => window.clearTimeout(id)
+
+    let advanceId: number | undefined
+
+    const clearAdvance = () => {
+      if (advanceId != null) {
+        window.clearTimeout(advanceId)
+        advanceId = undefined
+      }
+    }
+
+    const armAdvance = () => {
+      clearAdvance()
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return
+      const list = statesRef.current
+      const current = list[indexRef.current]
+      const ms = current?.durationMs ?? 5000
+      advanceId = window.setTimeout(() => {
+        setIndex((i) => (i + 1) % statesRef.current.length)
+      }, ms)
+    }
+
+    armAdvance()
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') {
+        clearAdvance()
+        return
+      }
+      window.setTimeout(() => {
+        const list = statesRef.current
+        const idx = indexRef.current
+        const cur = list[idx]
+        if (cur) {
+          setBgDisplay(normalizeStagedBg(cur.backgroundColor))
+          prevIndexRef.current = idx
+        }
+      }, 0)
+      armAdvance()
+    }
+
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      clearAdvance()
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
   }, [index, reduce, safeStates.length, safeStates[index]?.durationMs])
 
   useEffect(() => {
-    const st = safeStates[index]
+    const list = statesRef.current
+    const st = list[index]
     if (!st) return
 
-    if (reduce || safeStates.length < 2) {
+    if (reduce || list.length < 2) {
       setBgDisplay(normalizeStagedBg(st.backgroundColor))
       prevIndexRef.current = index
       return
@@ -143,14 +187,25 @@ function TriptychCardCycle({
     const oldIdx = prevIndexRef.current
     if (oldIdx === index) return
 
-    const prevState = safeStates[oldIdx]
+    const prevState = list[oldIdx]
     const delaySec = triptychSwapMidpointDelaySec({transitionMs, prevState, nextState: st})
     const nextBg = normalizeStagedBg(st.backgroundColor)
+    const targetIndex = index
     prevIndexRef.current = index
 
-    const id = window.setTimeout(() => setBgDisplay(nextBg), delaySec * 1000)
+    const id = window.setTimeout(() => {
+      if (indexRef.current !== targetIndex) {
+        const cur = statesRef.current[indexRef.current]
+        if (cur) {
+          setBgDisplay(normalizeStagedBg(cur.backgroundColor))
+          prevIndexRef.current = indexRef.current
+        }
+        return
+      }
+      setBgDisplay(nextBg)
+    }, delaySec * 1000)
     return () => window.clearTimeout(id)
-  }, [index, reduce, safeStates, transitionMs])
+  }, [index, reduce, transitionMs, safeStates.length])
 
   if (!state) return null
 

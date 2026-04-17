@@ -114,39 +114,41 @@ export function SectionCatalogPuzzle({section}: Props) {
         </header>
       ) : null}
 
-      <div className={styles.grid}>
-        <CatalogPuzzleCard
-          tile={section.leftTop}
-          className={styles.posLeftTop}
-          sizes={catalogPuzzleImageSizes}
-        />
-        <CatalogPuzzleCard
-          tile={section.leftMiddle}
-          className={styles.posLeftMiddle}
-          sizes={catalogPuzzleImageSizes}
-        />
-        <div className={styles.leftSplit}>
+      <div className={styles.scrollStrip}>
+        <div className={styles.grid}>
           <CatalogPuzzleCard
-            tile={section.leftBottomLeft}
-            className={styles.posLeftBottomLeft}
-            sizes={catalogPuzzleQuarterImageSizes}
+            tile={section.leftTop}
+            className={styles.posLeftTop}
+            sizes={catalogPuzzleImageSizes}
           />
           <CatalogPuzzleCard
-            tile={section.leftBottomRight}
-            className={styles.posLeftBottomRight}
-            sizes={catalogPuzzleQuarterImageSizes}
+            tile={section.leftMiddle}
+            className={styles.posLeftMiddle}
+            sizes={catalogPuzzleImageSizes}
+          />
+          <div className={styles.leftSplit}>
+            <CatalogPuzzleCard
+              tile={section.leftBottomLeft}
+              className={styles.posLeftBottomLeft}
+              sizes={catalogPuzzleQuarterImageSizes}
+            />
+            <CatalogPuzzleCard
+              tile={section.leftBottomRight}
+              className={styles.posLeftBottomRight}
+              sizes={catalogPuzzleQuarterImageSizes}
+            />
+          </div>
+          <CatalogPuzzleCard
+            tile={section.rightTall}
+            className={styles.posRightTall}
+            sizes={catalogPuzzleTallImageSizes}
+          />
+          <CatalogPuzzleCard
+            tile={section.rightBottom}
+            className={styles.posRightBottom}
+            sizes={catalogPuzzleImageSizes}
           />
         </div>
-        <CatalogPuzzleCard
-          tile={section.rightTall}
-          className={styles.posRightTall}
-          sizes={catalogPuzzleTallImageSizes}
-        />
-        <CatalogPuzzleCard
-          tile={section.rightBottom}
-          className={styles.posRightBottom}
-          sizes={catalogPuzzleImageSizes}
-        />
       </div>
     </section>
   )

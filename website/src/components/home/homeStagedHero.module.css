@@ -17,6 +17,23 @@
   pointer-events: none;
 }
 
+/* Calque images + voile : plein écran desktop ; sous le texte sur mobile. */
+.stagedHeroBackdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.stagedHeroBackdropInset {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.stagedHeroCycleMount {
+  z-index: 0;
+}
+
 .stagedRoot {
   position: absolute;
   inset: 0;
@@ -141,8 +158,8 @@
   align-items: center;
   gap: 0.65rem;
   width: 100%;
-  max-width: 30rem;
-padding: 0.8rem 0.48rem 0.8rem 1.15rem;
+  max-width: 38rem;
+  padding: 0.72rem 0.42rem 0.72rem 1.15rem;
   border-radius: 999px;
   box-sizing: border-box;
   background: rgb(15 17 22 / 0.42);
@@ -164,26 +181,75 @@ padding: 0.8rem 0.48rem 0.8rem 1.15rem;
   color: rgb(255 255 255 / 0.9);
 }
 
+/* Desktop (≥1025px avec hero « image ») : pastille blanche, texte + icône foncés (lisibles). */
 .searchBubble {
   flex-shrink: 0;
   display: inline-flex;
+  flex-direction: row;
   align-items: center;
-  gap: 0.42rem;
-  padding: 0.52rem 1rem 0.52rem 0.82rem;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.55rem;
+  padding: 0.42rem 1.05rem 0.42rem 0.78rem;
   border-radius: 999px;
   background: #fff;
   color: #111;
-  font-size: 0.88rem;
-  font-weight: 600;
-  border: none;
+  border: 1px solid rgb(255 255 255 / 0.55);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
   cursor: pointer;
   font-family: inherit;
-  line-height: 1;
+  font-size: clamp(0.86rem, 0.95vw, 0.96rem);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
 }
 
 .searchBubbleIcon {
   display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
   color: #111;
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.searchBubbleIcon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.searchBubbleLabel {
+  white-space: nowrap;
+}
+
+@media (max-width: 1024px) {
+  .stagedHeroContentLayer .searchBubble {
+    width: 2.68rem;
+    min-width: 2.68rem;
+    height: 2.68rem;
+    min-height: 2.68rem;
+    padding: 0;
+    gap: 0;
+    border-radius: 50%;
+    font-size: 0;
+    letter-spacing: 0;
+    background: #111;
+    color: #fff;
+    border: none;
+    box-shadow: none;
+  }
+
+  .stagedHeroContentLayer .searchBubbleLabel {
+    display: none;
+  }
+
+  .stagedHeroContentLayer .searchBubbleIcon {
+    width: 1.15rem;
+    height: 1.15rem;
+    color: #fff;
+  }
 }
 
 .infoRow {
@@ -229,17 +295,166 @@ padding: 0.8rem 0.48rem 0.8rem 1.15rem;
 }
 
 @media (max-width: 1024px) {
+  .stagedHeroRoot {
+    display: flex;
+    flex-direction: column;
+    /* Pas de min-height plein écran : 100dvh laissait une grande zone blanche sous le visu avant les sections. */
+    background: #fff;
+    /* Air modéré entre le bas du visu et la 1re section (citation), sans retrouver l’excès d’avant. */
+    margin-bottom: clamp(1.2rem, 4vw, 2.1rem);
+  }
+
+  .stagedHeroRoot .stagedHeroContentLayer {
+    order: 1;
+    align-self: stretch;
+    /* Ne pas étirer sur la hauteur d’écran : évite une grande zone blanche au-dessus / sous le texte. */
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-height: 0;
+    width: 100%;
+    /* Même gouttière horizontale que `.shell` / citation mobile (page-sections). */
+    padding-top: 5.35rem;
+    padding-bottom: clamp(0.4rem, 1.1vw, 0.55rem);
+    padding-inline: clamp(1rem, 4vw, 2.75rem);
+    box-sizing: border-box;
+    background: #fff;
+    color: #111;
+  }
+
+  @media (max-width: 767px) {
+    .stagedHeroRoot .stagedHeroContentLayer {
+      padding-inline: max(clamp(1rem, 4vw, 2.75rem), env(safe-area-inset-left, 0px))
+        max(clamp(1rem, 4vw, 2.75rem), env(safe-area-inset-right, 0px));
+    }
+  }
+
+  .stagedHeroBackdrop {
+    order: 2;
+    position: relative;
+    inset: auto;
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 auto;
+    align-self: stretch;
+    width: 100%;
+    max-width: none;
+    min-height: min(34dvh, 19rem);
+    max-height: 36dvh;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: hidden;
+  }
+
+  .stagedHeroBackdropInset {
+    position: relative;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    width: 100%;
+    border-radius: 0;
+    overflow: hidden;
+  }
+
+  .stagedHeroCycleMount {
+    border-radius: inherit;
+  }
+
+  .stagedHeroBackdrop .overlayStaged {
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      transparent 58%,
+      rgb(0 0 0 / 0.14) 100%
+    );
+  }
+
+  /* Même logique bureau : slots en absolute + groupe animé (Framer translateY). */
+
+  .stagedHeroLower {
+    min-height: 0;
+    align-items: stretch;
+    justify-content: flex-end;
+    width: 100%;
+    /* Air sous le header fixe, avant le H1 (réf. type HomeExchange). */
+    padding-top: clamp(2.5rem, 3.4vw, 3.6rem);
+    padding-inline: 0;
+    /* Rapproche le bandeau image / suite de page du bloc infos. */
+    padding-bottom: clamp(2.4rem, 1.5vw, 0.65rem);
+  }
+
   .stagedHeroColumn {
     width: 100%;
     max-width: none;
+    margin-inline: 0;
+    align-items: flex-start;
+    gap: 2.35rem;
   }
 
   .stagedHeroTitleWrap {
     width: 100%;
     max-width: none;
+    text-align: left;
   }
 
   .stagedHeroTitle {
-    font-size: clamp(1.85rem, 6.5vw, 2.65rem);
+    font-size: clamp(2.2rem, 7.2vw, 3.05rem);
+    color: #111;
+    text-wrap: balance;
+  }
+
+  .stagedHeroColumn .stagedHeroMeta {
+    /* Espace modéré recherche → 1re ligne d’info (~réf. type HomeExchange). */
+    gap: clamp(2.35rem, 2.8vw, 1.05rem);
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .stagedHeroContentLayer .searchBar {
+    width: 100%;
+    max-width: min(27.5rem, 94vw);
+    align-self: flex-start;
+    background: #fff;
+    border-color: rgb(0 0 0 / 0.1);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.06);
+    padding: 0.28rem 0.4rem 0.28rem 1.05rem;
+    gap: 0.5rem;
+  }
+
+  .stagedHeroContentLayer .searchInput {
+    color: #111;
+  }
+
+  .stagedHeroContentLayer .searchInput::placeholder {
+    color: rgb(15 17 22 / 0.45);
+  }
+
+  .stagedHeroContentLayer .infoRow {
+    flex-direction: column;
+    align-items: flex-start;
+    color: rgb(15 17 22 / 0.72);
+    row-gap: 0.22rem;
+    column-gap: 0;
+    justify-content: flex-start;
+  }
+
+  .stagedHeroContentLayer .infoItem {
+    padding: 0.12rem 0;
+  }
+
+  .stagedHeroContentLayer .infoItem:not(:last-child)::after {
+    display: none;
+  }
+
+  /* Icône Segna (première ligne d’info) en noir ; laisser les suivantes inchangées. */
+  .stagedHeroContentLayer .infoItem:first-child .infoIconImg {
+    filter: brightness(0);
   }
 }

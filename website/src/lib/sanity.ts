@@ -43,19 +43,18 @@ export const stagedHeroSliceImageSizes = '(max-width: 1024px) 96vw, min(40vw, 52
 export const triptychCardImageSizes = '(max-width: 900px) 42vw, 30vw'
 
 /**
- * `sizes` pour la grille catalogue : valeurs généreuses (Retina) pour éviter
- * que Next ne choisisse une variante trop petite — les cadres sont larges (~40–45 % du viewport).
+ * `sizes` pour la grille catalogue : desktop ~colonnes ; mobile = slides carrées scroll (~78vw).
  */
 export const catalogPuzzleImageSizes =
-  '(max-width: 768px) 96vw, (max-width: 1200px) 55vw, min(45vw, min(100vw, 2000px))'
+  '(max-width: 768px) 82vw, (max-width: 1200px) 55vw, min(45vw, min(100vw, 2000px))'
 
-/** Demi-colonne gauche (deux cartes du bas) : ~½ de la colonne ≈ 20–22 % du viewport. */
+/** Demi-colonne gauche (desktop) ; mobile = même largeur de slide que les autres tuiles. */
 export const catalogPuzzleQuarterImageSizes =
-  '(max-width: 768px) 48vw, min(28vw, min(100vw, 1200px))'
+  '(max-width: 768px) 82vw, min(28vw, min(100vw, 1200px))'
 
-/** Colonne droite, carte très haute : même largeur affichée que la demi-grille, hauteur plus grande (même `sizes` = largeur). */
+/** Colonne droite carte haute (desktop) ; mobile = slide carrée comme le reste. */
 export const catalogPuzzleTallImageSizes =
-  '(max-width: 768px) 96vw, (max-width: 1200px) 55vw, min(45vw, min(100vw, 2000px))'
+  '(max-width: 768px) 82vw, (max-width: 1200px) 55vw, min(45vw, min(100vw, 2000px))'
 
 /** Cartes du bandeau horizontal : largeur d’affichage variable selon le format. */
 export const horizontalScrollCardImageSizes =

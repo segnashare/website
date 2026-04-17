@@ -34,7 +34,7 @@ export default async function HomePage() {
       ) : (
         <HomeHero homePage={homePage} backgroundImageUrl={backgroundImageUrl} />
       )}
-      <PageSections sections={homePage.sections} />
+      <PageSections sections={homePage.sections} afterFullBleedHero />
     </main>
   )
 }
