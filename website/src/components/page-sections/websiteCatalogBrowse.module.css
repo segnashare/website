@@ -1,0 +1,298 @@
+/* Layout type vitrine : marges filtres + grille centrale (desktop). */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 210px) minmax(0, 1fr) minmax(0, 200px);
+  gap: clamp(1.25rem, 3vw, 2.75rem);
+  align-items: start;
+  margin-top: clamp(1.25rem, 2.5vw, 2rem);
+}
+
+.rail {
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.railTitle {
+  margin: 0 0 0.65rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #14110f;
+}
+
+.railBlock {
+  margin-bottom: 1.75rem;
+}
+
+.railBlock:last-child {
+  margin-bottom: 0;
+}
+
+.railList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.railItem {
+  margin: 0 0 0.35rem;
+}
+
+.railLabel {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  cursor: pointer;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: #2a2826;
+}
+
+.railLabel input {
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+}
+
+.railLabel:hover {
+  color: #000;
+}
+
+.center {
+  min-width: 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+  gap: clamp(0.65rem, 1.5vw, 1.1rem);
+}
+
+.card {
+  position: relative;
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: #fff;
+}
+
+.cardMedia {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  border-radius: 2px;
+  overflow: hidden;
+  background: #ece8e2;
+}
+
+.cardImage {
+  object-fit: cover;
+}
+
+.cardBody {
+  padding: 0.65rem 0.15rem 0.35rem;
+  text-align: left;
+}
+
+.cardBrand {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #14110f;
+  margin-bottom: 0.2rem;
+}
+
+.cardMetaLine {
+  display: block;
+  font-size: 0.76rem;
+  line-height: 1.3;
+  color: #6b6560;
+  margin-bottom: 0.2rem;
+}
+
+.cardTitle {
+  display: block;
+  font-size: 0.84rem;
+  line-height: 1.35;
+  color: #2a2826;
+  margin-bottom: 0.25rem;
+}
+
+.cardPrice {
+  font-size: 0.82rem;
+  color: #14110f;
+}
+
+.countLine {
+  margin: 0 0 1rem;
+  font-size: 0.82rem;
+  color: #5c5854;
+}
+
+/* Mobile : barre d’actions + feuilles (proche boutique app). */
+.mobileBar {
+  display: none;
+  position: sticky;
+  bottom: 0;
+  z-index: 30;
+  gap: 0.5rem;
+  padding: 0.65rem 0 max(0.65rem, env(safe-area-inset-bottom));
+  margin-top: 1rem;
+  background: linear-gradient(to top, #fff 70%, transparent);
+}
+
+.mobileBtn {
+  flex: 1;
+  border: 1px solid #14110f;
+  background: #14110f;
+  color: #faf8f5;
+  border-radius: 999px;
+  padding: 0.75rem 0.5rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mobileBtnSecondary {
+  background: #fff;
+  color: #14110f;
+}
+
+.sheetBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.sheet {
+  max-height: min(88dvh, 640px);
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 1.25rem 1.25rem 0 0;
+  padding: 1rem 1rem max(1.25rem, env(safe-area-inset-bottom));
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.18);
+}
+
+.sheetTitle {
+  margin: 0 0 0.75rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid #ece8e2;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #14110f;
+}
+
+.sheetBack {
+  display: block;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #5c5854;
+  cursor: pointer;
+  text-align: left;
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.75rem;
+}
+
+.chip {
+  border-radius: 999px;
+  border: 1px solid #d4d0ca;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.82rem;
+  background: #fff;
+  color: #14110f;
+  cursor: pointer;
+}
+
+.chipActive {
+  background: #14110f;
+  border-color: #14110f;
+  color: #faf8f5;
+}
+
+.sheetPrimary {
+  width: 100%;
+  margin-top: 1rem;
+  border: 0;
+  border-radius: 1rem;
+  padding: 0.95rem;
+  font-size: 1rem;
+  font-weight: 700;
+  background: #14110f;
+  color: #faf8f5;
+  cursor: pointer;
+}
+
+.sheetGhost {
+  width: 100%;
+  margin-top: 0.5rem;
+  border: 0;
+  background: none;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #5c5854;
+  cursor: pointer;
+}
+
+.menuRow {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid #f0ebe4;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #14110f;
+  background: none;
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.menuRowChev {
+  color: #9c9690;
+  font-size: 1.1rem;
+}
+
+@media (max-width: 1023px) {
+  .layout {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .rail {
+    display: none;
+  }
+
+  .mobileBar {
+    display: flex;
+  }
+}
+
+@media (min-width: 1024px) {
+  .sheetBackdrop {
+    display: none !important;
+    pointer-events: none;
+  }
+}

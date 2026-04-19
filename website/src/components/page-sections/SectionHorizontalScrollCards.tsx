@@ -98,7 +98,13 @@ export function SectionHorizontalScrollCards({section}: Props) {
       data-motion={section.motionPreset ?? 'none'}
     >
       <div className={styles.inner}>
-        <CatalogPuzzleIntroFit heading={heading} lead={section.lead?.trim()} introTone={introTone} />
+        <CatalogPuzzleIntroFit
+          heading={heading}
+          lead={section.lead?.trim()}
+          introCtaLabel={section.introCtaLabel}
+          introCtaHref={section.introCtaHref}
+          introTone={introTone}
+        />
       </div>
 
       <div className={styles.scrollBlock}>

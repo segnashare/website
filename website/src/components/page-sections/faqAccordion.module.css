@@ -1,0 +1,68 @@
+.root {
+  width: 100%;
+  margin-top: clamp(1.65rem, 3.8vw, 2.5rem);
+  box-sizing: border-box;
+}
+
+.item {
+  border-bottom: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+}
+
+.item:first-of-type {
+  border-top: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+}
+
+.summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: clamp(0.85rem, 2vw, 1.05rem) 0;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 600;
+  font-size: clamp(0.95rem, 1.15vw, 1.08rem);
+  line-height: 1.35;
+  text-align: left;
+}
+
+.summary::-webkit-details-marker {
+  display: none;
+}
+
+.question {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.chevron {
+  flex-shrink: 0;
+  width: 0.65rem;
+  height: 0.65rem;
+  margin-top: 0.12rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform 0.2s ease;
+  opacity: 0.85;
+}
+
+.item[open] .chevron {
+  transform: rotate(-135deg);
+  margin-top: 0.35rem;
+}
+
+.answer {
+  padding: 0 0 clamp(1rem, 2.2vw, 1.35rem);
+}
+
+.answerRich {
+  font-size: clamp(0.92rem, 1.05vw, 1.02rem);
+  line-height: 1.65;
+  font-weight: 400;
+  opacity: 0.96;
+}
+
+.answerRich :global(p:last-child) {
+  margin-bottom: 0;
+}

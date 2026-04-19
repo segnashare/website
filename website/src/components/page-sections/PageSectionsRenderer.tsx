@@ -9,6 +9,7 @@ import {SectionSplitFeature} from './SectionSplitFeature'
 import {SectionSplitMedia} from './SectionSplitMedia'
 import {SectionStatementBand} from './SectionStatementBand'
 import {SectionTriptych} from './SectionTriptych'
+import {SectionWebsiteDbCatalog} from './SectionWebsiteDbCatalog'
 import styles from './page-sections.module.css'
 
 export type PageSectionsRendererProps = {
@@ -50,6 +51,12 @@ function isHorizontalScrollCardsSection(
   section: PageSection,
 ): section is Extract<PageSection, {_type: 'horizontalScrollCardsSection'}> {
   return section._type === 'horizontalScrollCardsSection'
+}
+
+function isWebsiteDbCatalogSection(
+  section: PageSection,
+): section is Extract<PageSection, {_type: 'websiteDbCatalogSection'}> {
+  return section._type === 'websiteDbCatalogSection'
 }
 
 function isSplitFeatureSection(
@@ -110,6 +117,14 @@ export function PageSectionsRenderer({
 
         if (isHorizontalScrollCardsSection(section)) {
           return <SectionHorizontalScrollCards key={key} section={section} />
+        }
+
+        if (isWebsiteDbCatalogSection(section)) {
+          return (
+            <Suspense key={key} fallback={<p className={styles.asyncFallback}>Chargement du catalogue…</p>}>
+              <SectionWebsiteDbCatalog section={section} />
+            </Suspense>
+          )
         }
 
         if (isSplitFeatureSection(section)) {

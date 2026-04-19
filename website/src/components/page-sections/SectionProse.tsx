@@ -8,9 +8,11 @@ type Props = {
 
 export function SectionProse({section}: Props) {
   return (
-    <section className={styles.proseSection} data-motion={section.motionPreset ?? 'none'}>
-      {section.heading?.trim() ? <h2 className={styles.proseHeading}>{section.heading.trim()}</h2> : null}
-      <PortableRichText value={section.body} className={styles.proseBody} />
+    <section className={styles.proseSectionBleed} data-motion={section.motionPreset ?? 'none'}>
+      <div className={styles.proseInner}>
+        {section.heading?.trim() ? <h2 className={styles.proseHeading}>{section.heading.trim()}</h2> : null}
+        <PortableRichText value={section.body} className={styles.proseBody} />
+      </div>
     </section>
   )
 }

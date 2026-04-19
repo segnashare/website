@@ -1,3 +1,4 @@
+import type {Metadata} from 'next'
 import {PageSections} from '@/components/cms/PageSections'
 import {getHomePageData, urlFor} from '@/lib/sanity'
 import {HomeHero} from '../components/home/HomeHero'
@@ -5,6 +6,27 @@ import {HomeStagedHero} from '../components/home/HomeStagedHero'
 import styles from '@/components/home/homeHero.module.css'
 
 export const revalidate = 30
+
+/** SEO accueil : champs `seo` du document « Page d’accueil » dans Sanity, sinon repli sur le sous-titre hero. */
+export async function generateMetadata(): Promise<Metadata> {
+  const homePage = await getHomePageData()
+  if (!homePage) {
+    return {title: 'Segna'}
+  }
+  const titleBase = homePage.seo?.metaTitle?.trim() || homePage.heroTitle
+  const description =
+    homePage.seo?.metaDescription?.trim() || homePage.heroSubtitle?.trim() || undefined
+  const share = homePage.seo?.shareImage
+  const ogImage =
+    share?.asset && (share.asset._ref || share.asset.url)
+      ? urlFor(share).width(1200).height(630).fit('crop').url()
+      : undefined
+  return {
+    title: `${titleBase} | Segna`,
+    description,
+    openGraph: ogImage ? {images: [{url: ogImage}]} : undefined,
+  }
+}
 
 export default async function HomePage() {
   const homePage = await getHomePageData()

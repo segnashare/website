@@ -207,7 +207,13 @@ export function HomeHero({homePage, backgroundImageUrl}: HomeHeroProps) {
               </span>
             </button>
 
-            <div className={`${styles.brandWrap} ${styles.mobileHeaderBrand}`}>{brandMark}</div>
+            <Link
+              href="/"
+              className={`${styles.mobileHeaderLogoLink} ${styles.mobileHeaderBrand}`}
+              aria-label="Accueil — Segna"
+            >
+              <span className={styles.brandWrap}>{brandMark}</span>
+            </Link>
 
             <CtaHrefLink href={primaryHref} className={styles.mobileHeaderCta}>
               {primaryLabel}

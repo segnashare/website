@@ -1,4 +1,4 @@
-import {sanityClient} from '@/lib/sanity'
+import {helpFaqItemResolvedGroq, sanityClient, type HelpFaqItem} from '@/lib/sanity'
 
 export type HelpCenterSettingsData = {
   landingHeroTitle?: string
@@ -68,6 +68,7 @@ export type HelpArticlePageData = {
   isFeatured?: boolean
   lastUpdated?: string
   body?: unknown[]
+  faqRefs?: HelpFaqItem[] | null
   category?: {
     _id: string
     title?: string
@@ -203,6 +204,7 @@ export async function getHelpRootArticleBySlugs(
       isFeatured,
       lastUpdated,
       body,
+      faqRefs[]->${helpFaqItemResolvedGroq},
       category->{
         _id,
         title,
@@ -236,6 +238,7 @@ export async function getHelpNestedArticleBySlugs(
       isFeatured,
       lastUpdated,
       body,
+      faqRefs[]->${helpFaqItemResolvedGroq},
       category->{
         _id,
         title,

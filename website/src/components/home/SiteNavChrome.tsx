@@ -5,6 +5,7 @@ import Link from 'next/link'
 import {motion, useReducedMotion} from 'framer-motion'
 import type {WebsiteHeaderNavData} from '@/lib/sanity'
 import {CtaHrefLink} from './heroShared'
+import {useNavScrollElevated} from './useNavScrollElevated'
 import styles from './homeHero.module.css'
 
 type Props = {
@@ -62,16 +63,20 @@ export function SiteNavChrome({header, mobileNavId, mobileSurface = 'transparent
   const showNavDivider =
     navItems.length > 0 && (showSecondaryCta || Boolean(header?.primaryCta?.label?.trim()))
 
+  const navElevated = useNavScrollElevated()
+  const navRootClass = `${styles.navChromeRoot} ${navElevated ? styles.navChromeRootScrolled : ''}`
+
   return (
-    <>
-      <div className={styles.desktopNavSpacer} aria-hidden />
+    <div className={navRootClass}>
+      <div className={styles.desktopNavSpacer} aria-hidden="true" />
       <motion.header
         className={styles.desktopHeader}
         initial="hidden"
         animate={contentAnimationState}
         variants={{
-          hidden: {opacity: 0, y: -40},
-          visible: {opacity: 1, y: 0},
+          /* Pas de `y` / `transform` ici : sinon `position: fixed` du header ne reste pas accroché au viewport (cf. HomeHero). */
+          hidden: {opacity: 0},
+          visible: {opacity: 1},
         }}
         transition={{duration: shouldReduceMotion ? 0 : 0.65, ease: [0.16, 1, 0.3, 1]}}
       >
@@ -109,8 +114,8 @@ export function SiteNavChrome({header, mobileNavId, mobileSurface = 'transparent
         initial="hidden"
         animate={contentAnimationState}
         variants={{
-          hidden: {opacity: 0, y: -40},
-          visible: {opacity: 1, y: 0},
+          hidden: {opacity: 0},
+          visible: {opacity: 1},
         }}
         transition={{duration: shouldReduceMotion ? 0 : 0.65, ease: [0.16, 1, 0.3, 1]}}
       >
@@ -128,7 +133,13 @@ export function SiteNavChrome({header, mobileNavId, mobileSurface = 'transparent
           </span>
         </button>
 
-        <div className={`${styles.brandWrap} ${styles.mobileHeaderBrand}`}>{brandMark}</div>
+        <Link
+          href="/"
+          className={`${styles.mobileHeaderLogoLink} ${styles.mobileHeaderBrand}`}
+          aria-label="Accueil — Segna"
+        >
+          <span className={styles.brandWrap}>{brandMark}</span>
+        </Link>
 
         <CtaHrefLink href={primaryHref} className={styles.mobileHeaderCta}>
           {primaryLabel}
@@ -161,6 +172,6 @@ export function SiteNavChrome({header, mobileNavId, mobileSurface = 'transparent
           </div>
         ) : null}
       </nav>
-    </>
+    </div>
   )
 }

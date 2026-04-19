@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import {HelpBreadcrumbs} from '@/components/help/HelpBreadcrumbs'
 import {HelpPortableText} from '@/components/help/HelpPortableText'
+import {FaqAccordion} from '@/components/page-sections/FaqAccordion'
 import styles from '@/components/help/help.module.css'
 import type {HelpArticlePageData} from '@/lib/sanity-help'
 
@@ -29,6 +30,7 @@ export function HelpArticleContent({article, backHref, backLabel, breadcrumbItem
         <h1 className={styles.articlePageTitle}>{article.title}</h1>
         {updated ? <p className={styles.lastUpdated}>Dernière mise à jour : {updated}</p> : null}
         <HelpPortableText value={article.body as unknown[] | undefined} />
+        <FaqAccordion items={article.faqRefs} />
       </article>
 
       <p style={{marginTop: '2.5rem', fontSize: '0.9rem'}}>

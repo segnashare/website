@@ -6,6 +6,7 @@ import {useMemo, useState} from 'react'
 import type {PortableTextBlock} from '@portabletext/types'
 import {PortableRichText} from '@/components/cms/PortableRichText'
 import type {SplitPane} from '@/lib/sanity'
+import {FaqAccordion} from '@/components/page-sections/FaqAccordion'
 import styles from './splitFeatureSection.module.css'
 
 type Props = {
@@ -126,6 +127,8 @@ export function SplitPaneText({pane, foregroundColor}: Props) {
             </a>
           )
         ) : null}
+
+        <FaqAccordion items={pane.faqRefs} />
       </div>
     </div>
   )

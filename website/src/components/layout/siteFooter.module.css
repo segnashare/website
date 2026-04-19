@@ -1,0 +1,268 @@
+.root {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: auto;
+  padding: clamp(2.5rem, 5vw, 4rem) clamp(1rem, 4vw, 2.75rem) clamp(2rem, 4vw, 3rem);
+}
+
+/* Même principe que les sections catalogue / split : 80 % du conteneur, centré */
+.inner {
+  width: 80%;
+  max-width: 100%;
+  margin-inline: auto;
+  box-sizing: border-box;
+}
+
+.main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: clamp(1.5rem, 3vw, 2.75rem) clamp(1.25rem, 2.5vw, 2.25rem);
+}
+
+.brandCol {
+  flex: 0 1 min(220px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: clamp(0.65rem, 1.5vw, 0.95rem);
+}
+
+.logoLink {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+}
+
+.logoImg {
+  display: block;
+  height: clamp(1.65rem, 2.4vw, 2.1rem);
+  width: auto;
+  max-width: min(200px, 72vw);
+  object-fit: contain;
+}
+
+.logoText {
+  font-family: var(--font-playfair-display), Georgia, serif;
+  font-weight: 800;
+  font-size: clamp(1.85rem, 2.8vw, 2.35rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.copyright {
+  margin: 0;
+  max-width: min(28rem, 100%);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-size: clamp(0.75rem, 1.05vw, 0.82rem);
+  line-height: 1.45;
+  font-weight: 500;
+  color: color-mix(in srgb, currentColor 58%, transparent);
+}
+
+.socialRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: clamp(0.85rem, 2.2vw, 1.25rem);
+  margin-top: 0.15rem;
+}
+
+.socialIconLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 2px;
+  opacity: 0.92;
+  transition: opacity 0.2s ease;
+}
+
+.socialIconLink:hover,
+.socialIconLink:focus-visible {
+  opacity: 1;
+}
+
+.socialIconLink:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+.socialIconImg {
+  display: block;
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.columns {
+  --footer-cols: 1;
+  flex: 1 1 min(0, 100%);
+  display: grid;
+  min-width: 0;
+  gap: clamp(1.25rem, 2.5vw, 2rem) clamp(1rem, 2vw, 1.65rem);
+}
+
+/* Bureau : une seule rangée, autant de colonnes que de blocs Sanity (ex. 5) */
+@media (min-width: 992px) {
+  .main {
+    flex-wrap: nowrap;
+  }
+
+  .brandCol {
+    flex: 0 0 auto;
+  }
+
+  .columns {
+    grid-template-columns: repeat(var(--footer-cols, 1), minmax(0, 1fr));
+  }
+}
+
+/* Tablette : colonnes qui se réorganisent si besoin */
+@media (max-width: 991px) {
+  .columns {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  }
+}
+
+.column {
+  min-width: 0;
+}
+
+.columnTitle {
+  margin: 0 0 1rem;
+  font-size: clamp(0.88rem, 1.35vw, 1.08rem);
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  line-height: 1.35;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.linkList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.link {
+  font-size: clamp(0.88rem, 1vw, 1.02rem);
+  font-weight: 500;
+  line-height: 1.35;
+  color: inherit;
+  width: fit-content;
+  max-width: 100%;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  text-decoration-line: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition:
+    text-decoration-color 0.2s ease,
+    text-underline-offset 0.2s ease,
+    color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.link:hover,
+.link:focus-visible {
+  text-decoration-color: color-mix(in srgb, currentColor 88%, transparent);
+  text-underline-offset: 0.32em;
+  opacity: 1;
+}
+
+.link:focus-visible {
+  outline: 2px solid color-mix(in srgb, currentColor 45%, transparent);
+  outline-offset: 3px;
+}
+
+.legalBar {
+  margin-top: clamp(2rem, 4vw, 2.75rem);
+  padding-top: clamp(1rem, 2.2vw, 1.35rem);
+  border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  text-align: center;
+}
+
+.legalList {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  column-gap: 0.65rem;
+  row-gap: 0.45rem;
+  width: 100%;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.legalItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.legalItem:not(:last-child)::after {
+  content: '·';
+  font-weight: 600;
+  opacity: 0.38;
+  pointer-events: none;
+}
+
+.legalLink {
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-size: clamp(0.72rem, 1vw, 0.8rem);
+  font-weight: 500;
+  color: color-mix(in srgb, currentColor 72%, transparent);
+  text-decoration-line: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition:
+    text-decoration-color 0.2s ease,
+    text-underline-offset 0.2s ease,
+    color 0.2s ease;
+}
+
+.legalLink:hover,
+.legalLink:focus-visible {
+  color: currentColor;
+  text-decoration-color: color-mix(in srgb, currentColor 70%, transparent);
+  text-underline-offset: 0.3em;
+}
+
+/* Téléphone : remonter le bloc marque / copyright / réseaux ; aérer les colonnes de liens. */
+@media (max-width: 767px) {
+  .root {
+    padding: clamp(1rem, 3.6vw, 1.45rem) clamp(1rem, 4vw, 2.75rem) clamp(2rem, 4vw, 3rem);
+  }
+
+  .main {
+    flex-direction: column;
+    align-items: stretch;
+    gap: clamp(3.65rem, 4.5vw, 2.15rem);
+  }
+
+  .columns {
+    grid-template-columns: 1fr;
+    row-gap: clamp(2.2rem, 6.5vw, 3.1rem);
+    column-gap: 0;
+  }
+
+  .columnTitle {
+    margin-bottom: 1.2rem;
+  }
+
+  .linkList {
+    gap: 0.95rem;
+  }
+}

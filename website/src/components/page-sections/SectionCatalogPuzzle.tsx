@@ -93,7 +93,11 @@ export function SectionCatalogPuzzle({section}: Props) {
     section.rightBottom,
   ]
 
-  const hasIntro = Boolean(section.heading?.trim() || section.lead?.trim())
+  const hasIntro = Boolean(
+    section.heading?.trim() ||
+      section.lead?.trim() ||
+      (section.introCtaLabel?.trim() && section.introCtaHref?.trim()),
+  )
   if (!hasIntro && !tiles.some(tileHasContent)) {
     return null
   }
@@ -110,7 +114,12 @@ export function SectionCatalogPuzzle({section}: Props) {
     >
       {hasIntro ? (
         <header>
-          <CatalogPuzzleIntroFit heading={section.heading?.trim()} lead={section.lead?.trim()} />
+          <CatalogPuzzleIntroFit
+            heading={section.heading?.trim()}
+            lead={section.lead?.trim()}
+            introCtaLabel={section.introCtaLabel}
+            introCtaHref={section.introCtaHref}
+          />
         </header>
       ) : null}
 

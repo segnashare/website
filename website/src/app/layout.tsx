@@ -1,5 +1,7 @@
 import type {Metadata} from 'next'
 import {Playfair_Display} from 'next/font/google'
+import {SiteFooter} from '@/components/layout/SiteFooter'
+import {getWebsiteFooter} from '@/lib/sanity'
 import './globals.css'
 
 const playfairDisplay = Playfair_Display({
@@ -18,10 +20,17 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({children}: Readonly<{children: React.ReactNode}>) {
+export const revalidate = 60
+
+export default async function RootLayout({children}: Readonly<{children: React.ReactNode}>) {
+  const footer = await getWebsiteFooter()
+
   return (
     <html lang="fr" className={playfairDisplay.variable}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <SiteFooter data={footer} />
+      </body>
     </html>
   )
 }

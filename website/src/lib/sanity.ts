@@ -105,13 +105,45 @@ export type NavItem = {
 
 export type MotionPreset = 'none' | 'fade-up' | 'stagger'
 
+/** Entrée FAQ (document `helpFaqItem`), après déréférencement GROQ. */
+export type HelpFaqItem = {
+  _id: string
+  question: string
+  answer?: PortableTextBlock[]
+}
+
+export type SectionBlockDualImageFormat = 'square' | 'landscape' | 'portrait'
+
+export type SectionBlockDualRow = {
+  _key: string
+  /** Image à gauche (défaut) ou à droite du texte. */
+  mediaPosition?: 'left' | 'right'
+  /** Cadre visuel de l’image (défaut : paysage). */
+  imageFormat?: SectionBlockDualImageFormat | null
+  image?: SanityImage
+  body?: PortableTextBlock[]
+}
+
 export type HomeSection = {
   _key: string
   _type?: 'sectionBlock'
   title: string
-  text: string
+  /** Sous-titre (même typo que le bandeau défilant) ; optionnel. */
+  text?: string
   image?: SanityImage
+  /** Fond pleine largeur ; optionnel. */
+  backgroundColor?: string
+  /** `dark` = texte noir, `light` = texte blanc (fonds foncés). */
+  textOnBackground?: 'dark' | 'light'
   motionPreset?: MotionPreset
+  /** Mode deux onglets + rangées image + texte par état. */
+  dualTabsEnabled?: boolean
+  tab1Label?: string
+  tab2Label?: string
+  state1Rows?: SectionBlockDualRow[] | null
+  state2Rows?: SectionBlockDualRow[] | null
+  /** Références FAQ (accordéon sous le bloc). */
+  faqRefs?: HelpFaqItem[] | null
 }
 
 export type RichTextSection = {
@@ -175,6 +207,47 @@ export type WebsiteHeaderNavData = {
 
 export type WebsiteSiteSettingsData = {
   defaultSeo?: SeoMetadata | null
+}
+
+export type WebsiteFooterLink = {
+  _key: string
+  label: string
+  href?: string
+}
+
+export type WebsiteFooterColumn = {
+  _key: string
+  title: string
+  links?: WebsiteFooterLink[]
+}
+
+export type WebsiteFooterSocialLink = {
+  _key: string
+  href?: string
+  label?: string
+  icon?: {
+    asset?: {
+      url?: string
+      mimeType?: string
+      originalFilename?: string
+    }
+  } | null
+}
+
+export type WebsiteFooterData = {
+  logoSvg?: {
+    asset?: SanityFileAsset
+  } | null
+  logoImage?: SanityImage | null
+  backgroundColor?: string | null
+  textColor?: string | null
+  columnHeadingColor?: string | null
+  columns?: WebsiteFooterColumn[] | null
+  copyrightLine?: string | null
+  /** Icônes SVG uploadées + URL (ordre = ordre d’affichage). */
+  socialLinks?: WebsiteFooterSocialLink[] | null
+  /** CGU, confidentialité, etc. — rangée sous le bloc principal. */
+  legalLinks?: WebsiteFooterLink[] | null
 }
 
 /** Cadre CSS éditable (bureau / mobile) pour une image du hero multi-états. */
@@ -261,6 +334,10 @@ export type CatalogPuzzleSection = {
   _type: 'catalogPuzzleSection'
   eyebrow?: string
   heading?: string
+  /** Libellé du lien à droite du titre (ex. « Découvrez la sélection »). Avec `introCtaHref`. */
+  introCtaLabel?: string
+  /** URL du lien (interne ou https). */
+  introCtaHref?: string
   lead?: string
   backgroundColor?: string
   motionPreset?: MotionPreset
@@ -287,11 +364,34 @@ export type HorizontalScrollCardsSection = {
   _key: string
   _type: 'horizontalScrollCardsSection'
   heading?: string
+  introCtaLabel?: string
+  introCtaHref?: string
   lead?: string
   /** `light` = bandeau clair ; `dark` = bandeau sombre (texte intro inversé). */
   surfaceTheme?: 'light' | 'dark'
   motionPreset?: MotionPreset
   items?: HorizontalScrollCard[] | null
+}
+
+/** Entrée éditoriale : UUID pièce Segna + couverture Sanity optionnelle. */
+export type WebsiteDbCatalogItemEntry = {
+  _key: string
+  itemId?: string
+  coverImage?: SanityImage
+  cardTitle?: string
+  cardSubtitle?: string
+}
+
+export type WebsiteDbCatalogSection = {
+  _key: string
+  _type: 'websiteDbCatalogSection'
+  /** Défaut côté site : `full_catalog` si absent (anciens contenus). */
+  catalogMode?: 'full_catalog' | 'curated'
+  heading?: string
+  intro?: string
+  introCtaLabel?: string
+  introCtaHref?: string
+  dbItems?: WebsiteDbCatalogItemEntry[] | null
 }
 
 export type SplitPaneContentKind = 'text' | 'image' | 'video'
@@ -326,6 +426,8 @@ export type SplitPane = {
   /** Sans onglets uniquement. */
   ctaLabel?: string
   ctaHref?: string
+  /** Colonne texte : FAQ sous le contenu. */
+  faqRefs?: HelpFaqItem[] | null
 }
 
 export type SplitFeatureSection = {
@@ -360,6 +462,7 @@ export type PageSection =
   | TriptychSection
   | CatalogPuzzleSection
   | HorizontalScrollCardsSection
+  | WebsiteDbCatalogSection
   | SplitFeatureSection
 
 export type HomeHeroStagedInfoItem = {
@@ -437,6 +540,39 @@ const portableTextInSection = `body[]{
   }
 }`
 
+/** Rangée « image + texte riche » dans le bloc texte + image (mode deux états). */
+const sectionBlockDualRowGroq = `
+  _key,
+  mediaPosition,
+  imageFormat,
+  image{
+    ...,
+    alt,
+    asset->{
+      _id,
+      _ref,
+      url,
+      metadata {
+        dimensions { width, height, aspectRatio }
+      }
+    },
+    hotspot,
+    crop
+  },
+  body[]{
+    ...,
+    markDefs[]{
+      ...,
+      _type == "link" => {
+        href
+      }
+    },
+    _type == "image" => {
+      ...,
+      asset->
+    }
+  }`
+
 const portableCaptionInTriptychCard = `caption[]{
   ...,
   markDefs[]{
@@ -464,6 +600,13 @@ const portableTextBlockProjection = (field: string) => `${field}[]{
     ...,
     asset->
   }
+}`
+
+/** FAQ déréférencée (réponse = portable text). Réutilisable dans les requêtes centre d’aide. */
+export const helpFaqItemResolvedGroq = `{
+  _id,
+  question,
+  ${portableTextBlockProjection('answer')}
 }`
 
 const splitPaneGroq = `
@@ -517,7 +660,8 @@ const splitPaneGroq = `
       cta2Label,
       cta2Href,
       ctaLabel,
-      ctaHref`
+      ctaHref,
+      faqRefs[]->${helpFaqItemResolvedGroq}`
 
 const catalogPuzzleTileGroq = `
   title,
@@ -542,6 +686,27 @@ const horizontalScrollItemsGroq = `items[]{
   _key,
   frameFormat,
 ${catalogPuzzleTileGroq}
+}`
+
+const websiteDbCatalogItemsGroq = `dbItems[]{
+  _key,
+  itemId,
+  cardTitle,
+  cardSubtitle,
+  coverImage{
+    ...,
+    alt,
+    asset->{
+      _id,
+      _ref,
+      url,
+      metadata {
+        dimensions { width, height, aspectRatio }
+      }
+    },
+    hotspot,
+    crop
+  }
 }`
 
 const triptychCycleStateFrameLayout = `frameLayout{
@@ -643,6 +808,7 @@ const documentPageSectionsGroq = `sections[]{
         tone,
         title,
         text,
+        textOnBackground,
         motionPreset,
         backgroundColor,
         textColor,
@@ -683,6 +849,10 @@ const documentPageSectionsGroq = `sections[]{
           alt
         },
         heading,
+        catalogMode,
+        intro,
+        introCtaLabel,
+        introCtaHref,
         ${portableTextInSection},
         splitRatio,
         contentWidth,
@@ -701,7 +871,14 @@ const documentPageSectionsGroq = `sections[]{
         rightTall{${catalogPuzzleTileGroq}},
         rightBottom{${catalogPuzzleTileGroq}},
         surfaceTheme,
-        ${horizontalScrollItemsGroq}
+        ${horizontalScrollItemsGroq},
+        ${websiteDbCatalogItemsGroq},
+        dualTabsEnabled,
+        tab1Label,
+        tab2Label,
+        state1Rows[]{${sectionBlockDualRowGroq}},
+        state2Rows[]{${sectionBlockDualRowGroq}},
+        faqRefs[]->${helpFaqItemResolvedGroq}
       }`
 
 const homePageProjection = `{
@@ -750,6 +927,60 @@ const headerNavProjection = `{
   }
 }`
 
+const websiteFooterProjection = `{
+  logoSvg{
+    asset->{
+      url,
+      mimeType,
+      originalFilename
+    }
+  },
+  logoImage{
+    ...,
+    alt,
+    asset->{
+      _id,
+      _ref,
+      url,
+      metadata {
+        dimensions { width, height, aspectRatio }
+      }
+    },
+    hotspot,
+    crop
+  },
+  backgroundColor,
+  textColor,
+  columnHeadingColor,
+  copyrightLine,
+  socialLinks[]{
+    _key,
+    href,
+    label,
+    icon{
+      asset->{
+        url,
+        mimeType,
+        originalFilename
+      }
+    }
+  },
+  legalLinks[]{
+    _key,
+    label,
+    href
+  },
+  columns[]{
+    _key,
+    title,
+    links[]{
+      _key,
+      label,
+      href
+    }
+  }
+}`
+
 function combineHomeWithHeader(
   home: HomePageDocumentData | null,
   siteNav: WebsiteHeaderNavData | null | undefined,
@@ -793,6 +1024,11 @@ export async function getWebsiteSiteSettings(): Promise<WebsiteSiteSettingsData 
       }
     }
   }`)
+}
+
+/** Pied de page global (document unique recommandé : id `websiteFooter` dans le desk). */
+export async function getWebsiteFooter(): Promise<WebsiteFooterData | null> {
+  return sanityClient.fetch(`*[_type == "websiteFooter"]|order(_updatedAt desc)[0]${websiteFooterProjection}`)
 }
 
 export async function getNewsroomPageData(): Promise<NewsroomPageData | null> {

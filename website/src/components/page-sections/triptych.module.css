@@ -128,7 +128,7 @@ a.cardHit:hover {
   margin: 0;
   padding: 1rem;
   font-family: var(--font-playfair-display), Georgia, serif;
-  font-size: clamp(2.35rem, 4.8vw, 3.65rem);
+  font-size: clamp(5.55rem, 7.2vw, 6.1rem);
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.02em;
@@ -139,11 +139,11 @@ a.cardHit:hover {
 }
 
 .captionRich {
-  font-size: clamp(1rem, 1.65vw, 1.2rem);
-  line-height: 1.55;
+  font-size: clamp(1.12rem, 2.15vw, 1.48rem);
+  line-height: 1.52;
   text-align: center;
   color: #14110f;
-  max-width: 40ch;
+  max-width: min(48ch, 100%);
   margin-inline: auto;
 }
 

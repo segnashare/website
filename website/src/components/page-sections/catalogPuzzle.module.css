@@ -14,6 +14,77 @@
   box-sizing: border-box;
 }
 
+.introHeadingRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem clamp(1rem, 3vw, 1.75rem);
+  margin: 0 0 0.55rem;
+  min-width: 0;
+}
+
+.introHeadingRow .heading {
+  margin: 0;
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.introHeadingSpacer {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 1px;
+}
+
+.introCta {
+  flex-shrink: 0;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-size: clamp(0.9rem, 1.35vw, 1rem);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  color: #2a2826;
+  text-decoration: none;
+  border-radius: 2px;
+}
+
+.introCta:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.introCta:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+.introCtaLabel {
+  white-space: nowrap;
+}
+
+.introCtaArrow {
+  display: inline-block;
+  flex-shrink: 0;
+  margin-inline-start: 0.12em;
+  font-size: 1.05em;
+  line-height: 1;
+  font-weight: 400;
+  color: currentColor;
+  transform: translateY(0.04em);
+}
+
+.introOnDark .introCta {
+  color: #faf8f5;
+}
+
+.introOnDark .introCta:hover {
+  color: #ffffff;
+}
+
 .heading {
   margin: 0 0 0.55rem;
   font-family: var(--font-playfair-display), Georgia, serif;
