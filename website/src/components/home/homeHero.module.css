@@ -157,10 +157,13 @@
 }
 
 .secondaryCta {
+  display: inline-flex;
+  align-items: center;
   color: #fff;
   font-size: 1rem;
   font-weight: 500;
   letter-spacing: 0.01em;
+  line-height: 1.2;
   text-decoration: none;
   white-space: nowrap;
   opacity: 0.98;
@@ -172,10 +175,13 @@
 }
 
 .navLink {
+  display: inline-flex;
+  align-items: center;
   color: #fff;
   font-size: 1rem;
   font-weight: 500;
   letter-spacing: 0.01em;
+  line-height: 1.2;
   opacity: 0.98;
 }
 
@@ -511,6 +517,8 @@
     left: 0;
     right: 0;
     z-index: 100;
+    /* Même hauteur verticale totale qu’avant (1.5rem + 0) mais répartie haut/bas pour centrer la barre dans le bloc blanc au scroll. */
+    padding: 0.75rem clamp(1rem, 4vw, 2.75rem) 0.75rem;
     transition:
       background-color 0.28s ease,
       box-shadow 0.28s ease,

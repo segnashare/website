@@ -1067,6 +1067,21 @@ export async function getMarketingPageSlugs(): Promise<string[]> {
   return [...new Set([...MAIN_MARKETING_SLUGS, ...fromCms])]
 }
 
+export type CatalogBrandEditorial = {
+  headline: string | null
+  description: PortableTextBlock[] | null
+}
+
+/** Contenu éditorial catalogue pour une marque (`catalogBrandPage.brandSlug` = `item_brands.slug`). */
+export async function getCatalogBrandEditorialBySlug(slug: string): Promise<CatalogBrandEditorial | null> {
+  const normalized = slug.trim().toLowerCase()
+  if (!normalized) return null
+  return sanityClient.fetch<CatalogBrandEditorial | null>(
+    `*[_type == "catalogBrandPage" && lower(brandSlug) == $slug][0]{headline, description}`,
+    {slug: normalized},
+  )
+}
+
 export async function getMarketingPageBySlug(slug: string): Promise<MarketingPageData | null> {
   const normalized = slug.trim()
   if (!normalized) return null

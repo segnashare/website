@@ -1,0 +1,28 @@
+.wrap {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.headline {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-playfair-display), Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.35rem, 2.4vw, 2rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  color: #14110f;
+}
+
+.body {
+  font-family: var(--font-montserrat), ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+    sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: #2a2826;
+}
+
+.body :global(p:last-child) {
+  margin-bottom: 0;
+}

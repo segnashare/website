@@ -12,7 +12,8 @@ type PageProps = {
 
 export async function generateStaticParams() {
   const slugs = await getMarketingPageSlugs()
-  return slugs.map((slug) => ({slug}))
+  /** `/catalogue` est servi par `app/catalogue/page.tsx` (navigation par liens). */
+  return slugs.filter((slug) => slug !== 'catalogue').map((slug) => ({slug}))
 }
 
 export async function generateMetadata({params}: PageProps): Promise<Metadata> {
