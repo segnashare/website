@@ -1,14 +1,16 @@
 import type {CatalogBrowseQuery} from '@/lib/catalog/catalog-search-params'
 import type {CatalogPathResolved} from '@/lib/catalog/catalog-path-resolve'
+import {idsForCatalogRpc} from '@/lib/catalog/catalog-facet-scope-ids'
 import {
   catalogListingPath,
-  idsForCatalogRpc,
   resolveCatalogIntersection,
   resolveCatalogOneSegment,
 } from '@/lib/catalog/catalog-path-resolve'
+import {catalogPerfEnabled, catalogPerfLog, catalogPerfNow} from '@/lib/catalog/catalog-perf'
 import {
-  fetchMarketingCatalogFacetsNav,
+  fetchMarketingCatalogBrowseFacetsNav,
   fetchMarketingCatalogItemsPage,
+  fetchMarketingCatalogPathResolveNav,
   gridItemsFromRows,
   type MarketingCatalogFacetsNav,
   type MarketingCatalogGridItem,
@@ -35,10 +37,13 @@ export async function loadCatalogBrowsePayload(
   const supabase = getSupabaseServiceRoleClient()
   if (!supabase) return null
 
-  const facets = await fetchMarketingCatalogFacetsNav()
-  if (!facets) return null
+  const pathNav = await fetchMarketingCatalogPathResolveNav()
+  if (!pathNav) return null
 
-  const {categoryIds, brandIds, colorIds, sizeIds} = idsForCatalogRpc(resolved, query, facets)
+  const facets = await fetchMarketingCatalogBrowseFacetsNav(pathNav, resolved, query)
+  const {categoryIds, brandIds, colorIds, sizeIds} = idsForCatalogRpc(resolved, query, facets, {
+    slugFacetSource: pathNav,
+  })
   const pageSize = 50
   const offset = (query.page - 1) * pageSize
 
@@ -74,27 +79,33 @@ export async function loadCatalogBrowseFromPath(
   path: CatalogPathInput,
   query: CatalogBrowseQuery,
 ): Promise<CatalogBrowsePayload | null> {
+  const t0 = catalogPerfNow()
   const supabase = getSupabaseServiceRoleClient()
   if (!supabase) return null
 
-  const facets = await fetchMarketingCatalogFacetsNav()
-  if (!facets) return null
+  const pathNav = await fetchMarketingCatalogPathResolveNav()
+  if (!pathNav) return null
 
   let resolved: CatalogPathResolved | null = null
   if (path.kind === 'all') {
     resolved = {kind: 'all'}
   } else if (path.kind === 'one') {
-    resolved = resolveCatalogOneSegment(facets, path.segment)
+    resolved = resolveCatalogOneSegment(pathNav, path.segment)
   } else {
-    resolved = resolveCatalogIntersection(facets, path.brandSlug, path.categorySlug)
+    resolved = resolveCatalogIntersection(pathNav, path.brandSlug, path.categorySlug)
   }
 
   if (!resolved) return null
 
-  const {categoryIds, brandIds, colorIds, sizeIds} = idsForCatalogRpc(resolved, query, facets)
+  const facets = await fetchMarketingCatalogBrowseFacetsNav(pathNav, resolved, query)
+  const tFacets1 = catalogPerfNow()
+  const {categoryIds, brandIds, colorIds, sizeIds} = idsForCatalogRpc(resolved, query, facets, {
+    slugFacetSource: pathNav,
+  })
   const pageSize = 50
   const offset = (query.page - 1) * pageSize
 
+  const tItems0 = catalogPerfNow()
   const {items: rows, total} = await fetchMarketingCatalogItemsPage({
     limit: pageSize,
     offset,
@@ -104,8 +115,21 @@ export async function loadCatalogBrowseFromPath(
     colorIds,
     sizeIds,
   })
+  const tAfterRows = catalogPerfNow()
 
   const items = await gridItemsFromRows(supabase, rows)
+  const tEnd = catalogPerfNow()
+
+  if (catalogPerfEnabled()) {
+    catalogPerfLog('loadCatalogBrowseFromPath', {
+      path: path.kind,
+      totalMs: Math.round(tEnd - t0),
+      facetsMs: Math.round(tFacets1 - t0),
+      itemsRpcMs: Math.round(tAfterRows - tItems0),
+      gridCoversMs: Math.round(tEnd - tAfterRows),
+      rowCount: rows.length,
+    })
+  }
 
   return {
     facets,

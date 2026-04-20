@@ -6,7 +6,7 @@ import {getBrandEditorialForCatalogPayload} from '@/lib/catalog/catalog-brand-ed
 import {loadCatalogBrowseFromPath} from '@/lib/catalog/catalog-page-loader'
 import {parseCatalogBrowseQueryFromNext} from '@/lib/catalog/catalog-search-params'
 import {categoryBySlug} from '@/lib/catalog/catalog-category-tree'
-import {fetchMarketingCatalogFacetsNav} from '@/lib/catalog/marketing-catalog-items'
+import {fetchMarketingCatalogPathResolveNav} from '@/lib/catalog/marketing-catalog-items'
 
 export const revalidate = 30
 
@@ -17,7 +17,7 @@ type PageProps = {
 
 export async function generateMetadata({params}: PageProps): Promise<Metadata> {
   const {segment, categorySlug} = await params
-  const facets = await fetchMarketingCatalogFacetsNav()
+  const facets = await fetchMarketingCatalogPathResolveNav()
   if (!facets) return {title: 'Catalogue | Segna'}
   const b = facets.brands.find((x) => x.slug === segment.toLowerCase())
   const c = categoryBySlug(facets.categories, categorySlug)

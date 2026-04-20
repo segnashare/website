@@ -1,5 +1,5 @@
 import {createClient} from '@sanity/client'
-import imageUrlBuilder from '@sanity/image-url'
+import {createImageUrlBuilder} from '@sanity/image-url'
 import type {PortableTextBlock} from '@portabletext/types'
 
 const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ?? '1qxhnoe8'
@@ -14,7 +14,7 @@ export const sanityClient = createClient({
   useCdn: false,
 })
 
-const builder = imageUrlBuilder(sanityClient)
+const builder = createImageUrlBuilder(sanityClient)
 
 type SanityImageSource = Parameters<typeof builder.image>[0]
 

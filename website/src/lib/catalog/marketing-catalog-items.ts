@@ -1,7 +1,14 @@
+import {idsForCatalogRpc} from '@/lib/catalog/catalog-facet-scope-ids'
+import {mergeCategoriesNavWithScopedPresence} from '@/lib/catalog/catalog-scoped-facets'
+import {catalogPerfDetail, catalogPerfLog, catalogPerfNow} from '@/lib/catalog/catalog-perf'
+import type {CatalogPathResolved} from '@/lib/catalog/catalog-path-types'
+import type {CatalogBrowseQuery} from '@/lib/catalog/catalog-search-params'
 import {slugifyFr, withUniqueSlugs} from '@/lib/catalog/catalog-slugs'
 import {collectPhotoPathsFromItemPhotos, getFirstPhotoStoragePath} from '@/lib/catalog/item-photos'
 import {createSignedUrlForStoragePath, type StorageSignClient} from '@/lib/catalog/storage-signed-url'
 import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
+import {unstable_cache} from 'next/cache'
+import {cache} from 'react'
 
 export type CatalogSortMode = 'recent' | 'price_asc' | 'price_desc'
 
@@ -111,15 +118,32 @@ function navOptionsFromBase(
   return withUniqueSlugs(raw)
 }
 
-/** Facettes + slugs URL (marques = slug base ; catégories / couleurs / tailles = slugify du libellé). */
-export async function fetchMarketingCatalogFacetsNav(): Promise<MarketingCatalogFacetsNav | null> {
+function parseFacetsRpcPayload(data: unknown): MarketingCatalogFacets | null {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return null
+  const root = data as Record<string, unknown>
+  return {
+    categories: parseFacetOptions(root.categories),
+    brands: parseFacetOptions(root.brands),
+    colors: parseFacetOptions(root.colors),
+    sizes: parseFacetOptions(root.sizes),
+  }
+}
+
+/**
+ * Facettes « globales » : résolution d’URL (slugs) + arbre catégories complet.
+ * Ne pas utiliser seule pour les rails filtres (voir `fetchMarketingCatalogBrowseFacetsNav`).
+ */
+async function fetchMarketingCatalogPathResolveNavUncached(): Promise<MarketingCatalogFacetsNav | null> {
+  const t0 = catalogPerfNow()
   const [base, supabase] = await Promise.all([fetchMarketingCatalogFacets(), Promise.resolve(getSupabaseServiceRoleClient())])
+  const tAfterBase = catalogPerfNow()
   if (!base || !supabase) return null
 
   const [{data: brandRows}, {data: catRows}] = await Promise.all([
     supabase.from('item_brands').select('id, slug'),
     supabase.from('item_categories').select('id, name, parent_category_id'),
   ])
+  const tAfterTables = catalogPerfNow()
 
   const brandSlugById = new Map<string, string>()
   if (Array.isArray(brandRows)) {
@@ -166,13 +190,129 @@ export async function fetchMarketingCatalogFacetsNav(): Promise<MarketingCatalog
     }
   }
 
-  return {
+  const out: MarketingCatalogFacetsNav = {
     categories: withUniqueSlugs(categoryNavRaw),
     brands: navOptionsFromBase(base.brands, brandSlug),
     colors: navOptionsFromBase(base.colors, labelSlug),
     sizes: navOptionsFromBase(base.sizes, labelSlug),
   }
+  if (catalogPerfDetail()) {
+    catalogPerfLog('fetchMarketingCatalogPathResolveNav', {
+      totalMs: Math.round(catalogPerfNow() - t0),
+      baseRpcMs: Math.round(tAfterBase - t0),
+      tablesMs: Math.round(tAfterTables - tAfterBase),
+      buildMs: Math.round(catalogPerfNow() - tAfterTables),
+      categoriesCount: out.categories.length,
+      brandsCount: out.brands.length,
+    })
+  }
+  return out
 }
+
+const fetchMarketingCatalogPathResolveNavCrossRequest = unstable_cache(
+  fetchMarketingCatalogPathResolveNavUncached,
+  ['marketing_catalog_path_nav_v2'],
+  {revalidate: 30},
+)
+
+/** Dédup par rendu RSC + cache entre requêtes (résolution de chemin / slugs). */
+export const fetchMarketingCatalogPathResolveNav = cache(fetchMarketingCatalogPathResolveNavCrossRequest)
+
+type FacetsScopedRpcPayload = {
+  p_brand_ids: string[] | null
+  p_category_id: string | null
+  p_category_ids: string[] | null
+  p_color_ids: string[] | null
+  p_size_ids: string[] | null
+}
+
+function facetsScopedRpcPayloadFromScope(scope: {
+  brandIds: string[]
+  categoryIds: string[]
+  colorIds: string[]
+  sizeIds: string[]
+}): FacetsScopedRpcPayload {
+  return {
+    p_brand_ids: scope.brandIds.length > 0 ? scope.brandIds : null,
+    p_category_id: scope.categoryIds.length === 1 ? scope.categoryIds[0]! : null,
+    p_category_ids: scope.categoryIds.length > 1 ? scope.categoryIds : null,
+    p_color_ids: scope.colorIds.length > 0 ? scope.colorIds : null,
+    p_size_ids: scope.sizeIds.length > 0 ? scope.sizeIds : null,
+  }
+}
+
+function facetsScopedRpcCacheKey(p: FacetsScopedRpcPayload): string {
+  return JSON.stringify({
+    b: [...(p.p_brand_ids ?? [])].sort(),
+    c1: p.p_category_id,
+    cN: [...(p.p_category_ids ?? [])].sort(),
+    co: [...(p.p_color_ids ?? [])].sort(),
+    s: [...(p.p_size_ids ?? [])].sort(),
+  })
+}
+
+/** Résultat brut facettes scopées (même `revalidate` que le path nav). */
+const getMarketingCatalogFacetsScopedPayload = unstable_cache(
+  async (scopeKey: string) => {
+    const payload = JSON.parse(scopeKey) as FacetsScopedRpcPayload
+    const supabase = getSupabaseServiceRoleClient()
+    if (!supabase) return null
+    const {data, error} = await supabase.rpc('get_marketing_website_catalog_facets_scoped', {
+      p_brand_ids: payload.p_brand_ids,
+      p_category_id: payload.p_category_id,
+      p_category_ids: payload.p_category_ids,
+      p_color_ids: payload.p_color_ids,
+      p_size_ids: payload.p_size_ids,
+    })
+    if (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[marketing-catalog] facets_scoped', error.message)
+      }
+      return null
+    }
+    return parseFacetsRpcPayload(data)
+  },
+  ['marketing_catalog_facets_scoped_payload_v1'],
+  {revalidate: 30},
+)
+
+async function fetchMarketingCatalogBrowseFacetsNavUncached(
+  pathNav: MarketingCatalogFacetsNav,
+  resolved: CatalogPathResolved,
+  query: CatalogBrowseQuery,
+): Promise<MarketingCatalogFacetsNav> {
+  const supabase = getSupabaseServiceRoleClient()
+  if (!supabase) return pathNav
+
+  const scope = idsForCatalogRpc(resolved, query, pathNav)
+  const rpcPayload = facetsScopedRpcPayloadFromScope(scope)
+  const scopeKey = facetsScopedRpcCacheKey(rpcPayload)
+
+  const t0 = catalogPerfNow()
+  const scoped = await getMarketingCatalogFacetsScopedPayload(scopeKey)
+  if (!scoped) return pathNav
+
+  if (catalogPerfDetail()) {
+    catalogPerfLog('fetchMarketingCatalogBrowseFacetsNav', {
+      rpcMs: Math.round(catalogPerfNow() - t0),
+      scopedCategoryCount: scoped.categories.length,
+    })
+  }
+
+  const mergedCats = mergeCategoriesNavWithScopedPresence(pathNav.categories, scoped.categories)
+  const brandSlug = (id: string, label: string) => pathNav.brands.find((b) => b.id === id)?.slug ?? slugifyFr(label)
+  const labelSlug = (_id: string, label: string) => slugifyFr(label)
+
+  return {
+    categories: mergedCats,
+    brands: navOptionsFromBase(scoped.brands, brandSlug),
+    colors: navOptionsFromBase(scoped.colors, labelSlug),
+    sizes: navOptionsFromBase(scoped.sizes, labelSlug),
+  }
+}
+
+/** Rails latéraux : options restreintes au périmètre courant (marque, catégorie, filtres query). */
+export const fetchMarketingCatalogBrowseFacetsNav = cache(fetchMarketingCatalogBrowseFacetsNavUncached)
 
 export async function fetchMarketingCatalogItemsPage(params: {
   limit: number
@@ -209,6 +349,7 @@ export async function fetchMarketingCatalogItemsPage(params: {
     rpcArgs.p_category_ids = catIds
   }
 
+  const tRpc0 = catalogPerfNow()
   const {data, error} = await supabase.rpc('get_marketing_website_catalog_items_page', rpcArgs)
   if (error) {
     if (process.env.NODE_ENV === 'development') {
@@ -220,6 +361,13 @@ export async function fetchMarketingCatalogItemsPage(params: {
   const items = parseMarketingCatalogRpcPayload(data)
   const totalNum = Number(root.total)
   const total = Number.isFinite(totalNum) ? totalNum : 0
+  if (catalogPerfDetail()) {
+    catalogPerfLog('fetchMarketingCatalogItemsPage', {
+      rpcMs: Math.round(catalogPerfNow() - tRpc0),
+      rowCount: items.length,
+      total,
+    })
+  }
   return {items, total}
 }
 
@@ -292,21 +440,45 @@ export async function fetchMarketingCatalogItemsFull(limit = 200): Promise<Marke
   return parseMarketingCatalogRpcPayload(data)
 }
 
+/** Au-delà, on découpe pour éviter des centaines de `createSignedUrl` simultanés (sections CMS volumineuses). */
+const COVER_SIGN_ALL_PARALLEL_MAX = 56
+
 export async function resolveCoverUrlsForItems(
   supabase: StorageSignClient,
   rows: MarketingCatalogItemRow[],
-  chunkSize = 14,
+  /** Taille des lots si `rows.length` dépasse `COVER_SIGN_ALL_PARALLEL_MAX`. */
+  chunkSize = 40,
 ): Promise<Map<string, string | null>> {
+  const t0 = catalogPerfNow()
   const map = new Map<string, string | null>()
-  for (let i = 0; i < rows.length; i += chunkSize) {
-    const slice = rows.slice(i, i + chunkSize)
-    const pairs = await Promise.all(
-      slice.map(async (r) => {
-        const url = await resolveItemCoverSignedUrl(supabase, r.photos)
-        return [r.id, url] as const
-      }),
-    )
+
+  async function signRow(r: MarketingCatalogItemRow): Promise<readonly [string, string | null]> {
+    const url = await resolveItemCoverSignedUrl(supabase, r.photos)
+    return [r.id, url] as const
+  }
+
+  if (rows.length <= COVER_SIGN_ALL_PARALLEL_MAX) {
+    const pairs = await Promise.all(rows.map((r) => signRow(r)))
     for (const [id, url] of pairs) map.set(id, url)
+  } else {
+    for (let i = 0; i < rows.length; i += chunkSize) {
+      const slice = rows.slice(i, i + chunkSize)
+      const pairs = await Promise.all(slice.map((r) => signRow(r)))
+      for (const [id, url] of pairs) map.set(id, url)
+    }
+  }
+
+  if (catalogPerfDetail()) {
+    const batches =
+      rows.length <= COVER_SIGN_ALL_PARALLEL_MAX
+        ? 1
+        : Math.ceil(rows.length / chunkSize) || 0
+    catalogPerfLog('resolveCoverUrlsForItems', {
+      totalMs: Math.round(catalogPerfNow() - t0),
+      rowCount: rows.length,
+      chunkSize: rows.length <= COVER_SIGN_ALL_PARALLEL_MAX ? rows.length || chunkSize : chunkSize,
+      batches,
+    })
   }
   return map
 }

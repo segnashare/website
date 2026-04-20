@@ -5,28 +5,11 @@ import {
   collectDescendantCategoryIds,
   rootCategoryForSlug,
 } from '@/lib/catalog/catalog-category-tree'
-import type {CatalogBrowseQuery} from '@/lib/catalog/catalog-search-params'
 import type {MarketingCatalogFacetsNav} from '@/lib/catalog/marketing-catalog-items'
+import type {CatalogPathResolved, CategoryPathSegments} from '@/lib/catalog/catalog-path-types'
 
-export type CategoryPathSegments =
-  | {shape: 'single'; slug: string}
-  | {shape: 'parent_child'; parentSlug: string; childSlug: string}
-
-export type CatalogPathResolved =
-  | {kind: 'all'}
-  | {kind: 'brand'; brandSlug: string; brandId: string}
-  | {
-      kind: 'category'
-      segments: CategoryPathSegments
-      categoryFilterIds: string[]
-    }
-  | {
-      kind: 'intersection'
-      brandSlug: string
-      brandId: string
-      categorySlug: string
-      categoryFilterIds: string[]
-    }
+export {idsForCatalogRpc} from '@/lib/catalog/catalog-facet-scope-ids'
+export type {CatalogPathResolved, CategoryPathSegments} from '@/lib/catalog/catalog-path-types'
 
 const RESERVED_SEGMENTS = new Set(['piece', 'api'])
 
@@ -117,39 +100,6 @@ export function catalogListingPath(resolved: CatalogPathResolved): string {
     return catalogBrowsePath(resolved.segments.parentSlug, resolved.segments.childSlug)
   }
   return catalogBrowsePath(resolved.brandSlug, resolved.categorySlug)
-}
-
-export function idsForCatalogRpc(
-  resolved: CatalogPathResolved,
-  query: CatalogBrowseQuery,
-  facets: MarketingCatalogFacetsNav,
-): {
-  categoryIds: string[]
-  brandIds: string[]
-  colorIds: string[]
-  sizeIds: string[]
-} {
-  let categoryIds: string[] = []
-  let brandIds: string[] = []
-
-  if (resolved.kind === 'brand') {
-    brandIds = [resolved.brandId]
-  } else if (resolved.kind === 'category') {
-    categoryIds = resolved.categoryFilterIds
-  } else if (resolved.kind === 'intersection') {
-    brandIds = [resolved.brandId]
-    categoryIds = resolved.categoryFilterIds
-  }
-
-  const colorIds = query.colorSlugs
-    .map((slug) => facets.colors.find((c) => c.slug === slug)?.id)
-    .filter((x): x is string => Boolean(x))
-
-  const sizeIds = query.sizeSlugs
-    .map((slug) => facets.sizes.find((s) => s.slug === slug)?.id)
-    .filter((x): x is string => Boolean(x))
-
-  return {categoryIds, brandIds, colorIds, sizeIds}
 }
 
 /** Parent dont la colonne doit lister les sous-catégories (URL feuille courte incluse). */
