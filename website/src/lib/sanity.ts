@@ -34,10 +34,10 @@ export function urlForStagedHeroImage(source: SanityImageSource) {
  * Attribut `sizes` pour `<Image>` du hero multi-états : évite une sous-estimation (flou) quand
  * les cadres sont larges ou sur écran haute densité (Next choisit la résolution à partir de `sizes`).
  */
-export const stagedHeroImageSizes = '(max-width: 1024px) 100vw, min(92vw, 2400px)'
+export const stagedHeroImageSizes = '(max-width: 1200px) 100vw, min(92vw, 2400px)'
 
 /** Tranche hero secondaire (~1/3 de la largeur utile). */
-export const stagedHeroSliceImageSizes = '(max-width: 1024px) 96vw, min(40vw, 520px)'
+export const stagedHeroSliceImageSizes = '(max-width: 1200px) 96vw, min(40vw, 520px)'
 
 /** `sizes` pour images du tryptique (cartes étroites). */
 export const triptychCardImageSizes = '(max-width: 900px) 42vw, 30vw'
@@ -105,11 +105,32 @@ export type NavItem = {
 
 export type MotionPreset = 'none' | 'fade-up' | 'stagger'
 
-/** Entrée FAQ (document `helpFaqItem`), après déréférencement GROQ. */
-export type HelpFaqItem = {
-  _id: string
+/** Q/R saisie sur un article d’aide (objet dans `qaItems[]`). */
+export type HelpArticleQaItem = {
+  _key: string
   question: string
   answer?: PortableTextBlock[]
+}
+
+/**
+ * Article d’aide déréférencé pour l’accordéon marketing (slugs plats pour l’URL publique).
+ */
+export type HelpArticleFaqBundle = {
+  _id: string
+  title?: string
+  articleSlug?: string
+  categorySlug?: string
+  sectionSlug?: string | null
+  qaItems?: HelpArticleQaItem[] | null
+}
+
+/** Ligne d’accordéon (article seul ou extrait d’un article référencé sur une page marketing). */
+export type HelpFaqItem = {
+  _key: string
+  question: string
+  answer?: PortableTextBlock[]
+  /** Présent lorsque la ligne provient d’un article référencé (lien « article complet »). */
+  helpArticleHref?: string | null
 }
 
 export type SectionBlockDualImageFormat = 'square' | 'landscape' | 'portrait'
@@ -142,8 +163,8 @@ export type HomeSection = {
   tab2Label?: string
   state1Rows?: SectionBlockDualRow[] | null
   state2Rows?: SectionBlockDualRow[] | null
-  /** Références FAQ (accordéon sous le bloc). */
-  faqRefs?: HelpFaqItem[] | null
+  /** Articles d’aide : Q/R en accordéon + lien vers chaque article. */
+  helpArticleRefs?: HelpArticleFaqBundle[] | null
 }
 
 export type RichTextSection = {
@@ -151,6 +172,23 @@ export type RichTextSection = {
   _type: 'richTextSection'
   heading?: string
   body: PortableTextBlock[]
+  motionPreset?: MotionPreset
+}
+
+export type TwoColumnTableRow = {
+  _key: string
+  firstCell?: string
+  secondCell?: string
+}
+
+export type TwoColumnTableSection = {
+  _key: string
+  _type: 'twoColumnTableSection'
+  heading?: string
+  intro?: string
+  firstColumnHeader?: string
+  secondColumnHeader?: string
+  rows?: TwoColumnTableRow[] | null
   motionPreset?: MotionPreset
 }
 
@@ -322,6 +360,32 @@ export type TriptychSection = {
   motionPreset?: MotionPreset
 }
 
+export type ThreeStepCardItem = {
+  _key: string
+  frameFormat?: 'portrait' | 'landscape' | 'square'
+  title?: string
+  /** Portable Text ; les anciens brouillons peuvent encore avoir une chaîne jusqu’à republication. */
+  description?: PortableTextBlock[] | string
+  image?: SanityImage
+}
+
+export type ThreeStepCardsSection = {
+  _key: string
+  _type: 'threeStepCardsSection'
+  threeStepBandColor?: string
+  /** `framed` = carte blanche ; `bare` = image + texte sans cadre. */
+  threeStepCardsLayout?: 'framed' | 'bare'
+  threeStepTextColor?: 'black' | 'white'
+  threeStepTitle: string
+  threeStepSubtitle?: string
+  threeStepItems?: ThreeStepCardItem[]
+  threeStepPrimaryCtaLabel?: string
+  threeStepPrimaryCtaHref?: string
+  threeStepSecondaryCtaLabel?: string
+  threeStepSecondaryCtaHref?: string
+  motionPreset?: MotionPreset
+}
+
 export type CatalogPuzzleTile = {
   title?: string
   subtitle?: string
@@ -340,6 +404,8 @@ export type CatalogPuzzleSection = {
   introCtaHref?: string
   lead?: string
   backgroundColor?: string
+  /** `auto` = déduit de la luminosité du fond ; sinon force le jeu de couleurs du titre / chapô. */
+  surfaceTheme?: 'auto' | 'light' | 'dark'
   motionPreset?: MotionPreset
   leftTop?: CatalogPuzzleTile | null
   leftMiddle?: CatalogPuzzleTile | null
@@ -412,6 +478,8 @@ export type SplitPane = {
   /** Aperçu avant lecture (prioritaire sur la vignette YouTube si renseigné). */
   videoPoster?: SanityImage
   heading?: string
+  /** Sous-titre sous le titre principal (colonne texte). */
+  headingSubtitle?: string
   dualTabsEnabled?: boolean
   tab1Label?: string
   tab2Label?: string
@@ -426,8 +494,8 @@ export type SplitPane = {
   /** Sans onglets uniquement. */
   ctaLabel?: string
   ctaHref?: string
-  /** Colonne texte : FAQ sous le contenu. */
-  faqRefs?: HelpFaqItem[] | null
+  /** Colonne texte : Q/R des articles d’aide référencés. */
+  helpArticleRefs?: HelpArticleFaqBundle[] | null
 }
 
 export type SplitFeatureSection = {
@@ -446,20 +514,27 @@ export type SplitFeatureSection = {
 export type HelpCenterHubSection = {
   _key: string
   _type: 'helpCenterHubSection'
+  /** Fond de la bande pleine largeur (hex). */
+  hubBackgroundColor?: string
+  /** `black` = texte foncé + CTA clair sur foncé ; `white` = texte clair + CTA foncé sur clair. */
+  hubTextColor?: 'black' | 'white'
   hubTitle: string
   hubIntro?: string
   helpHubCtaLabel?: string
   helpHubCtaHref?: string
-  helpHubNote?: string
+  /** Articles d’aide : Q/R en accordéon à droite. */
+  helpArticleRefs?: HelpArticleFaqBundle[] | null
 }
 
 export type PageSection =
   | HelpCenterHubSection
   | HomeSection
   | RichTextSection
+  | TwoColumnTableSection
   | StatementBandSection
   | QuoteSection
   | TriptychSection
+  | ThreeStepCardsSection
   | CatalogPuzzleSection
   | HorizontalScrollCardsSection
   | WebsiteDbCatalogSection
@@ -602,11 +677,21 @@ const portableTextBlockProjection = (field: string) => `${field}[]{
   }
 }`
 
-/** FAQ déréférencée (réponse = portable text). Réutilisable dans les requêtes centre d’aide. */
-export const helpFaqItemResolvedGroq = `{
-  _id,
+/** Q/R embarquées dans un article (`qaItems[]`), projection GROQ réutilisable. */
+export const helpArticleQaItemsGroq = `qaItems[]{
+  _key,
   question,
   ${portableTextBlockProjection('answer')}
+}`
+
+/** Article d’aide déréférencé pour sections marketing (accordéon + liens). */
+export const helpArticleFaqBundleResolvedGroq = `{
+  _id,
+  title,
+  "articleSlug": slug.current,
+  "categorySlug": category->slug.current,
+  "sectionSlug": section->slug.current,
+  ${helpArticleQaItemsGroq}
 }`
 
 const splitPaneGroq = `
@@ -649,6 +734,7 @@ const splitPaneGroq = `
         crop
       },
       heading,
+      headingSubtitle,
       dualTabsEnabled,
       tab1Label,
       tab2Label,
@@ -661,7 +747,7 @@ const splitPaneGroq = `
       cta2Href,
       ctaLabel,
       ctaHref,
-      faqRefs[]->${helpFaqItemResolvedGroq}`
+      helpArticleRefs[]->${helpArticleFaqBundleResolvedGroq}`
 
 const catalogPuzzleTileGroq = `
   title,
@@ -794,15 +880,48 @@ const homeHeroStatesGroq = `heroStates[]{
     images[]{${stagedHeroImageRow}}
   }`
 
+const threeStepCardItemsGroq = `threeStepItems[]{
+  _key,
+  frameFormat,
+  title,
+  ${portableTextBlockProjection('description')},
+  image{
+    ...,
+    alt,
+    asset->{
+      _id,
+      _ref,
+      url,
+      metadata {
+        dimensions { width, height, aspectRatio }
+      }
+    },
+    hotspot,
+    crop
+  }
+}`
+
 /** Blocs `sections[]` partagés (accueil, newsroom, pages marketing). */
 const documentPageSectionsGroq = `sections[]{
         _key,
         _type,
         hubTitle,
         hubIntro,
+        hubBackgroundColor,
+        hubTextColor,
         helpHubCtaLabel,
         helpHubCtaHref,
-        helpHubNote,
+        helpArticleRefs[]->${helpArticleFaqBundleResolvedGroq},
+        threeStepBandColor,
+        threeStepCardsLayout,
+        threeStepTextColor,
+        threeStepTitle,
+        threeStepSubtitle,
+        threeStepPrimaryCtaLabel,
+        threeStepPrimaryCtaHref,
+        threeStepSecondaryCtaLabel,
+        threeStepSecondaryCtaHref,
+        ${threeStepCardItemsGroq},
         eyebrow,
         lead,
         tone,
@@ -854,6 +973,13 @@ const documentPageSectionsGroq = `sections[]{
         introCtaLabel,
         introCtaHref,
         ${portableTextInSection},
+        firstColumnHeader,
+        secondColumnHeader,
+        rows[]{
+          _key,
+          firstCell,
+          secondCell
+        },
         splitRatio,
         contentWidth,
         backgroundColor,
@@ -878,7 +1004,7 @@ const documentPageSectionsGroq = `sections[]{
         tab2Label,
         state1Rows[]{${sectionBlockDualRowGroq}},
         state2Rows[]{${sectionBlockDualRowGroq}},
-        faqRefs[]->${helpFaqItemResolvedGroq}
+        helpArticleRefs[]->${helpArticleFaqBundleResolvedGroq}
       }`
 
 const homePageProjection = `{
@@ -1057,7 +1183,13 @@ export async function getNewsroomPageData(): Promise<NewsroomPageData | null> {
   )
 }
 
-const MAIN_MARKETING_SLUGS = ['catalogue', 'communaute', 'mission-impact', 'comment-ca-marche'] as const
+const MAIN_MARKETING_SLUGS = [
+  'catalogue',
+  'communaute',
+  'mission-impact',
+  'comment-ca-marche',
+  'combien-ca-coute',
+] as const
 
 export async function getMarketingPageSlugs(): Promise<string[]> {
   const slugs = await sanityClient.fetch<string[] | null>(

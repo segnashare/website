@@ -334,19 +334,19 @@ export async function fetchMarketingCatalogItemsPage(params: {
       : []
   const catIds = fromArray.length > 0 ? fromArray : fromLegacy
 
-  /** Sans `p_category_ids` dans l’appel, PostgREST cible encore la RPC 7 paramètres si la migration n’est pas appliquée. */
+  /**
+   * Toujours envoyer `p_category_ids` (même `null`) : si les deux RPC 7 et 8 args coexistent en base,
+   * PostgREST ne peut pas choisir — la migration `20260530120000_*` ne garde que la 8e forme.
+   */
   const rpcArgs: Record<string, unknown> = {
     p_limit: params.limit,
     p_offset: params.offset,
     p_sort: params.sort,
     p_category_id: catIds.length === 1 ? catIds[0]! : null,
+    p_category_ids: catIds.length > 1 ? catIds : null,
     p_brand_ids: params.brandIds.length > 0 ? params.brandIds : null,
     p_couleur_ids: params.colorIds.length > 0 ? params.colorIds : null,
     p_size_ids: params.sizeIds.length > 0 ? params.sizeIds : null,
-  }
-  if (catIds.length > 1) {
-    rpcArgs.p_category_id = null
-    rpcArgs.p_category_ids = catIds
   }
 
   const tRpc0 = catalogPerfNow()

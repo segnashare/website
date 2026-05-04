@@ -17,8 +17,8 @@
 }
 
 .contentShellInset {
-  /* 80 % de la largeur du bloc plein écran → ~10 % de marge de chaque côté */
-  width: 80%;
+  /* Largeur réduite + centrée (voir schéma Sanity) : un peu plus large qu’avant pour les titres en deux colonnes */
+  width: min(92rem, 88%);
   max-width: 100%;
   margin-inline: auto;
   /* Même respiration haut / bas à l’intérieur du fond coloré (cadre média visuellement centré). */
@@ -26,14 +26,13 @@
 }
 
 /**
- * Mode marges : la colonne texte peut imposer une ligne plus haute que le cadre média ;
- * on centre le média sur l’axe vertical pour un vide symétrique au-dessus / en dessous.
- * En pleine largeur (sans .contentShellInset), ce centrage n’est pas appliqué.
+ * Mode marges : la colonne texte peut être plus haute que le ratio du cadre média ;
+ * on étire la colonne média sur la hauteur de la rangée pour que l’image (cover) remplisse tout le bloc.
  */
 .contentShellInset .mediaPane.mediaFrameLandscape,
 .contentShellInset .mediaPane.mediaFrameSquare,
 .contentShellInset .mediaPane.mediaFramePortrait {
-  align-self: center;
+  align-self: stretch;
 }
 
 .grid {
@@ -52,7 +51,8 @@
   }
 
   .gridRatio50_50 {
-    grid-template-columns: 1fr 1fr;
+    /* Première colonne un peu plus large (souvent le texte) : titres longs sur une ligne plus souvent */
+    grid-template-columns: minmax(0, 1.14fr) minmax(0, 0.86fr);
   }
 }
 
@@ -73,17 +73,17 @@
 
 @media (min-width: 768px) {
   .textPane {
-    padding-inline: clamp(2.5rem, 9vw + 1rem, 8rem);
+    padding-inline: clamp(1.75rem, 5vw + 0.75rem, 5.25rem);
   }
 }
 
 .textPaneStack {
   width: 100%;
-  max-width: min(42.5rem, 100%);
+  max-width: min(50rem, 100%);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: clamp(1.65rem, 4vw, 2.6rem);
+  gap: clamp(1.1rem, 2.8vw, 1.75rem);
 }
 
 @media (max-width: 767px) {
@@ -93,18 +93,28 @@
   }
 
   /*
-   * Mode « marges » (.contentShellInset = 80 % de largeur) : le cadre média a déjà ~10 vw de chaque côté.
+   * Mode « marges » (.contentShellInset ≈ 88 % de largeur) : le cadre média a déjà ~6 vw de chaque côté.
    * Sans ajustement, .textPane réutilise le même padding-inline qu’en pleine largeur → texte trop resserré.
-   * On retire ces ~10 vw pour retrouver le même retrait depuis le bord de l’écran qu’en pleine largeur.
+   * On retire ces ~6 vw pour retrouver le même retrait depuis le bord de l’écran qu’en pleine largeur.
    */
   .contentShellInset .textPane {
     padding-inline: max(
         0.75rem,
-        calc(clamp(2rem, 7vw + 0.75rem, 6.5rem) - 10vw),
+        calc(clamp(2rem, 7vw + 0.75rem, 6.5rem) - 6vw),
         env(safe-area-inset-left, 0px)
       )
-      max(0.75rem, calc(clamp(2rem, 7vw + 0.75rem, 6.5rem) - 10vw), env(safe-area-inset-right, 0px));
+      max(0.75rem, calc(clamp(2rem, 7vw + 0.75rem, 6.5rem) - 6vw), env(safe-area-inset-right, 0px));
   }
+}
+
+.headingGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: clamp(0.2rem, 0.9vw, 0.4rem);
+  margin: 0;
+  max-width: none;
+  width: 100%;
 }
 
 .heading {
@@ -114,6 +124,16 @@
   font-weight: var(--segna-type-h2-weight);
   letter-spacing: var(--segna-type-h2-tracking);
   line-height: var(--segna-type-h2-leading);
+}
+
+.headingSubtitle {
+  margin: 0;
+  max-width: min(40rem, 100%);
+  font-family: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(0.98rem, 0.45vw + 0.9rem, 1.1rem);
+  font-weight: 400;
+  line-height: 1.5;
+  color: color-mix(in srgb, currentColor 76%, transparent);
 }
 
 /**
@@ -311,6 +331,19 @@
 
 @media (min-width: 768px) {
   .mediaPane {
+    min-height: 0;
+  }
+
+  /*
+   * Grille 2 colonnes : sans cela, aspect-ratio + max-height plafonnent la hauteur du média
+   * alors que la colonne texte grandit quand la largeur se réduit → bande de fond sous l’image.
+   */
+  .grid > .mediaPane.mediaFrameLandscape,
+  .grid > .mediaPane.mediaFrameSquare,
+  .grid > .mediaPane.mediaFramePortrait {
+    aspect-ratio: unset;
+    max-height: none;
+    align-self: stretch;
     min-height: 0;
   }
 }

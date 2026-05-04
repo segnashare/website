@@ -1,6 +1,15 @@
+/** Landmark unique : même nœud côté SSR et hydratation (évite mismatch avec un `<main>` serveur au-dessus du client). */
+.pageMain {
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .root {
   width: 100%;
   box-sizing: border-box;
+  /* Au-dessus des sections suivantes (tryptique, etc.) pour que la nav ne soit pas recouverte au scroll. */
+  position: relative;
+  z-index: 30;
 }
 
 /**

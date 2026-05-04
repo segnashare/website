@@ -1,17 +1,13 @@
-import {helpFaqItemResolvedGroq, sanityClient, type HelpFaqItem} from '@/lib/sanity'
+import {helpArticleQaItemsGroq, sanityClient, type HelpArticleQaItem} from '@/lib/sanity'
 
 export type HelpCenterSettingsData = {
   landingHeroTitle?: string
   landingHeroSubtitle?: string
   headerBrandLabel?: string
   headerHelpLabel?: string
-  homeLinkHref?: string
   searchPlaceholder?: string
   searchResultsTitle?: string
   accentHex?: string
-  footerCtaQuestion?: string
-  footerCtaLinkLabel?: string
-  footerCtaHref?: string
 }
 
 export type HelpCategoryListItem = {
@@ -68,7 +64,7 @@ export type HelpArticlePageData = {
   isFeatured?: boolean
   lastUpdated?: string
   body?: unknown[]
-  faqRefs?: HelpFaqItem[] | null
+  qaItems?: HelpArticleQaItem[] | null
   category?: {
     _id: string
     title?: string
@@ -101,13 +97,9 @@ const settingsProjection = `{
   landingHeroSubtitle,
   headerBrandLabel,
   headerHelpLabel,
-  homeLinkHref,
   searchPlaceholder,
   searchResultsTitle,
-  accentHex,
-  footerCtaQuestion,
-  footerCtaLinkLabel,
-  footerCtaHref
+  accentHex
 }`
 
 export async function getHelpCenterSettings(): Promise<HelpCenterSettingsData | null> {
@@ -204,7 +196,7 @@ export async function getHelpRootArticleBySlugs(
       isFeatured,
       lastUpdated,
       body,
-      faqRefs[]->${helpFaqItemResolvedGroq},
+      ${helpArticleQaItemsGroq},
       category->{
         _id,
         title,
@@ -238,7 +230,7 @@ export async function getHelpNestedArticleBySlugs(
       isFeatured,
       lastUpdated,
       body,
-      faqRefs[]->${helpFaqItemResolvedGroq},
+      ${helpArticleQaItemsGroq},
       category->{
         _id,
         title,
@@ -289,12 +281,25 @@ export async function searchHelpArticles(query: string): Promise<HelpSearchHit[]
   )
 }
 
+/** URL publique à partir des slugs (catégorie, sous-section optionnelle, article). */
+export function helpArticleHrefFromSlugs(
+  categorySlug?: string | null,
+  subsectionSlug?: string | null,
+  articleSlug?: string | null,
+): string | null {
+  const cat = categorySlug?.trim()
+  const art = articleSlug?.trim()
+  if (!cat || !art) return null
+  const sub = subsectionSlug?.trim()
+  if (sub) return `/aide/${cat}/${sub}/${art}`
+  return `/aide/${cat}/${art}`
+}
+
 /** URL publique d’un article d’aide */
 export function helpArticleHref(hit: Pick<HelpSearchHit, 'category' | 'section' | 'slug'>): string | null {
-  const catSlug = hit.category?.slug?.current
-  const artSlug = hit.slug?.current
-  if (!catSlug || !artSlug) return null
-  const subSlug = hit.section?.slug?.current
-  if (subSlug) return `/aide/${catSlug}/${subSlug}/${artSlug}`
-  return `/aide/${catSlug}/${artSlug}`
+  return helpArticleHrefFromSlugs(
+    hit.category?.slug?.current,
+    hit.section?.slug?.current,
+    hit.slug?.current,
+  )
 }

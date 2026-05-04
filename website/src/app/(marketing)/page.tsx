@@ -1,8 +1,8 @@
 import type {Metadata} from 'next'
 import {PageSections} from '@/components/cms/PageSections'
 import {getHomePageData, urlFor} from '@/lib/sanity'
-import {HomeHero} from '../components/home/HomeHero'
-import {HomeStagedHero} from '../components/home/HomeStagedHero'
+import {HomeHero} from '@/components/home/HomeHero'
+import {HomeStagedHero} from '@/components/home/HomeStagedHero'
 import styles from '@/components/home/homeHero.module.css'
 
 export const revalidate = 30

@@ -1,3 +1,8 @@
+/* Bloc liste + pagination : air avant le footer du site. */
+.catalogPageRoot {
+  padding-bottom: clamp(2.75rem, 7vw, 5rem);
+}
+
 /* Layout type vitrine : marges filtres + grille centrale (desktop). */
 
 .layout {
@@ -24,6 +29,11 @@
 }
 
 @media (max-width: 1023px) {
+  .catalogPageRoot {
+    padding-inline: clamp(0.85rem, 4vw, 1.35rem);
+    box-sizing: border-box;
+  }
+
   .layoutBleed {
     grid-template-columns: minmax(0, 1fr);
     width: 100%;

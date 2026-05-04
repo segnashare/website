@@ -1,8 +1,9 @@
 import type {Metadata} from 'next'
 import type {CSSProperties} from 'react'
-import {HelpFooterCta} from '@/components/help/HelpFooterCta'
 import {HelpHeader} from '@/components/help/HelpHeader'
+import {SiteFooter} from '@/components/layout/SiteFooter'
 import styles from '@/components/help/help.module.css'
+import {getWebsiteFooter} from '@/lib/sanity'
 import {getHelpCenterSettings} from '@/lib/sanity-help'
 
 export const metadata: Metadata = {
@@ -16,7 +17,7 @@ function resolveAccent(hex: string | undefined): string {
 }
 
 export default async function AideLayout({children}: Readonly<{children: React.ReactNode}>) {
-  const settings = await getHelpCenterSettings()
+  const [settings, footer] = await Promise.all([getHelpCenterSettings(), getWebsiteFooter()])
   const accent = resolveAccent(settings?.accentHex)
 
   const shellStyle: CSSProperties & {'--help-accent'?: string} = {'--help-accent': accent}
@@ -25,7 +26,7 @@ export default async function AideLayout({children}: Readonly<{children: React.R
     <div className={styles.shell} style={shellStyle}>
       <HelpHeader settings={settings} />
       {children}
-      <HelpFooterCta settings={settings} />
+      <SiteFooter data={footer} />
     </div>
   )
 }

@@ -1,0 +1,247 @@
+.band {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  box-sizing: border-box;
+  padding: clamp(2.75rem, 6vw, 4.25rem) clamp(0.75rem, 2.5vw, 2rem);
+}
+
+.toneTextBlack {
+  color: #0f172a;
+}
+
+.toneTextWhite {
+  color: #f8fafc;
+}
+
+.inner {
+  max-width: min(1360px, 100%);
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: clamp(2rem, 4.5vw, 3rem);
+}
+
+.sectionTitle {
+  margin: 0 0 clamp(0.65rem, 2vw, 0.9rem);
+  font-family: var(--font-playfair-display), Georgia, serif;
+  font-size: clamp(1.85rem, 4vw, 2.65rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: inherit;
+}
+
+.sectionSubtitle {
+  margin: 0 auto;
+  max-width: 40rem;
+  font-family: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(0.95rem, 1.4vw, 1.08rem);
+  line-height: 1.65;
+  font-weight: 400;
+}
+
+.toneTextBlack .sectionSubtitle {
+  color: color-mix(in srgb, currentColor 55%, #334155);
+}
+
+.toneTextWhite .sectionSubtitle {
+  color: rgb(255 255 255 / 0.78);
+}
+
+.cards {
+  display: grid;
+  gap: clamp(1.75rem, 4vw, 2.75rem);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 900px) {
+  .cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: clamp(2.75rem, 6.5vw, 5.5rem);
+    row-gap: clamp(1.75rem, 4vw, 2.75rem);
+  }
+}
+
+.card {
+  position: relative;
+  box-sizing: border-box;
+  padding: clamp(1.35rem, 2.5vw, 1.65rem) clamp(1.2rem, 2.2vw, 1.5rem);
+  border-radius: 1rem;
+  background: #fff;
+  color: #0f172a;
+  box-shadow: 0 10px 36px rgb(15 23 42 / 0.08);
+  border: 1px solid rgb(15 23 42 / 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* Carte sans image : un peu plus de retrait vertical pour équilibrer le bloc texte. */
+.cardNoMedia:not(.cardBare) {
+  padding-top: clamp(1.5rem, 3vw, 2rem);
+}
+
+/* Photo + texte, sans fond blanc ni ombre (couleurs de texte = bandeau). */
+.cardBare {
+  position: relative;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.media {
+  position: relative;
+  width: 100%;
+  margin: 0 0 clamp(1.1rem, 2.2vw, 1.35rem);
+  margin-top: clamp(0.25rem, 1vw, 0.35rem);
+  border-radius: 0.65rem;
+  overflow: hidden;
+  background: #f1f5f9;
+  align-self: center;
+  max-width: 100%;
+}
+
+.mediaSquare {
+  aspect-ratio: 1;
+}
+
+.mediaPortrait {
+  aspect-ratio: 3 / 4;
+}
+
+.mediaLandscape {
+  aspect-ratio: 4 / 3;
+}
+
+.mediaBare {
+  margin-top: 0;
+  margin-bottom: clamp(0.75rem, 2vw, 1rem);
+  align-self: stretch;
+}
+
+.mediaImg {
+  object-fit: cover;
+}
+
+.cardTitle {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(1.06rem, 1.5vw, 1.2rem);
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+  color: #0f172a;
+}
+
+.cardDesc {
+  margin: 0;
+  font-family: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(0.94rem, 1.28vw, 1.04rem);
+  line-height: 1.58;
+  font-weight: 400;
+  text-align: center;
+  color: rgb(51 65 85 / 0.92);
+}
+
+.cardDesc :global(a) {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.cardTitleBare {
+  color: inherit;
+}
+
+.cardDescBare {
+  color: color-mix(in srgb, currentColor 72%, transparent);
+}
+
+.footer {
+  margin-top: clamp(2.25rem, 4.5vw, 3.25rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  text-align: center;
+}
+
+.primaryCta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.78rem 1.6rem;
+  border-radius: 999px;
+  font-family: var(--font-montserrat), ui-sans-serif, sans-serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.toneTextBlack .primaryCta {
+  color: #fff;
+  background: #0f172a;
+  border: 1px solid #0f172a;
+}
+
+.toneTextBlack .primaryCta:hover,
+.toneTextBlack .primaryCta:focus-visible {
+  background: #1e293b;
+  border-color: #1e293b;
+  color: #fff;
+}
+
+.toneTextWhite .primaryCta {
+  color: #0f172a;
+  background: #fff;
+  border: 1px solid #fff;
+}
+
+.toneTextWhite .primaryCta:hover,
+.toneTextWhite .primaryCta:focus-visible {
+  background: #f1f5f9;
+  border-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.secondaryLink {
+  font-family: var(--font-montserrat), ui-sans-serif, sans-serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  padding: 0;
+}
+
+.toneTextBlack .secondaryLink {
+  color: inherit;
+}
+
+.toneTextBlack .secondaryLink:hover,
+.toneTextBlack .secondaryLink:focus-visible {
+  opacity: 0.85;
+}
+
+.toneTextWhite .secondaryLink {
+  color: #fff;
+}
+
+.toneTextWhite .secondaryLink:hover,
+.toneTextWhite .secondaryLink:focus-visible {
+  opacity: 0.88;
+}

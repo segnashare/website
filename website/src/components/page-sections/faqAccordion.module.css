@@ -4,6 +4,10 @@
   box-sizing: border-box;
 }
 
+.rootEmbedded {
+  margin-top: 0;
+}
+
 .item {
   border-bottom: 1px solid color-mix(in srgb, currentColor 14%, transparent);
 }
@@ -65,4 +69,21 @@
 
 .answerRich :global(p:last-child) {
   margin-bottom: 0;
+}
+
+.articleLinkWrap {
+  margin: 0.85rem 0 0;
+}
+
+.articleLink {
+  font-size: clamp(0.88rem, 1vw, 0.95rem);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  opacity: 0.92;
+}
+
+.articleLink:hover,
+.articleLink:focus-visible {
+  opacity: 1;
 }

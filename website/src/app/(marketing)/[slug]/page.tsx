@@ -60,12 +60,10 @@ export default async function MarketingDynamicPage({params}: PageProps) {
   const cta = customCta ?? fallbackCta
 
   return (
-    <main>
-      <MarketingFullBleedHero marketing={marketingPage} headerNav={headerNav} cta={cta} />
-
+    <MarketingFullBleedHero marketing={marketingPage} headerNav={headerNav} cta={cta}>
       <div className="container" style={{paddingBlock: '0 4rem'}}>
         <PageSections sections={marketingPage.sections} afterFullBleedHero />
       </div>
-    </main>
+    </MarketingFullBleedHero>
   )
 }

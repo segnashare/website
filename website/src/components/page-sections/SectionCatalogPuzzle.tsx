@@ -9,6 +9,7 @@ import {
 import {objectPositionFromHotspot} from '@/lib/homeStagedPlacements'
 import {CtaHrefLink} from '@/components/home/heroShared'
 import {CatalogPuzzleIntroFit} from '@/components/page-sections/CatalogPuzzleIntroFit'
+import {inferIntroToneFromBackground} from '@/lib/inferIntroToneFromBackground'
 import styles from './catalogPuzzle.module.css'
 
 type Props = {
@@ -106,6 +107,11 @@ export function SectionCatalogPuzzle({section}: Props) {
     ? {backgroundColor: section.backgroundColor.trim()}
     : undefined
 
+  const introTone =
+    section.surfaceTheme === 'light' || section.surfaceTheme === 'dark'
+      ? section.surfaceTheme
+      : inferIntroToneFromBackground(section.backgroundColor) ?? 'light'
+
   return (
     <section
       className={styles.section}
@@ -119,6 +125,7 @@ export function SectionCatalogPuzzle({section}: Props) {
             lead={section.lead?.trim()}
             introCtaLabel={section.introCtaLabel}
             introCtaHref={section.introCtaHref}
+            introTone={introTone}
           />
         </header>
       ) : null}

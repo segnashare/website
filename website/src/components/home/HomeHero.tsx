@@ -3,8 +3,10 @@
 import {useEffect, useMemo, useState} from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import {usePathname} from 'next/navigation'
 import {motion, useReducedMotion} from 'framer-motion'
 import type {HomePageData} from '@/lib/sanity'
+import {visibleMobileMainNavItems} from '@/lib/mobileMainNav'
 import {CtaHrefLink} from './heroShared'
 import {useNavScrollElevated} from './useNavScrollElevated'
 import styles from './homeHero.module.css'
@@ -17,6 +19,7 @@ type HomeHeroProps = {
 export function HomeHero({homePage, backgroundImageUrl}: HomeHeroProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isIntroComplete, setIsIntroComplete] = useState(false)
+  const pathname = usePathname() || '/'
   const shouldReduceMotion = useReducedMotion()
 
   useEffect(() => {
@@ -26,6 +29,10 @@ export function HomeHero({homePage, backgroundImageUrl}: HomeHeroProps) {
       document.body.style.overflow = previousOverflow
     }
   }, [isMenuOpen])
+
+  useEffect(() => {
+    setIsMenuOpen(false)
+  }, [pathname])
 
   useEffect(() => {
     if (shouldReduceMotion) {
@@ -42,16 +49,7 @@ export function HomeHero({homePage, backgroundImageUrl}: HomeHeroProps) {
 
   const navItems = homePage.navItems ?? []
 
-  const mobileMenuItems = useMemo(() => {
-    if (navItems.length > 0) return navItems
-    return [
-      {_key: 'mission', label: 'Mission', href: '#'},
-      {_key: 'impact', label: 'Impact', href: '#'},
-      {_key: 'labs', label: 'Labs', href: '#'},
-      {_key: 'newsroom', label: 'Newsroom', href: '/newsroom'},
-      {_key: 'careers', label: 'Careers', href: '#'},
-    ]
-  }, [navItems])
+  const mobileMenuItems = useMemo(() => visibleMobileMainNavItems(pathname), [pathname])
 
   const logoUrl = homePage.segnaLogo?.asset?.url
   const logoMime = homePage.segnaLogo?.asset?.mimeType

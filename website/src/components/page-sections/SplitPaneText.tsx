@@ -44,19 +44,23 @@ export function SplitPaneText({pane, foregroundColor}: Props) {
   const tab1Text = tabLabelText(pane.tab1Label)
   const tab2Text = tabLabelText(pane.tab2Label)
   const dualOn = isDualTabsEnabledFlag(pane.dualTabsEnabled)
+  /** Désactivé explicitement dans le CMS : on n’affiche plus les onglets même si d’anciens libellés/corps restent en JSON. */
+  const dualExplicitlyOff = pane.dualTabsEnabled === false
   /**
    * Afficher la barre d’onglets si :
-   * — les deux libellés sont renseignés (même si le booléen « deux états » manque en base), ou
-   * — option « deux états » cochée + au moins un libellé, un corps d’onglet ou le corps unique.
+   * — option « deux états » désactivée → jamais (contenu « sans onglets » uniquement) ;
+   * — sinon, rétrocompat : deux libellés renseignés alors que le booléen n’existait pas encore en base ;
+   * — sinon, option cochée + au moins un libellé, un corps d’onglet ou le corps unique.
    */
-  const showTabs =
-    (Boolean(tab1Text) && Boolean(tab2Text)) ||
-    (dualOn &&
-      (Boolean(tab1Text) ||
-        Boolean(tab2Text) ||
-        blocksNonEmpty(pane.tab1Body) ||
-        blocksNonEmpty(pane.tab2Body) ||
-        blocksNonEmpty(pane.body)))
+  const showTabs = dualExplicitlyOff
+    ? false
+    : (Boolean(tab1Text) && Boolean(tab2Text)) ||
+      (dualOn &&
+        (Boolean(tab1Text) ||
+          Boolean(tab2Text) ||
+          blocksNonEmpty(pane.tab1Body) ||
+          blocksNonEmpty(pane.tab2Body) ||
+          blocksNonEmpty(pane.body)))
   const displayTab1 = tab1Text || 'État 1'
   const displayTab2 = tab2Text || 'État 2'
 
@@ -87,7 +91,14 @@ export function SplitPaneText({pane, foregroundColor}: Props) {
   return (
     <div className={`${styles.pane} ${styles.textPane}`} style={paneStyle}>
       <div className={styles.textPaneStack}>
-        {pane.heading?.trim() ? <h2 className={styles.heading}>{pane.heading.trim()}</h2> : null}
+        {pane.heading?.trim() || pane.headingSubtitle?.trim() ? (
+          <div className={styles.headingGroup}>
+            {pane.heading?.trim() ? <h2 className={styles.heading}>{pane.heading.trim()}</h2> : null}
+            {pane.headingSubtitle?.trim() ? (
+              <p className={styles.headingSubtitle}>{pane.headingSubtitle.trim()}</p>
+            ) : null}
+          </div>
+        ) : null}
 
         {showTabs ? (
           <div className={styles.tabRailGrid} role="tablist" aria-label="Contenu à bascule">
@@ -128,7 +139,7 @@ export function SplitPaneText({pane, foregroundColor}: Props) {
           )
         ) : null}
 
-        <FaqAccordion items={pane.faqRefs} />
+        <FaqAccordion items={pane.helpArticleRefs} />
       </div>
     </div>
   )

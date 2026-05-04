@@ -196,7 +196,7 @@ export function CatalogBrowseLinked({payload, brandBand}: {payload: CatalogBrows
   const marquesResetHrefFull = withQuery(marquesResetHref(resolved), {...query, page: 1})
 
   return (
-    <div>
+    <div className={styles.catalogPageRoot}>
       <div className={styles.layoutBleed}>
         <aside className={styles.rail} aria-label="Catégories et marques">
           <div className={styles.railBlock}>

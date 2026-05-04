@@ -57,7 +57,7 @@ export function SectionSplitMedia({section, imagePosition: _imagePosition}: Prop
             </div>
           </div>
         ) : null}
-        <FaqAccordion items={section.faqRefs} className={lightText ? catalogStyles.introOnDark : undefined} />
+        <FaqAccordion items={section.helpArticleRefs} className={lightText ? catalogStyles.introOnDark : undefined} />
       </div>
     </section>
   )

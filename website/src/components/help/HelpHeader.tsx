@@ -22,16 +22,21 @@ function SearchIcon() {
 export function HelpHeader({settings, compactSearch = true}: HelpHeaderProps) {
   const brand = settings?.headerBrandLabel ?? 'Segna'
   const helpLabel = settings?.headerHelpLabel ?? 'Centre d’aide'
-  const homeHref = settings?.homeLinkHref ?? '/'
+  /** Accueil marketing du site (indépendant du lien « Retour au site » du pied d’aide). */
+  const mainSiteHref = '/'
   const placeholder = settings?.searchPlaceholder ?? 'Rechercher'
 
   return (
     <header className={styles.header}>
       <div className={styles.headerInner}>
-        <Link href={homeHref} className={styles.brand}>
-          <span>{brand}</span>
-          <span className={styles.brandHelp}>{helpLabel}</span>
-        </Link>
+        <div className={styles.brand}>
+          <Link href={mainSiteHref} className={styles.brandMain}>
+            {brand}
+          </Link>
+          <Link href="/aide" className={styles.brandHelp}>
+            {helpLabel}
+          </Link>
+        </div>
         <form
           className={compactSearch ? styles.searchForm : `${styles.searchForm} ${styles.heroSearch}`}
           action="/aide/recherche"

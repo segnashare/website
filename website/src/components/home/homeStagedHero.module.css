@@ -103,7 +103,7 @@
   padding-bottom: clamp(9.35rem, 8.5vh, 10.25rem);
 }
 
-@media (min-width: 1025px) {
+@media (min-width: 1201px) {
   .stagedHeroLower {
     padding-bottom: clamp(8.5rem, 6.25vh, 15.5rem);
   }
@@ -119,10 +119,47 @@
 }
 
 /* Desktop : un peu plus à droite et un peu plus haut que le coin bas-gauche. */
-@media (min-width: 1025px) {
+@media (min-width: 1201px) {
   .stagedHeroColumn {
     margin-left: clamp(10.25rem, 5.5vw, 10.75rem);
     transform: translateY(clamp(-1.1rem, -2.4vh, -1.65rem));
+  }
+}
+
+/*
+ * Viewports « bas » (ratio largeur/hauteur modéré) : sans override, le bloc titre reste trop à droite / haut
+ * vs un 16:9 large ; on le rapproche du bas-gauche. Les écrans très larges (ratio > 3/2) gardent le desktop ci-dessus.
+ */
+@media (min-width: 1201px) and (max-aspect-ratio: 11/10) {
+  /* Moins de marge basse qu’en 16:9 : avec `align-items: flex-end`, ça laisse le bloc un peu plus bas. */
+  .stagedHeroLower {
+    padding-bottom: clamp(5.75rem, 4.8vh, 8.75rem);
+  }
+
+  .stagedHeroColumn {
+    margin-left: clamp(1.25rem, 3.5vw, 3.75rem);
+    transform: translateY(clamp(0.15rem, 0.65vh, 0.95rem));
+  }
+
+  .stagedHeroTitleWrap {
+    width: 128%;
+    max-width: min(46rem, calc(100vw - clamp(2rem, 5vw, 3.5rem)));
+  }
+}
+
+@media (min-width: 1201px) and (min-aspect-ratio: 11/10) and (max-aspect-ratio: 3/2) {
+  .stagedHeroLower {
+    padding-bottom: clamp(6rem, 5.1vh, 9.25rem);
+  }
+
+  .stagedHeroColumn {
+    margin-left: clamp(2.75rem, 3.8vw, 5.5rem);
+    transform: translateY(clamp(0.05rem, 0.35vh, 0.55rem));
+  }
+
+  .stagedHeroTitleWrap {
+    width: 136%;
+    max-width: min(48rem, calc(100vw - clamp(2rem, 5vw, 4rem)));
   }
 }
 
@@ -132,7 +169,7 @@
   align-self: flex-start;
 }
 
-@media (min-width: 1025px) {
+@media (min-width: 1201px) {
   .stagedHeroTitleWrap {
     width: 150%;
     max-width: calc(100vw - clamp(2.5rem, 6vw, 5.5rem));
@@ -181,7 +218,7 @@
   color: rgb(255 255 255 / 0.9);
 }
 
-/* Desktop (≥1025px avec hero « image ») : pastille blanche, texte + icône foncés (lisibles). */
+/* Desktop (≥1201px avec hero « image ») : pastille blanche, texte + icône foncés (lisibles). */
 .searchBubble {
   flex-shrink: 0;
   display: inline-flex;
@@ -224,7 +261,7 @@
   white-space: nowrap;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
   .stagedHeroContentLayer .searchBubble {
     width: 2.68rem;
     min-width: 2.68rem;
@@ -294,10 +331,15 @@
   object-fit: contain;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
   .stagedHeroRoot {
     display: flex;
     flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    overflow-x: clip;
     /* Pas de min-height plein écran : 100dvh laissait une grande zone blanche sous le visu avant les sections. */
     background: #fff;
     /* Air modéré entre le bas du visu et la 1re section (citation), sans retrouver l’excès d’avant. */
@@ -339,6 +381,7 @@
     flex: 0 0 auto;
     align-self: stretch;
     width: 100%;
+    min-width: 0;
     max-width: none;
     min-height: min(34dvh, 19rem);
     max-height: 36dvh;
@@ -394,6 +437,7 @@
     width: 100%;
     max-width: none;
     margin-inline: 0;
+    transform: none;
     align-items: flex-start;
     gap: 2.35rem;
   }
@@ -404,7 +448,8 @@
     text-align: left;
   }
 
-  .stagedHeroTitle {
+  /* Texte foncé seulement sur le hero accueil « replié » (titre sur fond blanc) — pas sur les pages marketing. */
+  .stagedHeroRoot .stagedHeroContentLayer .stagedHeroTitle {
     font-size: clamp(2.2rem, 7.2vw, 3.05rem);
     color: #111;
     text-wrap: balance;

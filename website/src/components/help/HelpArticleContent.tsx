@@ -30,7 +30,7 @@ export function HelpArticleContent({article, backHref, backLabel, breadcrumbItem
         <h1 className={styles.articlePageTitle}>{article.title}</h1>
         {updated ? <p className={styles.lastUpdated}>Dernière mise à jour : {updated}</p> : null}
         <HelpPortableText value={article.body as unknown[] | undefined} />
-        <FaqAccordion items={article.faqRefs} />
+        <FaqAccordion items={article.qaItems} />
       </article>
 
       <p style={{marginTop: '2.5rem', fontSize: '0.9rem'}}>

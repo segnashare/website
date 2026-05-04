@@ -2,8 +2,10 @@
 
 import {useEffect, useMemo, useState} from 'react'
 import Link from 'next/link'
+import {usePathname} from 'next/navigation'
 import {motion, useReducedMotion} from 'framer-motion'
 import type {WebsiteHeaderNavData} from '@/lib/sanity'
+import {visibleMobileMainNavItems} from '@/lib/mobileMainNav'
 import {CtaHrefLink} from './heroShared'
 import {useNavScrollElevated} from './useNavScrollElevated'
 import styles from './homeHero.module.css'
@@ -17,6 +19,7 @@ type Props = {
 
 export function SiteNavChrome({header, mobileNavId, mobileSurface = 'transparent'}: Props) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const pathname = usePathname() || '/'
   const shouldReduceMotion = useReducedMotion()
   const contentAnimationState = 'visible' as const
 
@@ -28,18 +31,13 @@ export function SiteNavChrome({header, mobileNavId, mobileSurface = 'transparent
     }
   }, [isMenuOpen])
 
+  useEffect(() => {
+    setIsMenuOpen(false)
+  }, [pathname])
+
   const navItems = header?.navItems ?? []
 
-  const mobileMenuItems = useMemo(() => {
-    if (navItems.length > 0) return navItems
-    return [
-      {_key: 'mission', label: 'Mission', href: '#'},
-      {_key: 'impact', label: 'Impact', href: '#'},
-      {_key: 'labs', label: 'Labs', href: '#'},
-      {_key: 'newsroom', label: 'Newsroom', href: '/newsroom'},
-      {_key: 'careers', label: 'Careers', href: '#'},
-    ]
-  }, [navItems])
+  const mobileMenuItems = useMemo(() => visibleMobileMainNavItems(pathname), [pathname])
 
   const logoUrl = header?.segnaLogo?.asset?.url
   const logoMime = header?.segnaLogo?.asset?.mimeType

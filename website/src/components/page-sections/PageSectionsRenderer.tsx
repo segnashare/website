@@ -8,7 +8,9 @@ import {SectionQuote} from './SectionQuote'
 import {SectionSplitFeature} from './SectionSplitFeature'
 import {SectionSplitMedia} from './SectionSplitMedia'
 import {SectionStatementBand} from './SectionStatementBand'
+import {SectionThreeStepCards} from './SectionThreeStepCards'
 import {SectionTriptych} from './SectionTriptych'
+import {SectionTwoColumnTable} from './SectionTwoColumnTable'
 import {SectionWebsiteDbCatalog} from './SectionWebsiteDbCatalog'
 import styles from './page-sections.module.css'
 
@@ -21,6 +23,12 @@ export type PageSectionsRendererProps = {
 
 function isRichTextSection(section: PageSection): section is Extract<PageSection, {_type: 'richTextSection'}> {
   return section._type === 'richTextSection'
+}
+
+function isTwoColumnTableSection(
+  section: PageSection,
+): section is Extract<PageSection, {_type: 'twoColumnTableSection'}> {
+  return section._type === 'twoColumnTableSection'
 }
 
 function isHelpCenterHubSection(
@@ -39,6 +47,12 @@ function isQuoteSection(section: PageSection): section is Extract<PageSection, {
 
 function isTriptychSection(section: PageSection): section is Extract<PageSection, {_type: 'triptychSection'}> {
   return section._type === 'triptychSection'
+}
+
+function isThreeStepCardsSection(
+  section: PageSection,
+): section is Extract<PageSection, {_type: 'threeStepCardsSection'}> {
+  return section._type === 'threeStepCardsSection'
 }
 
 function isCatalogPuzzleSection(
@@ -92,11 +106,7 @@ export function PageSectionsRenderer({
         const key = section._key
 
         if (isHelpCenterHubSection(section)) {
-          return (
-            <Suspense key={key} fallback={<p className={styles.asyncFallback}>Chargement du centre d’aide…</p>}>
-              <SectionHelpCenterHub section={section} />
-            </Suspense>
-          )
+          return <SectionHelpCenterHub key={key} section={section} />
         }
 
         if (isStatementBand(section)) {
@@ -105,6 +115,10 @@ export function PageSectionsRenderer({
 
         if (isQuoteSection(section)) {
           return <SectionQuote key={key} section={section} />
+        }
+
+        if (isThreeStepCardsSection(section)) {
+          return <SectionThreeStepCards key={key} section={section} />
         }
 
         if (isTriptychSection(section)) {
@@ -133,6 +147,10 @@ export function PageSectionsRenderer({
 
         if (isRichTextSection(section)) {
           return <SectionProse key={key} section={section} />
+        }
+
+        if (isTwoColumnTableSection(section)) {
+          return <SectionTwoColumnTable key={key} section={section} />
         }
 
         if (isSectionBlock(section)) {

@@ -3,22 +3,21 @@
   min-height: 100vh;
   color: #fff;
   overflow: hidden;
+  /*
+   * Au-dessus du `.shell` (sections sous le hero) : sans cela, le frère suivant dans le DOM
+   * (tryptique, transforms Framer…) se compose au-dessus et recouvre le header fixe au scroll.
+   */
+  z-index: 30;
 }
 
 /* HomeStagedHero : le wrapper réutilise `.hero` (100vh) ; en pile mobile ça laissait un vide blanc énorme sous le visu. */
-@media (max-width: 1024px) {
-  /*
-   * Le header mobile est `position: fixed` mais vit sous `.contentLayer` (z-index local).
-   * Sans z-index sur `.hero`, les sections suivantes (tryptique, Framer `transform`, etc.)
-   * peuvent composer au-dessus et masquer la barre au scroll.
-   */
-  .hero {
-    z-index: 30;
-  }
-
+/* Nav : 1200px (au lieu de 1024) pour afficher la barre hamburger avant que les liens + CTA desktop ne wrappent. */
+@media (max-width: 1200px) {
   .hero.heroStagedStack {
     min-height: unset;
-    overflow: visible;
+    /* `overflow-x: visible` laissait parfois un débordement (slots / Framer) → bande blanche à droite. */
+    overflow-x: clip;
+    overflow-y: visible;
   }
 }
 
@@ -242,6 +241,7 @@
   font-size: var(--segna-type-h1-size-single);
   line-height: var(--segna-type-h1-leading);
   letter-spacing: var(--segna-type-h1-tracking);
+  color: #fff;
 }
 
 .mobileHeader {
@@ -315,6 +315,7 @@
   line-height: var(--segna-type-h1-leading);
   letter-spacing: var(--segna-type-h1-tracking);
   max-width: 12ch;
+  color: #fff;
 }
 
 .mobileMenuOverlay {
@@ -371,6 +372,50 @@
   text-decoration: underline;
 }
 
+/* Menu plein écran (téléphone / header mobile) : fond blanc, texte noir, liens plus compacts. */
+@media (max-width: 1200px) {
+  .mobileMenuOverlay {
+    background: #fff;
+    color: #14110f;
+  }
+
+  .mobileMenuNav {
+    margin-top: clamp(4.5rem, 14vw, 5.25rem);
+    padding: 0 clamp(1rem, 4vw, 1.35rem) 1.5rem;
+  }
+
+  .mobileMenuLink {
+    font-size: clamp(2.2rem, 5.5vw, 3rem);
+    line-height: 1.14;
+    padding: 0.95rem 0;
+    color: #14110f;
+    border-bottom-color: rgb(20 17 15 / 0.1);
+    text-decoration: none;
+  }
+
+  .mobileMenuLink:hover {
+    color: #000;
+  }
+
+  .mobileMenuLink:focus-visible {
+    outline: 2px solid #14110f;
+    outline-offset: 2px;
+  }
+
+  .mobileMenuCtas {
+    padding-inline: clamp(1rem, 4vw, 1.35rem);
+  }
+
+  .mobileMenuSecondaryCta {
+    color: #14110f;
+    opacity: 1;
+  }
+
+  .mobileMenuSecondaryCta:hover {
+    color: #000;
+  }
+}
+
 .mobileHeaderBrand {
   position: static;
   justify-self: center;
@@ -390,9 +435,9 @@
   justify-content: center;
   min-height: 1.95rem;
   border-radius: 100px;
-  border: 1px solid #f4f4f4;
-  background: #f4f4f4;
-  color: #111;
+  border: 1px solid #111;
+  background: #111;
+  color: #fff;
   padding: 0.38rem 0.9rem;
   font-size: 0.86rem;
   line-height: 1;
@@ -400,6 +445,14 @@
   white-space: nowrap;
   margin-left: 0.5rem;
   transform: translateY(2px);
+  text-decoration: none;
+}
+
+.mobileHeaderCta:hover,
+.mobileHeaderCta:focus-visible {
+  background: #000;
+  border-color: #000;
+  color: #fff;
 }
 
 .fallback {
@@ -409,7 +462,7 @@
   padding: 2rem;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
   .desktopHeader,
   .heroContent {
     display: none;
@@ -468,12 +521,6 @@
   .mobileHeaderOnDark .mobileHeaderBrand {
     color: #fff;
   }
-
-  .mobileHeaderOnDark .mobileHeaderCta {
-    border-color: rgb(255 255 255 / 0.55);
-    background: transparent;
-    color: #fff;
-  }
 }
 
 @media (max-width: 380px) {
@@ -494,7 +541,7 @@
   }
 }
 
-@media (min-width: 1025px) {
+@media (min-width: 1201px) {
   .mobileHeader,
   .mobileTitleWrap {
     display: none;
@@ -596,7 +643,7 @@
   color: #111;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
   .surfaceLight .mobileHeader {
     background: #fff;
     box-shadow: none;
@@ -637,11 +684,5 @@
 
   .mobileHeaderBrand .brandLogo {
     filter: brightness(0);
-  }
-
-  .mobileHeaderOnDark .mobileHeaderCta {
-    border: 1px solid #111;
-    background: #111;
-    color: #fff;
   }
 }

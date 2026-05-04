@@ -8,11 +8,15 @@ import './portableRichText.module.css'
 type PortableRichTextProps = {
   value: PortableTextBlock[]
   className?: string
+  /** Marges de paragraphe plus serrées (ex. cartes marketing). */
+  variant?: 'default' | 'compact'
 }
 
-const components: PortableTextComponents = {
+function portableComponents(variant: 'default' | 'compact'): PortableTextComponents {
+  const paragraphMarginBottom = variant === 'compact' ? '0.45rem' : '0.75rem'
+  return {
   block: {
-    normal: ({children}) => <p style={{margin: '0 0 0.75rem'}}>{children}</p>,
+    normal: ({children}) => <p style={{margin: `0 0 ${paragraphMarginBottom}`}}>{children}</p>,
     h1: ({children}) => <h2 style={{margin: '1.5rem 0 0.5rem'}}>{children}</h2>,
     h2: ({children}) => <h3 style={{margin: '1.25rem 0 0.5rem'}}>{children}</h3>,
     h3: ({children}) => <h4 style={{margin: '1rem 0 0.35rem'}}>{children}</h4>,
@@ -71,9 +75,11 @@ const components: PortableTextComponents = {
     },
   },
 }
+}
 
-export function PortableRichText({value, className}: PortableRichTextProps) {
+export function PortableRichText({value, className, variant = 'default'}: PortableRichTextProps) {
   if (!value?.length) return null
+  const components = portableComponents(variant)
   return (
     <div className={className}>
       <PortableText value={value} components={components} />

@@ -61,7 +61,7 @@ export function CatalogPuzzleIntroFit({
         <div className={styles.introHeadingRow}>
           {h ? <h2 className={styles.heading}>{h}</h2> : <div className={styles.introHeadingSpacer} aria-hidden />}
           {showCta ? (
-            <CtaHrefLink href={ctaHref} className={styles.introCta}>
+            <CtaHrefLink href={ctaHref} className={styles.introCta} ariaLabel={ctaLabel}>
               <span className={styles.introCtaLabel}>{ctaLabel}</span>
               <IntroCtaArrow />
             </CtaHrefLink>

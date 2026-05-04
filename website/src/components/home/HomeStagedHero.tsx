@@ -66,7 +66,7 @@ export function HomeStagedHero({homePage}: Props) {
   const searchButtonLabel = homePage.heroStagedSearchButtonLabel?.trim() || 'Rechercher'
 
   const stagedSizes =
-    '(max-width: 1024px) min(82vw, 420px), min(92vw, 2400px)'
+    '(max-width: 1200px) min(82vw, 420px), min(92vw, 2400px)'
 
   return (
     <div className={`${styles.hero} ${styles.heroStagedStack} ${staged.stagedHeroRoot}`}>

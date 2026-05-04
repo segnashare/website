@@ -1,6 +1,6 @@
 'use client'
 
-import {useMemo} from 'react'
+import {useMemo, type ReactNode} from 'react'
 import Image from 'next/image'
 import {motion, useReducedMotion} from 'framer-motion'
 import type {MarketingPageData, WebsiteHeaderNavData} from '@/lib/sanity'
@@ -16,12 +16,17 @@ import m from './marketingFullBleedHero.module.css'
 type Cta = {label: string; href: string}
 
 type Props = {
-  marketing: MarketingPageData
+  marketing: MarketingPageData | null
   headerNav: WebsiteHeaderNavData | null
   cta: Cta | null
+  children?: ReactNode
 }
 
-export function MarketingFullBleedHero({marketing, headerNav, cta}: Props) {
+export function MarketingFullBleedHero({marketing, headerNav, cta, children}: Props) {
+  if (!marketing) {
+    return <main className={m.pageMain}>{children}</main>
+  }
+
   const shouldReduceMotion = useReducedMotion()
   const contentAnimationState = 'visible' as const
   const idSuffix = marketing._id.replace(/[^a-z0-9-]/gi, '')
@@ -44,8 +49,9 @@ export function MarketingFullBleedHero({marketing, headerNav, cta}: Props) {
   const visualBg = !useMulti && !backgroundImageUrl ? {background: '#2d3748'} : undefined
 
   return (
-    <div className={m.root}>
-      <section className={m.visualBand} style={visualBg} aria-labelledby={titleId}>
+    <main className={m.pageMain}>
+      <div className={m.root}>
+        <section className={m.visualBand} style={visualBg} aria-labelledby={titleId}>
         {useMulti ? <StagedHeroCycle states={states} transitionMs={transitionMs} layout="hero" /> : null}
         {!useMulti && backgroundImageUrl ? (
           <div className={m.photoRoot}>
@@ -109,7 +115,9 @@ export function MarketingFullBleedHero({marketing, headerNav, cta}: Props) {
           </div>
           <div className={m.heroVisualSpacer} aria-hidden="true" />
         </div>
-      </section>
-    </div>
+        </section>
+      </div>
+      {children}
+    </main>
   )
 }

@@ -50,11 +50,15 @@
   color: #2a2826;
   text-decoration: none;
   border-radius: 2px;
+  /* Ligne sous tout le bloc (texte + flèche) : `text-decoration` sur un flex laisse un trou au `gap`. */
+  border-bottom: 1px solid transparent;
+  padding-bottom: 0.12em;
+  box-sizing: border-box;
 }
 
-.introCta:hover {
-  text-decoration: underline;
-  text-underline-offset: 0.18em;
+.introCta:hover,
+.introCta:focus-visible {
+  border-bottom-color: currentColor;
 }
 
 .introCta:focus-visible {
@@ -81,7 +85,8 @@
   color: #faf8f5;
 }
 
-.introOnDark .introCta:hover {
+.introOnDark .introCta:hover,
+.introOnDark .introCta:focus-visible {
   color: #ffffff;
 }
 
@@ -128,6 +133,36 @@
 
   .introOnDark .lead {
     color: rgb(250 248 245 / 0.7);
+  }
+
+  /* Téléphone : libellé du CTA masqué, flèche alignée avec le titre (une ligne). */
+  .introHeadingRow {
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    column-gap: 0.35rem;
+  }
+
+  .introHeadingRow .heading {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .introCta {
+    margin-left: 0;
+    flex-shrink: 0;
+    align-self: flex-start;
+    /* Optique : cap-height du titre serif ~ première ligne */
+    padding-top: 0.32em;
+    gap: 0;
+  }
+
+  .introCtaLabel {
+    display: none;
+  }
+
+  .introCtaArrow {
+    margin-inline-start: 0;
   }
 }
 
