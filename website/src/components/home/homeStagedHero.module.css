@@ -100,12 +100,17 @@
   display: flex;
   align-items: flex-end;
   padding-inline: clamp(1rem, 4vw, 2.75rem);
-  padding-bottom: clamp(9.35rem, 8.5vh, 10.25rem);
+  /* Moins de marge basse : remonte le bloc titre + recherche + infos. */
+  padding-bottom: clamp(2.5rem, 3.5vh, 3.75rem);
 }
 
 @media (min-width: 1201px) {
+  /*
+   * Remonter le bloc titre + recherche : avec flex row + align-items flex-end,
+   * un padding-bottom généreux réduit la hauteur utile et place le bloc plus haut dans le hero.
+   */
   .stagedHeroLower {
-    padding-bottom: clamp(8.5rem, 6.25vh, 15.5rem);
+    padding-bottom: clamp(7.5rem, 18vh, 13rem);
   }
 }
 
@@ -122,7 +127,7 @@
 @media (min-width: 1201px) {
   .stagedHeroColumn {
     margin-left: clamp(10.25rem, 5.5vw, 10.75rem);
-    transform: translateY(clamp(-1.1rem, -2.4vh, -1.65rem));
+    transform: translateY(clamp(-6.5rem, -14vh, -10rem));
   }
 }
 
@@ -131,14 +136,13 @@
  * vs un 16:9 large ; on le rapproche du bas-gauche. Les écrans très larges (ratio > 3/2) gardent le desktop ci-dessus.
  */
 @media (min-width: 1201px) and (max-aspect-ratio: 11/10) {
-  /* Moins de marge basse qu’en 16:9 : avec `align-items: flex-end`, ça laisse le bloc un peu plus bas. */
   .stagedHeroLower {
-    padding-bottom: clamp(5.75rem, 4.8vh, 8.75rem);
+    padding-bottom: clamp(6rem, 15vh, 11rem);
   }
 
   .stagedHeroColumn {
     margin-left: clamp(1.25rem, 3.5vw, 3.75rem);
-    transform: translateY(clamp(0.15rem, 0.65vh, 0.95rem));
+    transform: translateY(clamp(-5.5rem, -11vh, -8rem));
   }
 
   .stagedHeroTitleWrap {
@@ -149,12 +153,12 @@
 
 @media (min-width: 1201px) and (min-aspect-ratio: 11/10) and (max-aspect-ratio: 3/2) {
   .stagedHeroLower {
-    padding-bottom: clamp(6rem, 5.1vh, 9.25rem);
+    padding-bottom: clamp(6.5rem, 16vh, 11.5rem);
   }
 
   .stagedHeroColumn {
     margin-left: clamp(2.75rem, 3.8vw, 5.5rem);
-    transform: translateY(clamp(0.05rem, 0.35vh, 0.55rem));
+    transform: translateY(clamp(-6rem, -12vh, -8.5rem));
   }
 
   .stagedHeroTitleWrap {
@@ -186,7 +190,7 @@
 .stagedHeroMeta {
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
+  gap: 0.72rem;
   width: 100%;
 }
 

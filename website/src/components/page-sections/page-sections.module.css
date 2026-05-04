@@ -493,6 +493,40 @@
   overflow-x: clip;
 }
 
+/*
+ * Contenu riche + tableaux (tight) : pas de full-bleed 100vw ici — dans un `.container` centré,
+ * `left: 50%` / `-50vw` se calcule par rapport au parent étroit et décale tout le bloc à gauche de l’écran.
+ * On reste en flux normal ; la colonne est centrée dans le container via flex.
+ */
+.proseSectionBleed[data-prose-stack='tight'] {
+  width: 100%;
+  max-width: 100%;
+  position: relative;
+  left: auto;
+  right: auto;
+  margin-left: 0;
+  margin-right: 0;
+  padding-block: clamp(0.35rem, 1vw, 0.55rem);
+  padding-inline: 0;
+  overflow-x: visible;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.shell > .proseSectionBleed[data-prose-stack='tight'] + .proseSectionBleed[data-prose-stack='tight'] {
+  margin-top: calc(-1 * clamp(1.5rem, 3.5vw, 2.75rem));
+}
+
+.proseSectionBleed[data-prose-stack='tight'] .proseInner {
+  width: 100%;
+  max-width: min(72rem, 100%);
+  box-sizing: border-box;
+  padding-inline: clamp(0.5rem, 2vw, 1rem);
+  text-align: left;
+}
+
 .proseInner {
   width: 80%;
   max-width: 100%;
@@ -531,8 +565,8 @@
 
 /* ——— Tableau 2 colonnes (légal / cookies, etc.) ——— */
 .twoColumnTableIntro {
-  margin: 0 0 1.25rem;
-  max-width: 72ch;
+  margin: 0 0 0.65rem;
+  max-width: 100%;
   font-size: 1.02rem;
   line-height: 1.65;
   color: rgb(22 22 22 / 0.88);
@@ -585,9 +619,10 @@
 
 .twoColumnTable tbody td:first-child {
   font-weight: 600;
-  max-width: 14rem;
+  width: 32%;
+  min-width: 10rem;
 }
 
 .twoColumnTable tbody td:last-child {
-  max-width: 56ch;
+  width: auto;
 }

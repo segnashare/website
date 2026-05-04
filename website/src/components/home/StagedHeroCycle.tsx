@@ -2,7 +2,7 @@
 
 import {useEffect, useMemo, useRef, useState} from 'react'
 import Image from 'next/image'
-import {AnimatePresence, motion, useReducedMotion} from 'framer-motion'
+import {AnimatePresence, motion} from 'framer-motion'
 import type {HomeHeroStagedState} from '@/lib/sanity'
 import {
   objectPositionFromHotspot,
@@ -12,6 +12,7 @@ import {
 import {stagedHeroImageSizes, stagedHeroSliceImageSizes, urlForStagedHeroImage} from '@/lib/sanity'
 import heroStyles from './homeHero.module.css'
 import staged from './homeStagedHero.module.css'
+import {useHydrationSafeReducedMotion} from './useHydrationSafeReducedMotion'
 
 function stagedImageHasAsset(img: {image?: {asset?: {url?: string; _ref?: string}}}): boolean {
   const a = img.image?.asset
@@ -72,7 +73,7 @@ export function StagedHeroCycle({
   const prevIndexRef = useRef(0)
   const indexRef = useRef(0)
   const statesRef = useRef<HomeHeroStagedState[]>([])
-  const reduce = useReducedMotion()
+  const reduce = useHydrationSafeReducedMotion()
   const safeStates = states.length > 0 ? states : []
   indexRef.current = index
   statesRef.current = safeStates

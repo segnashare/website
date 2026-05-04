@@ -1,5 +1,7 @@
 import type {Metadata} from 'next'
 import {PageSections} from '@/components/cms/PageSections'
+import {homeCatalogSearchNavFromFacets} from '@/lib/catalog/home-catalog-search-nav'
+import {fetchMarketingCatalogPathResolveNav} from '@/lib/catalog/marketing-catalog-items'
 import {getHomePageData, urlFor} from '@/lib/sanity'
 import {HomeHero} from '@/components/home/HomeHero'
 import {HomeStagedHero} from '@/components/home/HomeStagedHero'
@@ -29,7 +31,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const homePage = await getHomePageData()
+  const [homePage, catalogPathNav] = await Promise.all([
+    getHomePageData(),
+    fetchMarketingCatalogPathResolveNav(),
+  ])
+  const catalogSearchNav = homeCatalogSearchNavFromFacets(catalogPathNav)
 
   if (!homePage) {
     return (
@@ -52,9 +58,9 @@ export default async function HomePage() {
   return (
     <main>
       {useStagedHero ? (
-        <HomeStagedHero homePage={homePage} />
+        <HomeStagedHero homePage={homePage} catalogSearchNav={catalogSearchNav} />
       ) : (
-        <HomeHero homePage={homePage} backgroundImageUrl={backgroundImageUrl} />
+        <HomeHero homePage={homePage} backgroundImageUrl={backgroundImageUrl} catalogSearchNav={catalogSearchNav} />
       )}
       <PageSections sections={homePage.sections} afterFullBleedHero />
     </main>

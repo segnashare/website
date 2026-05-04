@@ -1,0 +1,191 @@
+.wrap {
+  position: relative;
+  width: 100%;
+  max-width: 38rem;
+}
+
+.searchBar {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.72rem 0.42rem 0.72rem 1.15rem;
+  border-radius: 999px;
+  box-sizing: border-box;
+  background: rgb(15 17 22 / 0.42);
+  border: 1px solid rgb(255 255 255 / 0.14);
+}
+
+.searchBarLight {
+  background: #fff;
+  border: 1px solid rgb(0 0 0 / 0.08);
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.08);
+}
+
+.input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: #fff;
+  font-size: clamp(0.92rem, 1.25vw, 1.04rem);
+  outline: none;
+  font-family: inherit;
+}
+
+/* Pas de croix native (type=search WebKit). Ici type=text + sécurité. */
+.input::-webkit-search-decoration,
+.input::-webkit-search-cancel-button,
+.input::-webkit-search-results-button,
+.input::-webkit-search-results-decoration {
+  display: none;
+}
+
+.searchBarLight .input {
+  color: #14110f;
+}
+
+.input::placeholder {
+  color: rgb(255 255 255 / 0.55);
+}
+
+.searchBarLight .input::placeholder {
+  color: rgb(20 17 15 / 0.45);
+}
+
+.button {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border: none;
+  border-radius: 999px;
+  padding: 0.55rem 1rem 0.55rem 0.85rem;
+  background: #f4f4f4;
+  color: #111;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.buttonLabel {
+  display: inline;
+}
+
+.bubbleIcon {
+  width: 1.1rem;
+  height: 1.1rem;
+  display: block;
+}
+
+.dropdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 0.35rem);
+  z-index: 40;
+  max-height: min(13rem, 40vh);
+  overflow: auto;
+  border-radius: 0.75rem;
+  background: #fff;
+  color: #14110f;
+  box-shadow: 0 12px 36px rgb(0 0 0 / 0.16);
+  border: 1px solid rgb(0 0 0 / 0.06);
+}
+
+.groupLabel {
+  padding: 0.35rem 0.75rem 0.12rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgb(20 17 15 / 0.45);
+}
+
+.row {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.38rem 0.75rem;
+  border: none;
+  background: transparent;
+  font-size: 0.9rem;
+  line-height: 1.22;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.row:hover,
+.row:focus-visible {
+  background: rgb(0 0 0 / 0.045);
+  outline: none;
+}
+
+.rowActive {
+  background: rgb(59 130 246 / 0.12);
+}
+
+.rowHint {
+  display: block;
+  font-size: 0.68rem;
+  color: rgb(20 17 15 / 0.42);
+  margin-top: 0.02rem;
+  line-height: 1.2;
+}
+
+/* Téléphone : cadre blanc, texte noir, bord noire ; bouton = rond noir + loupe blanche (sans libellé). */
+@media (max-width: 1200px) {
+  .searchBar {
+    background: #fff;
+    border: 1px solid #111;
+    box-shadow: none;
+    padding: 0.55rem 0.38rem 0.55rem 1rem;
+  }
+
+  .searchBar .input {
+    color: #111;
+  }
+
+  .searchBar .input::placeholder {
+    color: rgb(17 17 17 / 0.45);
+  }
+
+  .searchBarLight {
+    border: 1px solid #111;
+    box-shadow: none;
+  }
+
+  .searchBarLight .input::placeholder {
+    color: rgb(17 17 17 / 0.45);
+  }
+
+  .button {
+    width: 2.75rem;
+    height: 2.75rem;
+    min-width: 2.75rem;
+    padding: 0;
+    gap: 0;
+    border-radius: 50%;
+    background: #111;
+    color: #fff;
+  }
+
+  .button:disabled {
+    background: rgb(17 17 17 / 0.35);
+    color: rgb(255 255 255 / 0.85);
+  }
+
+  .buttonLabel {
+    display: none;
+  }
+}

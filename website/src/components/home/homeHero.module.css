@@ -230,7 +230,16 @@
   min-height: calc(100vh - 6.3rem);
   display: flex;
   align-items: flex-end;
-  padding-bottom: clamp(2.9rem, 10vh, 6rem);
+  padding-bottom: clamp(1.25rem, 4vh, 2.65rem);
+}
+
+.heroTitleStack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: clamp(1rem, 2.5vw, 1.45rem);
+  width: 100%;
+  max-width: min(40rem, 100%);
 }
 
 .heroTitle {
@@ -304,7 +313,7 @@
   min-height: calc(100vh - 6.3rem);
   display: flex;
   align-items: flex-end;
-  padding: 0 1.2rem 3.1rem;
+  padding: 0 1.2rem 2.35rem;
 }
 
 .mobileTitle {
@@ -613,6 +622,15 @@
   .navChromeRootScrolled .downloadButton:hover {
     background: #000;
     border-color: #000;
+  }
+
+  /* Hero photo seule : remonter titre + recherche (flex-end + padding-bottom large). */
+  .heroContent {
+    padding-bottom: clamp(7rem, 17vh, 12rem);
+  }
+
+  .heroTitleStack {
+    transform: translateY(clamp(-5rem, -11vh, -8rem));
   }
 }
 

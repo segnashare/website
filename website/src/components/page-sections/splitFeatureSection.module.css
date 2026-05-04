@@ -92,18 +92,23 @@
     margin-top: clamp(-1.35rem, -3.8vw, -0.65rem);
   }
 
-  /*
-   * Mode « marges » (.contentShellInset ≈ 88 % de largeur) : le cadre média a déjà ~6 vw de chaque côté.
-   * Sans ajustement, .textPane réutilise le même padding-inline qu’en pleine largeur → texte trop resserré.
-   * On retire ces ~6 vw pour retrouver le même retrait depuis le bord de l’écran qu’en pleine largeur.
-   */
+  /* Colonne texte : gouttières stables + chaîne min-width pour éviter le débordement horizontal. */
+  .textPane {
+    min-width: 0;
+    padding-block: clamp(1.6rem, 4.6vw, 2.35rem);
+    padding-inline: max(env(safe-area-inset-left, 0px), clamp(1.125rem, 5vw, 1.65rem))
+      max(env(safe-area-inset-right, 0px), clamp(1.125rem, 5vw, 1.65rem));
+  }
+
+  /* Mode « marges » : même retrait lisible que pleine largeur (l’ancienne compensation allait jusqu’à ~0,75rem). */
   .contentShellInset .textPane {
-    padding-inline: max(
-        0.75rem,
-        calc(clamp(2rem, 7vw + 0.75rem, 6.5rem) - 6vw),
-        env(safe-area-inset-left, 0px)
-      )
-      max(0.75rem, calc(clamp(2rem, 7vw + 0.75rem, 6.5rem) - 6vw), env(safe-area-inset-right, 0px));
+    padding-inline: max(env(safe-area-inset-left, 0px), clamp(1.125rem, 5vw, 1.65rem))
+      max(env(safe-area-inset-right, 0px), clamp(1.125rem, 5vw, 1.65rem));
+  }
+
+  .textPaneStack {
+    min-width: 0;
+    max-width: 100%;
   }
 }
 
@@ -166,16 +171,16 @@
   line-height: 1.35;
   /* Inactif : grisé par la couleur, pas par opacity (évite les effets bizarres sur le tronçon voisin). */
   color: rgb(255 255 255 / 0.42);
-  transition: color 0.18s ease, font-weight 0.18s ease;
+  transition: color 0.18s ease;
 }
 
 .tabRailGrid .tab:hover:not(.tabActive) {
   color: rgb(255 255 255 / 0.62);
 }
 
+/* Même graisse qu’inactif : un passage 500 → 600 élargit le glyphe et provoque un retour à la ligne au clic. */
 .tabRailGrid .tab.tabActive {
   color: #fff;
-  font-weight: 600;
 }
 
 .tabRailGrid .tab.tabActive::after {
@@ -213,6 +218,66 @@
   color: inherit;
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+@media (max-width: 767px) {
+  .headingGroup {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .heading {
+    max-width: 100%;
+    font-size: clamp(1.42rem, 4.2vw + 0.55rem, 2.05rem);
+    overflow-wrap: break-word;
+  }
+
+  .headingSubtitle {
+    max-width: 100%;
+    overflow-wrap: break-word;
+  }
+
+  /* Onglets : grille pleine largeur + retours à la ligne (le flex max-content dépassait l’écran). */
+  .tabRailGrid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    column-gap: clamp(0.5rem, 2.8vw, 0.85rem);
+    row-gap: 0.4rem;
+    align-items: end;
+  }
+
+  .tabRailGrid .tab {
+    min-width: 0;
+    white-space: nowrap;
+    overflow-wrap: normal;
+    hyphens: manual;
+    font-size: clamp(0.86rem, 2.6vw + 0.62rem, 1.02rem);
+    line-height: 1.3;
+  }
+
+  .body {
+    max-width: 100%;
+    font-size: clamp(1rem, 0.55vw + 0.9rem, 1.14rem);
+    line-height: 1.62;
+    overflow-wrap: break-word;
+  }
+
+  .body :global(ul),
+  .body :global(ol) {
+    padding-left: 1.05rem;
+    margin-right: 0;
+    box-sizing: border-box;
+  }
+}
+
+/* Très étroit : onglets empilés pour éviter des colonnes trop serrées. */
+@media (max-width: 360px) {
+  .tabRailGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .cta {

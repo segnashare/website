@@ -15,7 +15,6 @@ export const MOBILE_MAIN_NAV_ITEMS: MobileMainNavItem[] = [
   {_key: 'catalogue', label: 'Catalogue', href: '/catalogue'},
   {_key: 'communaute', label: 'Communauté', href: '/communaute'},
   {_key: 'newsroom', label: 'Newsroom', href: '/newsroom'},
-  {_key: 'mission', label: 'Mission & Impact', href: '/mission-impact'},
 ]
 
 function normalizePath(path: string): string {

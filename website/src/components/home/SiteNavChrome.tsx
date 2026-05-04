@@ -3,12 +3,13 @@
 import {useEffect, useMemo, useState} from 'react'
 import Link from 'next/link'
 import {usePathname} from 'next/navigation'
-import {motion, useReducedMotion} from 'framer-motion'
+import {motion} from 'framer-motion'
 import type {WebsiteHeaderNavData} from '@/lib/sanity'
 import {visibleMobileMainNavItems} from '@/lib/mobileMainNav'
 import {CtaHrefLink} from './heroShared'
 import {useNavScrollElevated} from './useNavScrollElevated'
 import styles from './homeHero.module.css'
+import {useHydrationSafeReducedMotion} from './useHydrationSafeReducedMotion'
 
 type Props = {
   header: WebsiteHeaderNavData | null
@@ -20,7 +21,7 @@ type Props = {
 export function SiteNavChrome({header, mobileNavId, mobileSurface = 'transparent'}: Props) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const pathname = usePathname() || '/'
-  const shouldReduceMotion = useReducedMotion()
+  const shouldReduceMotion = useHydrationSafeReducedMotion()
   const contentAnimationState = 'visible' as const
 
   useEffect(() => {

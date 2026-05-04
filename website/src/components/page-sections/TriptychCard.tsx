@@ -2,7 +2,7 @@
 
 import {useEffect, useMemo, useRef, useState} from 'react'
 import Image from 'next/image'
-import {AnimatePresence, motion, useReducedMotion} from 'framer-motion'
+import {AnimatePresence, motion} from 'framer-motion'
 import type {
   HomeHeroStagedImage,
   HomeHeroStagedState,
@@ -17,6 +17,7 @@ import {resolveTriptychImageSlotStyle} from '@/lib/triptychPlacements'
 import {PortableRichText} from '@/components/cms/PortableRichText'
 import {triptychCardImageSizes, urlFor, urlForStagedHeroImage} from '@/lib/sanity'
 import {CtaHrefLink} from '@/components/home/heroShared'
+import {useHydrationSafeReducedMotion} from '@/components/home/useHydrationSafeReducedMotion'
 import styles from './triptych.module.css'
 
 function stagedImageHasAsset(img: {image?: {asset?: {url?: string; _ref?: string}}}): boolean {
@@ -78,7 +79,7 @@ function TriptychCardCycle({
   const prevIndexRef = useRef(0)
   const indexRef = useRef(0)
   const statesRef = useRef<TriptychCardCycleState[]>([])
-  const reduce = useReducedMotion()
+  const reduce = useHydrationSafeReducedMotion()
   const safeStates = states.length > 0 ? states : []
   indexRef.current = index
   statesRef.current = safeStates

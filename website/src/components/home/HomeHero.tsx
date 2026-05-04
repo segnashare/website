@@ -4,23 +4,27 @@ import {useEffect, useMemo, useState} from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {usePathname} from 'next/navigation'
-import {motion, useReducedMotion} from 'framer-motion'
+import {motion} from 'framer-motion'
+import type {HomeCatalogSearchNav} from '@/lib/catalog/home-catalog-search-nav'
 import type {HomePageData} from '@/lib/sanity'
+import {HomeCatalogQuickSearch} from './HomeCatalogQuickSearch'
 import {visibleMobileMainNavItems} from '@/lib/mobileMainNav'
 import {CtaHrefLink} from './heroShared'
 import {useNavScrollElevated} from './useNavScrollElevated'
 import styles from './homeHero.module.css'
+import {useHydrationSafeReducedMotion} from './useHydrationSafeReducedMotion'
 
 type HomeHeroProps = {
   homePage: HomePageData
   backgroundImageUrl?: string
+  catalogSearchNav: HomeCatalogSearchNav | null
 }
 
-export function HomeHero({homePage, backgroundImageUrl}: HomeHeroProps) {
+export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeHeroProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isIntroComplete, setIsIntroComplete] = useState(false)
   const pathname = usePathname() || '/'
-  const shouldReduceMotion = useReducedMotion()
+  const shouldReduceMotion = useHydrationSafeReducedMotion()
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
@@ -73,6 +77,9 @@ export function HomeHero({homePage, backgroundImageUrl}: HomeHeroProps) {
   const showNavDivider =
     navItems.length > 0 && (showSecondaryCta || Boolean(homePage.primaryCta?.label?.trim()))
   const mobileNavId = 'mobile-nav'
+  const catalogSearchPlaceholder =
+    homePage.heroStagedSearchPlaceholder?.trim() || 'Marque ou catégorie…'
+  const catalogSearchButtonLabel = homePage.heroStagedSearchButtonLabel?.trim() || 'Rechercher'
   const introLetters = 'Segna'.split('')
   const contentAnimationState = shouldReduceMotion || isIntroComplete ? 'visible' : 'hidden'
   const navElevated = useNavScrollElevated()
@@ -220,53 +227,99 @@ export function HomeHero({homePage, backgroundImageUrl}: HomeHeroProps) {
         </div>
 
         <section className={styles.heroContent}>
-          <motion.h1
-            className={styles.heroTitle}
-            initial="hidden"
-            animate={contentAnimationState}
-            variants={{
-              hidden: {
-                opacity: 0,
-                y: 90,
-              },
-              visible: {
-                opacity: 1,
-                y: 0,
-              },
-            }}
-            transition={{
-              duration: shouldReduceMotion ? 0 : 0.92,
-              ease: [0.16, 1, 0.3, 1],
-              delay: shouldReduceMotion ? 0 : 1.2,
-            }}
-          >
-            {homePage.heroTitle}
-          </motion.h1>
+          <div className={styles.heroTitleStack}>
+            <motion.h1
+              className={styles.heroTitle}
+              initial="hidden"
+              animate={contentAnimationState}
+              variants={{
+                hidden: {
+                  opacity: 0,
+                  y: 90,
+                },
+                visible: {
+                  opacity: 1,
+                  y: 0,
+                },
+              }}
+              transition={{
+                duration: shouldReduceMotion ? 0 : 0.92,
+                ease: [0.16, 1, 0.3, 1],
+                delay: shouldReduceMotion ? 0 : 1.2,
+              }}
+            >
+              {homePage.heroTitle}
+            </motion.h1>
+            <motion.div
+              initial="hidden"
+              animate={contentAnimationState}
+              variants={{
+                hidden: {opacity: 0, y: 28},
+                visible: {opacity: 1, y: 0},
+              }}
+              transition={{
+                duration: shouldReduceMotion ? 0 : 0.75,
+                ease: [0.16, 1, 0.3, 1],
+                delay: shouldReduceMotion ? 0 : 1.38,
+              }}
+            >
+              <HomeCatalogQuickSearch
+                nav={catalogSearchNav}
+                surface="single"
+                placeholder={catalogSearchPlaceholder}
+                searchButtonLabel={catalogSearchButtonLabel}
+                inputId="home-hero-search"
+              />
+            </motion.div>
+          </div>
         </section>
 
         <section className={styles.mobileTitleWrap}>
-          <motion.h1
-            className={styles.mobileTitle}
-            initial="hidden"
-            animate={contentAnimationState}
-            variants={{
-              hidden: {
-                opacity: 0,
-                y: 90,
-              },
-              visible: {
-                opacity: 1,
-                y: 0,
-              },
-            }}
-            transition={{
-              duration: shouldReduceMotion ? 0 : 0.92,
-              ease: [0.16, 1, 0.3, 1],
-              delay: shouldReduceMotion ? 0 : 1.2,
-            }}
-          >
-            {homePage.heroTitle}
-          </motion.h1>
+          <div className={styles.heroTitleStack}>
+            <motion.h1
+              className={styles.mobileTitle}
+              initial="hidden"
+              animate={contentAnimationState}
+              variants={{
+                hidden: {
+                  opacity: 0,
+                  y: 90,
+                },
+                visible: {
+                  opacity: 1,
+                  y: 0,
+                },
+              }}
+              transition={{
+                duration: shouldReduceMotion ? 0 : 0.92,
+                ease: [0.16, 1, 0.3, 1],
+                delay: shouldReduceMotion ? 0 : 1.2,
+              }}
+            >
+              {homePage.heroTitle}
+            </motion.h1>
+            <motion.div
+              initial="hidden"
+              animate={contentAnimationState}
+              variants={{
+                hidden: {opacity: 0, y: 28},
+                visible: {opacity: 1, y: 0},
+              }}
+              transition={{
+                duration: shouldReduceMotion ? 0 : 0.75,
+                ease: [0.16, 1, 0.3, 1],
+                delay: shouldReduceMotion ? 0 : 1.38,
+              }}
+            >
+              <HomeCatalogQuickSearch
+                nav={catalogSearchNav}
+                surface="single"
+                placeholder={catalogSearchPlaceholder}
+                searchButtonLabel={catalogSearchButtonLabel}
+                inputId="home-hero-search-mobile"
+              />
+            </motion.div>
+          </div>
         </section>
 
         <nav id={mobileNavId} className={`${styles.mobileMenuOverlay} ${isMenuOpen ? styles.mobileMenuOverlayOpen : ''}`}>

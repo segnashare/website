@@ -2,25 +2,20 @@
 
 import {useMemo} from 'react'
 import Image from 'next/image'
-import {motion, useReducedMotion} from 'framer-motion'
+import {motion} from 'framer-motion'
+import type {HomeCatalogSearchNav} from '@/lib/catalog/home-catalog-search-nav'
 import type {HomeHeroStagedInfoItem, HomePageData} from '@/lib/sanity'
 import {urlFor} from '@/lib/sanity'
+import {HomeCatalogQuickSearch} from './HomeCatalogQuickSearch'
 import {StagedHeroCycle} from './StagedHeroCycle'
 import {SiteNavChrome} from './SiteNavChrome'
 import styles from './homeHero.module.css'
 import staged from './homeStagedHero.module.css'
+import {useHydrationSafeReducedMotion} from './useHydrationSafeReducedMotion'
 
 type Props = {
   homePage: HomePageData
-}
-
-function SearchLoupeIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-      <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="2" />
-      <path d="M20 20l-4.2-4.2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  )
+  catalogSearchNav: HomeCatalogSearchNav | null
 }
 
 function stagedInfoHasIcon(item: HomeHeroStagedInfoItem) {
@@ -53,8 +48,8 @@ function StagedHeroInfoRow({items}: {items?: HomeHeroStagedInfoItem[] | null}) {
   )
 }
 
-export function HomeStagedHero({homePage}: Props) {
-  const shouldReduceMotion = useReducedMotion()
+export function HomeStagedHero({homePage, catalogSearchNav}: Props) {
+  const shouldReduceMotion = useHydrationSafeReducedMotion()
   const states = useMemo(() => homePage.heroStates ?? [], [homePage.heroStates])
   const transitionMs = homePage.heroStageTransitionMs ?? 650
 
@@ -115,30 +110,13 @@ export function HomeStagedHero({homePage}: Props) {
               }}
               transition={{duration: shouldReduceMotion ? 0 : 0.72, ease: [0.16, 1, 0.3, 1], delay: 0.12}}
             >
-              <div className={staged.searchBar} role="search">
-                <input
-                  id="staged-hero-search"
-                  className={staged.searchInput}
-                  type="search"
-                  name="hero-search"
-                  placeholder={searchPlaceholder}
-                  aria-label={searchPlaceholder}
-                  autoComplete="off"
-                />
-                <button
-                  type="button"
-                  className={staged.searchBubble}
-                  aria-label={searchButtonLabel}
-                  title={searchButtonLabel}
-                >
-                  <span className={staged.searchBubbleIcon}>
-                    <SearchLoupeIcon />
-                  </span>
-                  <span className={staged.searchBubbleLabel} aria-hidden="true">
-                    {searchButtonLabel}
-                  </span>
-                </button>
-              </div>
+              <HomeCatalogQuickSearch
+                nav={catalogSearchNav}
+                surface="staged"
+                placeholder={searchPlaceholder}
+                searchButtonLabel={searchButtonLabel}
+                inputId="staged-hero-search"
+              />
               <StagedHeroInfoRow items={homePage.heroStagedInfoItems} />
             </motion.div>
           </div>
