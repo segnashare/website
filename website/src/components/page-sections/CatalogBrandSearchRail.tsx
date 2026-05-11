@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import posthog from 'posthog-js'
 import {useMemo, useState} from 'react'
 import styles from './websiteCatalogBrowse.module.css'
 
@@ -58,6 +59,7 @@ export function CatalogBrandSearchRail({brands}: Props) {
               <Link
                 href={b.href}
                 className={`${styles.railLink} ${b.active ? styles.railLinkActive : ''}`}
+                onClick={() => posthog.capture('catalog_brand_filter_clicked', {brand: b.label, search_query: q || null})}
               >
                 {b.label}
               </Link>

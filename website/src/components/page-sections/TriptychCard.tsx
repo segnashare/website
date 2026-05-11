@@ -20,10 +20,10 @@ import {CtaHrefLink} from '@/components/home/heroShared'
 import {useHydrationSafeReducedMotion} from '@/components/home/useHydrationSafeReducedMotion'
 import styles from './triptych.module.css'
 
-function stagedImageHasAsset(img: {image?: {asset?: {url?: string; _ref?: string}}}): boolean {
+function stagedImageHasAsset(img: {image?: {asset?: {url?: string; _ref?: string; _id?: string}}}): boolean {
   const a = img.image?.asset
   if (!a) return false
-  return Boolean(a._ref || a.url)
+  return Boolean(a._ref || a._id || a.url)
 }
 
 function normalizeStagedBg(raw?: string | null) {

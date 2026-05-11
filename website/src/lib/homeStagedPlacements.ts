@@ -154,6 +154,28 @@ export function resolveStagedImageSlotStyle(
   return fallbackSlotStyle(stackIndex)
 }
 
+function normalizedObjectFit(v: unknown): 'cover' | 'contain' | null {
+  if (v === 'contain' || v === 'cover') return v
+  if (typeof v === 'string') {
+    const t = v.trim().toLowerCase()
+    if (t === 'contain' || t === 'cover') return t
+  }
+  return null
+}
+
+/**
+ * Remplissage : le cadre Sanity peut imposer `objectFit` (sinon chaîne vide = hériter de l’image).
+ * Sans cadre, on lit seulement le réglage de l’image (« Contenir » / défaut « Couvrir »).
+ */
+function resolveImageObjectFit(
+  img: HomeHeroStagedImage,
+  slot: HomeHeroStagedLayoutSlot | undefined,
+): 'cover' | 'contain' {
+  const fromSlot = normalizedObjectFit(slot?.objectFit)
+  if (fromSlot) return fromSlot
+  return normalizedObjectFit(img.objectFit) === 'contain' ? 'contain' : 'cover'
+}
+
 /**
  * Dans le cadre défini sur l’état : « Couvrir » = rognage possible (recadrage + hotspot Sanity) ;
  * « Contenir » = image entière. Sans cadre d’état : même logique sur le slot de repli.
@@ -164,8 +186,7 @@ export function resolveStagedImageObjectFit(
   state?: HomeHeroStagedState,
   stackIndex?: number,
 ): 'cover' | 'contain' {
-  if (state != null && stackIndex != null && pullStateFrameSlot(state, stackIndex, _isNarrow)) {
-    return img.objectFit === 'contain' ? 'contain' : 'cover'
-  }
-  return img.objectFit === 'contain' ? 'contain' : 'cover'
+  const slot =
+    state != null && stackIndex != null ? pullStateFrameSlot(state, stackIndex, _isNarrow) : undefined
+  return resolveImageObjectFit(img, slot)
 }

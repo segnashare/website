@@ -70,13 +70,15 @@ a.cardHit:hover {
   width: 100%;
   aspect-ratio: 3 / 4;
   border-radius: 16px;
-  overflow: hidden;
+  /* Pas d’overflow ici : le titre (.frameTitle) doit pouvoir dépasser sans être rogné par la boîte. */
   background: #e8e4df;
 }
 
 .frameMedia {
   position: absolute;
   inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
 }
 
 .cycleRoot {
@@ -126,15 +128,17 @@ a.cardHit:hover {
   align-items: center;
   justify-content: center;
   margin: 0;
-  padding: 1rem;
+  padding: clamp(0.65rem, 2vw, 1.25rem) clamp(0.75rem, 3vw, 1.5rem);
   font-family: var(--font-playfair-display), Georgia, serif;
-  font-size: clamp(5.55rem, 7.2vw, 6.1rem);
+  /* Ancien min 5,55rem rognait les titres sur cartes étroites (overflow du parent). */
+  font-size: clamp(1.85rem, 7.2vw, 6.1rem);
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.02em;
   color: #ffffff;
   text-align: center;
   text-transform: lowercase;
+  text-wrap: balance;
   pointer-events: none;
 }
 

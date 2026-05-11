@@ -37,7 +37,7 @@ export function MarketingFullBleedHero({marketing, headerNav, cta, children}: Pr
   const transitionMs = marketing?.heroStageTransitionMs ?? 650
 
   const heroAsset = marketing?.heroImage?.asset
-  const hasSinglePhoto = Boolean(heroAsset && (heroAsset._ref || heroAsset.url))
+  const hasSinglePhoto = Boolean(heroAsset && (heroAsset._ref || heroAsset._id || heroAsset.url))
   const backgroundImageUrl =
     marketing &&
     !useMulti &&

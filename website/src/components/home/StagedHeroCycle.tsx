@@ -14,10 +14,10 @@ import heroStyles from './homeHero.module.css'
 import staged from './homeStagedHero.module.css'
 import {useHydrationSafeReducedMotion} from './useHydrationSafeReducedMotion'
 
-function stagedImageHasAsset(img: {image?: {asset?: {url?: string; _ref?: string}}}): boolean {
+function stagedImageHasAsset(img: {image?: {asset?: {url?: string; _ref?: string; _id?: string}}}): boolean {
   const a = img.image?.asset
   if (!a) return false
-  return Boolean(a._ref || a.url)
+  return Boolean(a._ref || a._id || a.url)
 }
 
 function normalizeStagedBg(raw?: string | null) {

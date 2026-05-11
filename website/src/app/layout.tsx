@@ -1,5 +1,6 @@
 import type {Metadata} from 'next'
 import {Montserrat, Playfair_Display} from 'next/font/google'
+import {PostHogProvider} from '@/components/analytics/PostHogProvider'
 import './globals.css'
 
 const playfairDisplay = Playfair_Display({
@@ -29,7 +30,9 @@ export const revalidate = 60
 export default function RootLayout({children}: Readonly<{children: React.ReactNode}>) {
   return (
     <html lang="fr" className={`${playfairDisplay.variable} ${montserrat.variable}`}>
-      <body>{children}</body>
+      <body>
+        <PostHogProvider>{children}</PostHogProvider>
+      </body>
     </html>
   )
 }

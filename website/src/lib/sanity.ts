@@ -847,37 +847,51 @@ const stagedHeroImageRow = `
         crop
       }`
 
-/** Projection GROQ `heroStates[]` (accueil + pages marketing multi-états). */
+/** Lignes GROQ communes pour un cadre `homeHeroStagedLayoutSlot`. */
+const stagedHeroFrameRow = `
+        _key,
+        top,
+        right,
+        bottom,
+        left,
+        width,
+        height,
+        objectFit,
+        zIndex`
+
+/** Bloc GROQ commun pour `frameLayout` (desktop + mobile) — utilisable inline ou résolu via `->`. */
+const stagedHeroFrameLayoutBlock = `{
+      framesDesktop[]{${stagedHeroFrameRow}},
+      framesMobile[]{${stagedHeroFrameRow}}
+    }`
+
+/**
+ * Projection GROQ `heroStates[]` (accueil + pages marketing multi-états).
+ *
+ * Accepte deux formes de membres dans le tableau :
+ * - `homeHeroStagedState` : état défini inline sur la page (forme historique).
+ * - `homeHeroStatePresetRef` : référence vers un document `homeHeroStatePreset`
+ *   du référentiel partagé. Les champs du preset sont aplatis pour que le
+ *   frontend (`HomeStagedHero`, `MarketingFullBleedHero`) voie la même forme
+ *   dans les deux cas.
+ */
 const homeHeroStatesGroq = `heroStates[]{
     _key,
-    label,
-    backgroundColor,
-    durationMs,
-    frameLayout{
-      framesDesktop[]{
-        _key,
-        top,
-        right,
-        bottom,
-        left,
-        width,
-        height,
-        objectFit,
-        zIndex
-      },
-      framesMobile[]{
-        _key,
-        top,
-        right,
-        bottom,
-        left,
-        width,
-        height,
-        objectFit,
-        zIndex
-      }
+    _type,
+    _type == "homeHeroStagedState" => {
+      label,
+      backgroundColor,
+      durationMs,
+      frameLayout${stagedHeroFrameLayoutBlock},
+      images[]{${stagedHeroImageRow}}
     },
-    images[]{${stagedHeroImageRow}}
+    _type == "homeHeroStatePresetRef" => preset->{
+      "label": coalesce(label, title),
+      backgroundColor,
+      durationMs,
+      "frameLayout": frameLayout${stagedHeroFrameLayoutBlock},
+      "images": coalesce(images, [])[]{${stagedHeroImageRow}}
+    }
   }`
 
 const threeStepCardItemsGroq = `threeStepItems[]{

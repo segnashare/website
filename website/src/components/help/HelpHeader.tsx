@@ -1,4 +1,7 @@
+'use client'
+
 import Link from 'next/link'
+import posthog from 'posthog-js'
 import styles from './help.module.css'
 import type {HelpCenterSettingsData} from '@/lib/sanity-help'
 
@@ -42,6 +45,10 @@ export function HelpHeader({settings, compactSearch = true}: HelpHeaderProps) {
           action="/aide/recherche"
           method="get"
           role="search"
+          onSubmit={(e) => {
+            const q = ((e.currentTarget as HTMLFormElement).elements.namedItem('q') as HTMLInputElement)?.value?.trim()
+            if (q) posthog.capture('help_search_submitted', {query: q})
+          }}
         >
           <button type="submit" className={styles.searchBtn} aria-label="Lancer la recherche">
             <SearchIcon />
