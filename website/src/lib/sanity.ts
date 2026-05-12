@@ -1197,20 +1197,12 @@ export async function getNewsroomPageData(): Promise<NewsroomPageData | null> {
   )
 }
 
-const MAIN_MARKETING_SLUGS = [
-  'catalogue',
-  'communaute',
-  'mission-impact',
-  'comment-ca-marche',
-  'combien-ca-coute',
-] as const
-
 export async function getMarketingPageSlugs(): Promise<string[]> {
   const slugs = await sanityClient.fetch<string[] | null>(
     `*[_type == "marketingPage" && defined(slug.current)].slug.current`,
   )
   const fromCms = (slugs ?? []).filter((s): s is string => Boolean(s && String(s).trim()))
-  return [...new Set([...MAIN_MARKETING_SLUGS, ...fromCms])]
+  return [...new Set(fromCms)]
 }
 
 export type CatalogBrandEditorial = {
