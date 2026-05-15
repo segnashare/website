@@ -21,6 +21,7 @@ import {
   type CatalogPathResolved,
 } from '@/lib/catalog/catalog-path-resolve'
 import type {CatalogBrowsePayload} from '@/lib/catalog/catalog-page-loader'
+import {splitMarketingCatalogSizeFacets} from '@/lib/catalog/catalog-size-facet-section'
 import type {
   CatalogSortMode,
   MarketingCatalogCategoryNavOption,
@@ -186,6 +187,7 @@ function PaginationLinks({
 
 export function CatalogBrowseLinked({payload, brandBand}: {payload: CatalogBrowsePayload; brandBand?: ReactNode}) {
   const {facets, items, total, pathname, resolved, query} = payload
+  const {shoeSizes, apparelSizes} = splitMarketingCatalogSizeFacets(facets.sizes)
   const pageSize = 50
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
   const safePage = Math.min(query.page, totalPages)
@@ -303,21 +305,40 @@ export function CatalogBrowseLinked({payload, brandBand}: {payload: CatalogBrows
               ))}
             </ul>
           </div>
-          <div className={styles.railBlock}>
-            <h3 className={styles.railTitle}>Tailles</h3>
-            <ul className={styles.railList}>
-              {facets.sizes.map((s) => (
-                <li key={s.id} className={styles.railItem}>
-                  <Link
-                    href={toggleSizeHref(pathname, {...query, page: 1}, s.slug)}
-                    className={`${styles.railLink} ${query.sizeSlugs.includes(s.slug) ? styles.railLinkActive : ''}`}
-                  >
-                    {s.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {shoeSizes.length > 0 ? (
+            <div className={styles.railBlock}>
+              <h3 className={styles.railTitle}>Pointures</h3>
+              <ul className={styles.railList}>
+                {shoeSizes.map((s) => (
+                  <li key={s.id} className={styles.railItem}>
+                    <Link
+                      href={toggleSizeHref(pathname, {...query, page: 1}, s.slug)}
+                      className={`${styles.railLink} ${query.sizeSlugs.includes(s.slug) ? styles.railLinkActive : ''}`}
+                    >
+                      {s.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {apparelSizes.length > 0 ? (
+            <div className={styles.railBlock}>
+              <h3 className={styles.railTitle}>Tailles</h3>
+              <ul className={styles.railList}>
+                {apparelSizes.map((s) => (
+                  <li key={s.id} className={styles.railItem}>
+                    <Link
+                      href={toggleSizeHref(pathname, {...query, page: 1}, s.slug)}
+                      className={`${styles.railLink} ${query.sizeSlugs.includes(s.slug) ? styles.railLinkActive : ''}`}
+                    >
+                      {s.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </aside>
       </div>
 

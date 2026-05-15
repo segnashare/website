@@ -36,6 +36,7 @@ function rowToBrowseItem(
     category_label: r.category_label,
     color_label: r.color_label,
     size_label: r.size_label,
+    size_code: r.size_code ?? null,
     price_points: r.price_points,
     item_category_id: r.item_category_id,
     item_brand_id: r.item_brand_id,

@@ -7,6 +7,7 @@ import {slugifyFr, withUniqueSlugs} from '@/lib/catalog/catalog-slugs'
 import {collectPhotoPathsFromItemPhotos, getFirstPhotoStoragePath} from '@/lib/catalog/item-photos'
 import {createSignedUrlForStoragePath, type StorageSignClient} from '@/lib/catalog/storage-signed-url'
 import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
+import type {SupabaseClient} from '@supabase/supabase-js'
 import {unstable_cache} from 'next/cache'
 import {cache} from 'react'
 
@@ -15,6 +16,8 @@ export type CatalogSortMode = 'recent' | 'price_asc' | 'price_desc'
 export type MarketingCatalogFacetOption = {
   id: string
   label: string
+  /** `public.sizes.code` (ex. `shoes:38`, `bottom:38`) — absent si RPC ancienne. */
+  code?: string
 }
 
 export type MarketingCatalogFacets = {
@@ -48,6 +51,8 @@ export type MarketingCatalogGridItem = {
   item_brand_id: string | null
   item_couleur_id: string | null
   item_size_id: string | null
+  /** Aligné sur le payload RPC marketing (`size_code`). */
+  size_code?: string | null
   coverUrl: string | null
   objectPosition?: string
   displayTitle?: string
@@ -68,6 +73,7 @@ export type MarketingCatalogItemRow = {
   item_materiaux_id: string | null
   category_label: string | null
   size_label: string | null
+  size_code?: string | null
   materials_label: string | null
   color_label: string | null
   brand_label: string | null
@@ -82,12 +88,52 @@ function parseFacetOptions(raw: unknown): MarketingCatalogFacetOption[] {
   const out: MarketingCatalogFacetOption[] = []
   for (const row of raw) {
     if (!row || typeof row !== 'object') continue
-    const o = row as {id?: unknown; label?: unknown}
+    const o = row as {id?: unknown; label?: unknown; code?: unknown}
     const id = typeof o.id === 'string' ? o.id : null
     const label = typeof o.label === 'string' ? o.label.trim() : ''
-    if (id && label) out.push({id, label})
+    const codeRaw = typeof o.code === 'string' ? o.code.trim() : ''
+    if (id && label) out.push({id, label, ...(codeRaw ? {code: codeRaw} : {})})
   }
   return out
+}
+
+/**
+ * Complète `sizes.code` depuis `public.sizes` lorsque la RPC facettes n’expose pas encore le code
+ * (migrations marketing avant `20260821110000_*`). Sans ça, le rail « Pointures » reste vide.
+ */
+async function enrichFacetSizesWithCodesFromSizesTable(
+  supabase: SupabaseClient,
+  sizes: MarketingCatalogFacetOption[],
+): Promise<MarketingCatalogFacetOption[]> {
+  if (sizes.length === 0) return sizes
+  const ids = [...new Set(sizes.map((s) => s.id).filter((id) => typeof id === 'string' && id.length > 0))]
+  if (ids.length === 0) return sizes
+
+  const byId = new Map<string, string>()
+  const chunk = 120
+  for (let i = 0; i < ids.length; i += chunk) {
+    const slice = ids.slice(i, i + chunk)
+    const {data, error} = await supabase.from('sizes').select('id, code').in('id', slice)
+    if (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[marketing-catalog] enrich facet sizes from table', error.message)
+      }
+      continue
+    }
+    for (const row of data ?? []) {
+      const id = typeof row.id === 'string' ? row.id : null
+      const code = typeof row.code === 'string' ? row.code.trim() : ''
+      if (id && code) byId.set(id, code)
+    }
+  }
+  if (byId.size === 0) return sizes
+
+  return sizes.map((s) => {
+    const fromRpc = s.code?.trim()
+    const fromTable = byId.get(s.id)
+    const code = (fromRpc && fromRpc.length > 0 ? fromRpc : fromTable) ?? ''
+    return code ? {...s, code} : s
+  })
 }
 
 export async function fetchMarketingCatalogFacets(): Promise<MarketingCatalogFacets | null> {
@@ -102,11 +148,12 @@ export async function fetchMarketingCatalogFacets(): Promise<MarketingCatalogFac
     return null
   }
   const root = data && typeof data === 'object' && !Array.isArray(data) ? (data as Record<string, unknown>) : {}
+  const sizes = parseFacetOptions(root.sizes)
   return {
     categories: parseFacetOptions(root.categories),
     brands: parseFacetOptions(root.brands),
     colors: parseFacetOptions(root.colors),
-    sizes: parseFacetOptions(root.sizes),
+    sizes: await enrichFacetSizesWithCodesFromSizesTable(supabase, sizes),
   }
 }
 
@@ -270,9 +317,14 @@ const getMarketingCatalogFacetsScopedPayload = unstable_cache(
       }
       return null
     }
-    return parseFacetsRpcPayload(data)
+    const parsed = parseFacetsRpcPayload(data)
+    if (!parsed) return null
+    return {
+      ...parsed,
+      sizes: await enrichFacetSizesWithCodesFromSizesTable(supabase, parsed.sizes),
+    }
   },
-  ['marketing_catalog_facets_scoped_payload_v1'],
+  ['marketing_catalog_facets_scoped_payload_v2'],
   {revalidate: 30},
 )
 
@@ -388,6 +440,7 @@ export async function gridItemsFromRows(
     item_brand_id: r.item_brand_id,
     item_couleur_id: r.item_couleur_id,
     item_size_id: r.item_size_id,
+    size_code: r.size_code ?? null,
     coverUrl: covers.get(r.id) ?? null,
   }))
 }

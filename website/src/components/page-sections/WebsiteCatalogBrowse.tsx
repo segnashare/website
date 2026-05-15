@@ -15,8 +15,11 @@ import {
 } from 'react'
 import posthog from 'posthog-js'
 import {buildPaginationRange} from '@/lib/catalog/catalog-pagination-range'
+import {splitMarketingCatalogSizeFacets} from '@/lib/catalog/catalog-size-facet-section'
 import type {CatalogSortMode, MarketingCatalogFacets, MarketingCatalogGridItem} from '@/lib/catalog/marketing-catalog-items'
 import styles from './websiteCatalogBrowse.module.css'
+
+type CatalogSizeFilterOption = {id: string; label: string; code?: string}
 
 export type WebsiteCatalogBrowseProps =
   | {
@@ -53,6 +56,20 @@ const FILTER_MENU: {family: FilterFamily; label: string}[] = [
 function priceLabel(p: number | null): string {
   if (typeof p === 'number' && !Number.isNaN(p)) return `${p} pts`
   return '—'
+}
+
+function uniqSizeOptionsFromItems(items: MarketingCatalogGridItem[]): CatalogSizeFilterOption[] {
+  const m = new Map<string, CatalogSizeFilterOption>()
+  for (const it of items) {
+    const id = it.item_size_id
+    const label = it.size_label?.trim()
+    if (!id || !label) continue
+    if (!m.has(id)) {
+      const code = it.size_code?.trim()
+      m.set(id, {id, label, ...(code ? {code} : {})})
+    }
+  }
+  return [...m.values()].sort((a, b) => a.label.localeCompare(b.label, 'fr', {numeric: true, sensitivity: 'base'}))
 }
 
 function uniqOptionsFromItems(
@@ -187,7 +204,7 @@ function WebsiteCatalogBrowseLocal({items}: {items: MarketingCatalogGridItem[]})
   const categories = useMemo(() => uniqOptionsFromItems(items, 'item_category_id', 'category_label'), [items])
   const brands = useMemo(() => uniqOptionsFromItems(items, 'item_brand_id', 'brand_label'), [items])
   const colors = useMemo(() => uniqOptionsFromItems(items, 'item_couleur_id', 'color_label'), [items])
-  const sizes = useMemo(() => uniqOptionsFromItems(items, 'item_size_id', 'size_label'), [items])
+  const sizes = useMemo(() => uniqSizeOptionsFromItems(items), [items])
 
   const filteredSorted = useMemo(() => {
     const f = applyLocalFilters(items, categoryId, brandIds, colorIds, sizeIds)
@@ -562,7 +579,7 @@ type RailProps = {
   categories: {id: string; label: string}[]
   brands: {id: string; label: string}[]
   colors: {id: string; label: string}[]
-  sizes: {id: string; label: string}[]
+  sizes: CatalogSizeFilterOption[]
   categoryId: string | null
   setCategoryId: (v: string | null) => void
   brandIds: Set<string>
@@ -644,6 +661,7 @@ function BrowseLeftRail(p: RailProps) {
 }
 
 function BrowseRightRail(p: RailProps) {
+  const {shoeSizes, apparelSizes} = splitMarketingCatalogSizeFacets(p.sizes)
   return (
     <aside className={styles.rail} aria-label="Tri et filtres">
       <div className={styles.railBlock}>
@@ -689,27 +707,52 @@ function BrowseRightRail(p: RailProps) {
           ))}
         </ul>
       </div>
-      <div className={styles.railBlock}>
-        <h3 className={styles.railTitle}>Tailles</h3>
-        <ul className={styles.railList}>
-          {p.sizes.map((s) => (
-            <li key={s.id} className={styles.railItem}>
-              <label className={styles.railLabel}>
-                <input
-                  type="checkbox"
-                  checked={p.sizeIds.has(s.id)}
-                  onChange={() => {
-                    toggleIdInSet(p.setSizeIds, s.id)
-                    p.onFilterChange()
-                    posthog.capture('catalog_filter_applied', {filter_type: 'size', value: s.label})
-                  }}
-                />
-                <span>{s.label}</span>
-              </label>
-            </li>
-          ))}
-        </ul>
-      </div>
+      {shoeSizes.length > 0 ? (
+        <div className={styles.railBlock}>
+          <h3 className={styles.railTitle}>Pointures</h3>
+          <ul className={styles.railList}>
+            {shoeSizes.map((s) => (
+              <li key={s.id} className={styles.railItem}>
+                <label className={styles.railLabel}>
+                  <input
+                    type="checkbox"
+                    checked={p.sizeIds.has(s.id)}
+                    onChange={() => {
+                      toggleIdInSet(p.setSizeIds, s.id)
+                      p.onFilterChange()
+                      posthog.capture('catalog_filter_applied', {filter_type: 'size', value: s.label})
+                    }}
+                  />
+                  <span>{s.label}</span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {apparelSizes.length > 0 ? (
+        <div className={styles.railBlock}>
+          <h3 className={styles.railTitle}>Tailles</h3>
+          <ul className={styles.railList}>
+            {apparelSizes.map((s) => (
+              <li key={s.id} className={styles.railItem}>
+                <label className={styles.railLabel}>
+                  <input
+                    type="checkbox"
+                    checked={p.sizeIds.has(s.id)}
+                    onChange={() => {
+                      toggleIdInSet(p.setSizeIds, s.id)
+                      p.onFilterChange()
+                      posthog.capture('catalog_filter_applied', {filter_type: 'size', value: s.label})
+                    }}
+                  />
+                  <span>{s.label}</span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </aside>
   )
 }
@@ -728,7 +771,7 @@ function BrowseMobileSheet(props: {
   categories: {id: string; label: string}[]
   brands: {id: string; label: string}[]
   colors: {id: string; label: string}[]
-  sizes: {id: string; label: string}[]
+  sizes: CatalogSizeFilterOption[]
   draftBrands: Set<string>
   setDraftBrands: Dispatch<SetStateAction<Set<string>>>
   draftColors: Set<string>
@@ -766,6 +809,8 @@ function BrowseMobileSheet(props: {
     resetFamilyDraft,
     uid,
   } = props
+
+  const {shoeSizes, apparelSizes} = useMemo(() => splitMarketingCatalogSizeFacets(sizes), [sizes])
 
   if (mobile === 'closed') return null
   return (
@@ -873,14 +918,32 @@ function BrowseMobileSheet(props: {
                   </label>
                 ))
               : null}
-            {mobileFamily === 'size'
-              ? sizes.map((s) => (
-                  <label key={s.id} className={styles.railLabel} style={{display: 'flex', marginBottom: '0.5rem'}}>
-                    <input type="checkbox" checked={draftSizes.has(s.id)} onChange={() => toggleIdInSet(setDraftSizes, s.id)} />
-                    <span>{s.label}</span>
-                  </label>
-                ))
-              : null}
+            {mobileFamily === 'size' ? (
+              <>
+                {shoeSizes.length > 0 ? (
+                  <div style={{marginBottom: apparelSizes.length > 0 ? '1rem' : 0}}>
+                    <h3 className={styles.railTitle}>Pointures</h3>
+                    {shoeSizes.map((s) => (
+                      <label key={s.id} className={styles.railLabel} style={{display: 'flex', marginBottom: '0.5rem'}}>
+                        <input type="checkbox" checked={draftSizes.has(s.id)} onChange={() => toggleIdInSet(setDraftSizes, s.id)} />
+                        <span>{s.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                ) : null}
+                {apparelSizes.length > 0 ? (
+                  <>
+                    <h3 className={styles.railTitle}>Tailles</h3>
+                    {apparelSizes.map((s) => (
+                      <label key={s.id} className={styles.railLabel} style={{display: 'flex', marginBottom: '0.5rem'}}>
+                        <input type="checkbox" checked={draftSizes.has(s.id)} onChange={() => toggleIdInSet(setDraftSizes, s.id)} />
+                        <span>{s.label}</span>
+                      </label>
+                    ))}
+                  </>
+                ) : null}
+              </>
+            ) : null}
             <button type="button" className={styles.sheetPrimary} onClick={() => setMobile('filters-menu')}>
               OK
             </button>
