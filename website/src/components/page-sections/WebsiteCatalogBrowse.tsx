@@ -1,7 +1,7 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
+import {CatalogGridCardMedia} from '@/components/catalog/CatalogGridCardMedia'
 import {
   useCallback,
   useEffect,
@@ -146,20 +146,7 @@ function renderProductCard(it: MarketingCatalogGridItem) {
   return (
     <Link key={it.id} href={`/catalogue/piece/${it.id}`} className={styles.card} onClick={() => posthog.capture('catalog_item_clicked', {item_id: it.id, item_title: it.title, brand: it.brand_label, category: it.category_label, price_points: it.price_points})}>
       <div className={styles.cardMedia}>
-        {it.coverUrl ? (
-          <Image
-            src={it.coverUrl}
-            alt=""
-            fill
-            sizes="(max-width: 575px) 45vw, (max-width: 831px) 30vw, (max-width: 1151px) 23vw, 18vw"
-            quality={90}
-            className={styles.cardImage}
-            style={{
-              objectFit: 'cover',
-              ...(it.objectPosition ? {objectPosition: it.objectPosition} : {}),
-            }}
-          />
-        ) : null}
+        <CatalogGridCardMedia item={it} />
       </div>
       <div className={styles.cardBody}>
         {brandLine ? <span className={styles.cardBrand}>{brandLine}</span> : null}

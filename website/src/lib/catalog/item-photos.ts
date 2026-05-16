@@ -2,6 +2,71 @@
  * Parse `items.photos` (JSON) : chemins storage ou URLs, aligné sur l’app Segna.
  */
 
+import {
+  defaultItemPhotoPosition,
+  itemPhotoPositionFromParsedJson,
+  type ItemPhotoCoverPosition,
+} from '@/lib/items/item-photo-frame'
+
+export type {ItemPhotoCoverPosition} from '@/lib/items/item-photo-frame'
+
+function photoPositionFromRow(row: Record<string, unknown>): ItemPhotoCoverPosition {
+  const pos = row.position
+  if (!pos || typeof pos !== 'object' || Array.isArray(pos)) {
+    return defaultItemPhotoPosition()
+  }
+  return itemPhotoPositionFromParsedJson(pos as Record<string, unknown>)
+}
+
+function storagePathFromPhotoRow(row: Record<string, unknown>): string | null {
+  const storagePathRaw = row.storage_path ?? row.storagePath ?? row.url ?? row.photo_url ?? row.photoUrl
+  if (typeof storagePathRaw === 'string' && storagePathRaw.trim()) {
+    return storagePathRaw.trim()
+  }
+  return null
+}
+
+export type ItemPhotoSlotMeta = {
+  storagePath: string
+  position: ItemPhotoCoverPosition
+}
+
+/** Première photo + cadrage BO (offset % / zoom). */
+export function getFirstPhotoCoverMeta(rawPhotos: unknown): ItemPhotoSlotMeta | null {
+  const slots = collectPhotoSlotsFromItemPhotos(rawPhotos)
+  return slots[0] ?? null
+}
+
+/** Entrées photo triées (`photo1`…) avec chemin et `position`. */
+export function collectPhotoSlotsFromItemPhotos(rawPhotos: unknown): ItemPhotoSlotMeta[] {
+  const out: ItemPhotoSlotMeta[] = []
+  const seen = new Set<string>()
+
+  const push = (row: Record<string, unknown>) => {
+    const path = storagePathFromPhotoRow(row)
+    if (!path || seen.has(path)) return
+    seen.add(path)
+    out.push({storagePath: path, position: photoPositionFromRow(row)})
+  }
+
+  if (!rawPhotos || typeof rawPhotos !== 'object') return out
+  const photos = rawPhotos as Record<string, unknown>
+
+  for (const entry of parsePhotoEntriesFromItemPhotos(rawPhotos)) {
+    push(entry)
+  }
+
+  const list = photos.entries
+  if (Array.isArray(list)) {
+    for (const entry of list) {
+      if (!entry || typeof entry !== 'object') continue
+      push(entry as Record<string, unknown>)
+    }
+  }
+
+  return out
+}
+
 function parsePhotoEntriesFromItemPhotos(raw: unknown): Array<Record<string, unknown>> {
   if (!raw || typeof raw !== 'object') return []
   const photos = raw as Record<string, unknown>
@@ -35,13 +100,14 @@ export function getFirstPhotoStoragePath(rawPhotos: unknown): string | null {
     }
   }
 
+  const firstSlot = getFirstPhotoCoverMeta(rawPhotos)
+  if (firstSlot) return firstSlot.storagePath
+
   const entries = parsePhotoEntriesFromItemPhotos(rawPhotos)
   const first = entries[0]
   if (first) {
-    const storagePathRaw = first.storage_path ?? first.storagePath ?? first.url ?? first.photo_url ?? first.photoUrl
-    if (typeof storagePathRaw === 'string' && storagePathRaw.trim()) {
-      return storagePathRaw.trim()
-    }
+    const path = storagePathFromPhotoRow(first)
+    if (path) return path
   }
 
   const list = photos.entries

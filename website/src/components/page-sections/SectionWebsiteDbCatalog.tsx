@@ -2,6 +2,7 @@ import type {SanityImage} from '@/lib/sanity'
 import {urlForCatalogPuzzleImage} from '@/lib/sanity'
 import type {WebsiteDbCatalogSection} from '@/lib/sanity'
 import type {MarketingCatalogGridItem, MarketingCatalogItemRow} from '@/lib/catalog/marketing-catalog-items'
+import {getFirstPhotoCoverMeta} from '@/lib/catalog/item-photos'
 import {fetchMarketingCatalogItemsByIds, gridItemsFromRows, resolveCoverUrlsForItems} from '@/lib/catalog/marketing-catalog-items'
 import {loadCatalogBrowseFromPath} from '@/lib/catalog/catalog-page-loader'
 import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
@@ -27,8 +28,16 @@ function coverUrlFromSanity(image?: SanityImage | null): string | null {
 function rowToBrowseItem(
   r: MarketingCatalogItemRow,
   coverUrl: string | null,
-  extras?: Partial<Pick<MarketingCatalogGridItem, 'displayTitle' | 'displaySubtitle' | 'objectPosition'>>,
+  extras?: Partial<
+    Pick<MarketingCatalogGridItem, 'displayTitle' | 'displaySubtitle' | 'objectPosition' | 'coverPosition'>
+  >,
 ): MarketingCatalogGridItem {
+  const coverPosition =
+    extras && 'coverPosition' in extras
+      ? extras.coverPosition
+      : (getFirstPhotoCoverMeta(r.photos)?.position ?? null)
+  const {coverPosition: _coverPosInExtras, ...restExtras} = extras ?? {}
+  void _coverPosInExtras
   return {
     id: r.id,
     title: r.title,
@@ -43,7 +52,8 @@ function rowToBrowseItem(
     item_couleur_id: r.item_couleur_id,
     item_size_id: r.item_size_id,
     coverUrl,
-    ...extras,
+    coverPosition,
+    ...restExtras,
   }
 }
 
@@ -168,10 +178,12 @@ export async function SectionWebsiteDbCatalog({section}: Props) {
     const objectPosition = objectPositionFromHotspot(entry.coverImage?.hotspot)
     const displayTitle = entry.cardTitle?.trim() || undefined
     const displaySubtitle = entry.cardSubtitle?.trim() || undefined
+    const photoMeta = getFirstPhotoCoverMeta(row.photos)
 
     browseItems.push(
       rowToBrowseItem(row, coverUrl, {
-        objectPosition: objectPosition ?? undefined,
+        objectPosition: editorialCover ? objectPosition ?? undefined : undefined,
+        coverPosition: editorialCover ? null : (photoMeta?.position ?? null),
         displayTitle,
         displaySubtitle,
       }),

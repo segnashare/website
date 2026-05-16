@@ -4,7 +4,13 @@ import {catalogPerfDetail, catalogPerfLog, catalogPerfNow} from '@/lib/catalog/c
 import type {CatalogPathResolved} from '@/lib/catalog/catalog-path-types'
 import type {CatalogBrowseQuery} from '@/lib/catalog/catalog-search-params'
 import {slugifyFr, withUniqueSlugs} from '@/lib/catalog/catalog-slugs'
-import {collectPhotoPathsFromItemPhotos, getFirstPhotoStoragePath} from '@/lib/catalog/item-photos'
+import {
+  collectPhotoPathsFromItemPhotos,
+  collectPhotoSlotsFromItemPhotos,
+  getFirstPhotoCoverMeta,
+  getFirstPhotoStoragePath,
+  type ItemPhotoCoverPosition,
+} from '@/lib/catalog/item-photos'
 import {createSignedUrlForStoragePath, type StorageSignClient} from '@/lib/catalog/storage-signed-url'
 import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
 import type {SupabaseClient} from '@supabase/supabase-js'
@@ -54,6 +60,9 @@ export type MarketingCatalogGridItem = {
   /** Aligné sur le payload RPC marketing (`size_code`). */
   size_code?: string | null
   coverUrl: string | null
+  /** Cadrage BO / app (`items.photos` → `position`). */
+  coverPosition?: ItemPhotoCoverPosition | null
+  /** Point focal Sanity (sections CMS éditoriales). */
   objectPosition?: string
   displayTitle?: string
   displaySubtitle?: string | null
@@ -442,7 +451,34 @@ export async function gridItemsFromRows(
     item_size_id: r.item_size_id,
     size_code: r.size_code ?? null,
     coverUrl: covers.get(r.id) ?? null,
+    coverPosition: getFirstPhotoCoverMeta(r.photos)?.position ?? null,
   }))
+}
+
+export type MarketingCatalogGallerySlot = {
+  url: string
+  position: ItemPhotoCoverPosition | null
+}
+
+export async function resolveItemGallerySlots(
+  supabase: StorageSignClient,
+  photos: unknown,
+): Promise<MarketingCatalogGallerySlot[]> {
+  const slots = collectPhotoSlotsFromItemPhotos(photos)
+  if (slots.length === 0) {
+    const paths = collectPhotoPathsFromItemPhotos(photos)
+    const signed = await signPhotoPaths(supabase, paths)
+    return signed
+      .filter((u): u is string => Boolean(u))
+      .map((url) => ({url, position: null}))
+  }
+
+  const out: MarketingCatalogGallerySlot[] = []
+  for (const slot of slots) {
+    const url = await createSignedUrlForStoragePath(supabase, slot.storagePath, SIGNED_TTL_SEC)
+    if (url) out.push({url, position: slot.position})
+  }
+  return out
 }
 
 function parseMarketingCatalogRpcPayload(data: unknown): MarketingCatalogItemRow[] {

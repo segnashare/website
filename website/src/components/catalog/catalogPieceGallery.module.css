@@ -1,0 +1,14 @@
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  gap: 0.65rem;
+  margin-bottom: 2rem;
+}
+
+.cell {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #ece8e2;
+}

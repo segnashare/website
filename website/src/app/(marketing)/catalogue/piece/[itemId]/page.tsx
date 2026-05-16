@@ -1,10 +1,10 @@
 import type {Metadata} from 'next'
-import Image from 'next/image'
 import Link from 'next/link'
 import {notFound} from 'next/navigation'
+import {CatalogPieceGallery} from '@/components/catalog/CatalogPieceGallery'
 import {
   fetchMarketingCatalogItemsByIds,
-  resolveItemGallerySignedUrls,
+  resolveItemGallerySlots,
 } from '@/lib/catalog/marketing-catalog-items'
 import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
 import {CatalogItemViewTracker} from '@/components/analytics/CatalogItemViewTracker'
@@ -42,7 +42,7 @@ export default async function CatalogPieceDetailPage({params}: PageProps) {
   const row = rows[0]
   if (!row) notFound()
 
-  const gallery = await resolveItemGallerySignedUrls(supabase, row.photos)
+  const gallery = await resolveItemGallerySlots(supabase, row.photos)
 
   const fields: {label: string; value: string | null | undefined}[] = [
     {label: 'Marque', value: row.brand_label},
@@ -72,23 +72,7 @@ export default async function CatalogPieceDetailPage({params}: PageProps) {
         {[row.brand_label, row.category_label].filter(Boolean).join(' · ') || 'Pièce Segna'}
       </p>
 
-      {gallery.length > 0 ? (
-        <div className={styles.gallery}>
-          {gallery.map((src, i) => (
-            <div key={`${src}-${i}`} className={styles.galleryCell}>
-              <Image
-                src={src}
-                alt={`${row.title} — photo ${i + 1}`}
-                fill
-                sizes="(max-width: 640px) 45vw, 220px"
-                quality={90}
-                className={styles.galleryImage}
-                priority={i === 0}
-              />
-            </div>
-          ))}
-        </div>
-      ) : null}
+      <CatalogPieceGallery slots={gallery} />
 
       {row.description?.trim() ? <p className={styles.description}>{row.description.trim()}</p> : null}
 
