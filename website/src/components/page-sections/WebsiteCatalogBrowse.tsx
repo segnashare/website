@@ -174,7 +174,7 @@ export function WebsiteCatalogBrowse(props: WebsiteCatalogBrowseProps) {
 
 function WebsiteCatalogBrowseLocal({items}: {items: MarketingCatalogGridItem[]}) {
   const uid = useId()
-  const pageSize = 50
+  const pageSize = 30
   const [sortMode, setSortMode] = useState<SortMode>('recent')
   const [categoryId, setCategoryId] = useState<string | null>(null)
   const [brandIds, setBrandIds] = useState<Set<string>>(() => new Set())
@@ -398,7 +398,7 @@ function WebsiteCatalogBrowseRemote({
       if (brands) sp.set('brands', brands)
       if (colors) sp.set('colors', colors)
       if (sizes) sp.set('sizes', sizes)
-      const res = await fetch(`/api/marketing/catalog?${sp.toString()}`, {cache: 'no-store'})
+      const res = await fetch(`/api/marketing/catalog?${sp.toString()}`, {cache: 'force-cache'})
       if (!res.ok) throw new Error(String(res.status))
       const data = (await res.json()) as {items?: MarketingCatalogGridItem[]; total?: number}
       setItems(Array.isArray(data.items) ? data.items : [])

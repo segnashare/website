@@ -175,7 +175,7 @@ function PaginationLinks({
 export function CatalogBrowseLinked({payload, brandBand}: {payload: CatalogBrowsePayload; brandBand?: ReactNode}) {
   const {facets, items, total, pathname, resolved, query} = payload
   const {shoeSizes, apparelSizes} = splitMarketingCatalogSizeFacets(facets.sizes)
-  const pageSize = 50
+  const pageSize = 30
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
   const safePage = Math.min(query.page, totalPages)
 

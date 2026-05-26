@@ -44,7 +44,7 @@ export async function loadCatalogBrowsePayload(
   const {categoryIds, brandIds, colorIds, sizeIds} = idsForCatalogRpc(resolved, query, facets, {
     slugFacetSource: pathNav,
   })
-  const pageSize = 50
+  const pageSize = 30
   const offset = (query.page - 1) * pageSize
 
   const {items: rows, total} = await fetchMarketingCatalogItemsPage({
@@ -102,7 +102,7 @@ export async function loadCatalogBrowseFromPath(
   const {categoryIds, brandIds, colorIds, sizeIds} = idsForCatalogRpc(resolved, query, facets, {
     slugFacetSource: pathNav,
   })
-  const pageSize = 50
+  const pageSize = 30
   const offset = (query.page - 1) * pageSize
 
   const tItems0 = catalogPerfNow()

@@ -91,6 +91,24 @@ export type MarketingCatalogItemRow = {
 }
 
 const SIGNED_TTL_SEC = 60 * 60 * 24
+const SIGNED_URL_CACHE_REVALIDATE_SEC = 60 * 60 * 12
+
+const getCachedSignedUrlForStoragePath = unstable_cache(
+  async (rawPath: string): Promise<string | null> => {
+    const supabase = getSupabaseServiceRoleClient()
+    if (!supabase) return null
+    return createSignedUrlForStoragePath(supabase, rawPath, SIGNED_TTL_SEC)
+  },
+  ['marketing_catalog_signed_url_v1'],
+  {revalidate: SIGNED_URL_CACHE_REVALIDATE_SEC},
+)
+
+async function resolveCachedSignedUrlForStoragePath(rawPath: string): Promise<string | null> {
+  const trimmed = rawPath.trim()
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+  if (!trimmed) return null
+  return getCachedSignedUrlForStoragePath(trimmed)
+}
 
 function parseFacetOptions(raw: unknown): MarketingCatalogFacetOption[] {
   if (!Array.isArray(raw)) return []
@@ -475,7 +493,7 @@ export async function resolveItemGallerySlots(
 
   const out: MarketingCatalogGallerySlot[] = []
   for (const slot of slots) {
-    const url = await createSignedUrlForStoragePath(supabase, slot.storagePath, SIGNED_TTL_SEC)
+    const url = await resolveCachedSignedUrlForStoragePath(slot.storagePath)
     if (url) out.push({url, position: slot.position})
   }
   return out
@@ -578,7 +596,7 @@ export async function signPhotoPaths(
 ): Promise<(string | null)[]> {
   const out: (string | null)[] = []
   for (const p of paths) {
-    out.push(await createSignedUrlForStoragePath(supabase, p, SIGNED_TTL_SEC))
+    out.push(await resolveCachedSignedUrlForStoragePath(p))
   }
   return out
 }
@@ -589,7 +607,7 @@ export async function resolveItemCoverSignedUrl(
 ): Promise<string | null> {
   const first = getFirstPhotoStoragePath(photos)
   if (!first) return null
-  return createSignedUrlForStoragePath(supabase, first, SIGNED_TTL_SEC)
+  return resolveCachedSignedUrlForStoragePath(first)
 }
 
 export async function resolveItemGallerySignedUrls(
