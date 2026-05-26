@@ -6,6 +6,8 @@ type WebhookPayload = {
   type?: string
 }
 
+const REVALIDATED_PATHS = ['/', '/newsroom', '/catalogue', '/aide'] as const
+
 export async function POST(request: NextRequest) {
   const secret = request.nextUrl.searchParams.get('secret')
   const expectedSecret = process.env.SANITY_REVALIDATE_SECRET
@@ -28,16 +30,13 @@ export async function POST(request: NextRequest) {
     payload = null
   }
 
-  // Revalidate root layout to refresh all routes under the app.
-  revalidatePath('/', 'layout')
-
-  // Keep explicit paths for immediate refresh of current key pages.
-  revalidatePath('/')
-  revalidatePath('/newsroom')
+  for (const path of REVALIDATED_PATHS) {
+    revalidatePath(path)
+  }
 
   return NextResponse.json({
     ok: true,
-    revalidated: ['/', '/newsroom', '/ (layout)'],
+    revalidated: REVALIDATED_PATHS,
     type: payload?._type ?? payload?.type ?? null,
     timestamp: new Date().toISOString(),
   })

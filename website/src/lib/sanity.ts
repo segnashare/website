@@ -1,6 +1,7 @@
 import {createClient} from '@sanity/client'
 import {createImageUrlBuilder} from '@sanity/image-url'
 import type {PortableTextBlock} from '@portabletext/types'
+import {cache} from 'react'
 
 const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ?? '1qxhnoe8'
 const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET ?? 'production'
@@ -1135,7 +1136,7 @@ function combineHomeWithHeader(
   }
 }
 
-export async function getHomePageData(): Promise<HomePageData | null> {
+export const getHomePageData = cache(async (): Promise<HomePageData | null> => {
   const [home, siteNav] = await Promise.all([
     sanityClient.fetch<HomePageDocumentData | null>(
       `*[_type == "homePage"]|order(_updatedAt desc)[0]${homePageProjection}`,
@@ -1146,14 +1147,14 @@ export async function getHomePageData(): Promise<HomePageData | null> {
   ])
 
   return combineHomeWithHeader(home, siteNav)
-}
+})
 
 /** Header global seul (ex. autres pages marketing plus tard). */
-export async function getWebsiteHeaderNav(): Promise<WebsiteHeaderNavData | null> {
+export const getWebsiteHeaderNav = cache(async (): Promise<WebsiteHeaderNavData | null> => {
   return sanityClient.fetch(`*[_type == "websiteHeaderNav"]|order(_updatedAt desc)[0]${headerNavProjection}`)
-}
+})
 
-export async function getWebsiteSiteSettings(): Promise<WebsiteSiteSettingsData | null> {
+export const getWebsiteSiteSettings = cache(async (): Promise<WebsiteSiteSettingsData | null> => {
   return sanityClient.fetch(`*[_type == "websiteSiteSettings"]|order(_updatedAt desc)[0]{
     defaultSeo{
       metaTitle,
@@ -1164,14 +1165,14 @@ export async function getWebsiteSiteSettings(): Promise<WebsiteSiteSettingsData 
       }
     }
   }`)
-}
+})
 
 /** Pied de page global (document unique recommandé : id `websiteFooter` dans le desk). */
-export async function getWebsiteFooter(): Promise<WebsiteFooterData | null> {
+export const getWebsiteFooter = cache(async (): Promise<WebsiteFooterData | null> => {
   return sanityClient.fetch(`*[_type == "websiteFooter"]|order(_updatedAt desc)[0]${websiteFooterProjection}`)
-}
+})
 
-export async function getNewsroomPageData(): Promise<NewsroomPageData | null> {
+export const getNewsroomPageData = cache(async (): Promise<NewsroomPageData | null> => {
   return sanityClient.fetch(
     `*[_type == "newsroomPage"]|order(_updatedAt desc)[0]{
       seo,
@@ -1195,15 +1196,15 @@ export async function getNewsroomPageData(): Promise<NewsroomPageData | null> {
       ${documentPageSectionsGroq}
     }`,
   )
-}
+})
 
-export async function getMarketingPageSlugs(): Promise<string[]> {
+export const getMarketingPageSlugs = cache(async (): Promise<string[]> => {
   const slugs = await sanityClient.fetch<string[] | null>(
     `*[_type == "marketingPage" && defined(slug.current)].slug.current`,
   )
   const fromCms = (slugs ?? []).filter((s): s is string => Boolean(s && String(s).trim()))
   return [...new Set(fromCms)]
-}
+})
 
 export type CatalogBrandEditorial = {
   headline: string | null
@@ -1211,16 +1212,16 @@ export type CatalogBrandEditorial = {
 }
 
 /** Contenu éditorial catalogue pour une marque (`catalogBrandPage.brandSlug` = `item_brands.slug`). */
-export async function getCatalogBrandEditorialBySlug(slug: string): Promise<CatalogBrandEditorial | null> {
+export const getCatalogBrandEditorialBySlug = cache(async (slug: string): Promise<CatalogBrandEditorial | null> => {
   const normalized = slug.trim().toLowerCase()
   if (!normalized) return null
   return sanityClient.fetch<CatalogBrandEditorial | null>(
     `*[_type == "catalogBrandPage" && lower(brandSlug) == $slug][0]{headline, description}`,
     {slug: normalized},
   )
-}
+})
 
-export async function getMarketingPageBySlug(slug: string): Promise<MarketingPageData | null> {
+export const getMarketingPageBySlug = cache(async (slug: string): Promise<MarketingPageData | null> => {
   const normalized = slug.trim()
   if (!normalized) return null
   return sanityClient.fetch<MarketingPageData | null>(
@@ -1254,9 +1255,9 @@ export async function getMarketingPageBySlug(slug: string): Promise<MarketingPag
     }`,
     {slug: normalized},
   )
-}
+})
 
-export async function getPosts(): Promise<PostData[]> {
+export const getPosts = cache(async (): Promise<PostData[]> => {
   return sanityClient.fetch(
     `*[_type == "post"]|order(publishedAt desc){
       _id,
@@ -1269,4 +1270,4 @@ export async function getPosts(): Promise<PostData[]> {
       }
     }`,
   )
-}
+})

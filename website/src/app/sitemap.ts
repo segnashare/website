@@ -1,7 +1,10 @@
 import type {MetadataRoute} from 'next'
+import {unstable_cache} from 'next/cache'
 import {getMarketingPageSlugs, sanityClient} from '@/lib/sanity'
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.segnashare.com').replace(/\/+$/, '')
+
+export const revalidate = 3600
 
 type HelpCategoryNode = {
   category?: string
@@ -27,7 +30,7 @@ function compactSlug(value: string | null | undefined): string | null {
   return trimmed ? trimmed : null
 }
 
-async function getHelpCenterPaths(): Promise<string[]> {
+const getHelpCenterPaths = unstable_cache(async (): Promise<string[]> => {
   const categories = await sanityClient.fetch<HelpCategoryNode[]>(
     `*[_type == "helpCategory" && defined(slug.current)]{
       "category": slug.current,
@@ -88,7 +91,7 @@ async function getHelpCenterPaths(): Promise<string[]> {
   }
 
   return [...paths]
-}
+}, ['help-center-sitemap-paths'], {revalidate: 3600})
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()

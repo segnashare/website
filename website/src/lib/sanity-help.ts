@@ -1,4 +1,5 @@
 import {helpArticleQaItemsGroq, sanityClient, type HelpArticleQaItem} from '@/lib/sanity'
+import {cache} from 'react'
 
 export type HelpCenterSettingsData = {
   landingHeroTitle?: string
@@ -102,11 +103,11 @@ const settingsProjection = `{
   accentHex
 }`
 
-export async function getHelpCenterSettings(): Promise<HelpCenterSettingsData | null> {
+export const getHelpCenterSettings = cache(async (): Promise<HelpCenterSettingsData | null> => {
   return sanityClient.fetch(`*[_type == "helpCenterSettings"]|order(_updatedAt desc)[0]${settingsProjection}`)
-}
+})
 
-export async function getHelpCategoriesForHome(): Promise<HelpCategoryListItem[]> {
+export const getHelpCategoriesForHome = cache(async (): Promise<HelpCategoryListItem[]> => {
   return sanityClient.fetch(
     `*[_type == "helpCategory" && (showOnHome != false)]|order(sortOrder asc, title asc){
       _id,
@@ -115,10 +116,10 @@ export async function getHelpCategoriesForHome(): Promise<HelpCategoryListItem[]
       description
     }`
   )
-}
+})
 
 /** Toutes les sections d’aide (liens vers /aide/{slug}) — ex. bloc sur page « Comment ça marche ». */
-export async function getHelpCategoriesForHub(): Promise<HelpCategoryListItem[]> {
+export const getHelpCategoriesForHub = cache(async (): Promise<HelpCategoryListItem[]> => {
   return sanityClient.fetch(
     `*[_type == "helpCategory"]|order(sortOrder asc, title asc){
       _id,
@@ -127,9 +128,9 @@ export async function getHelpCategoriesForHub(): Promise<HelpCategoryListItem[]>
       description
     }`,
   )
-}
+})
 
-export async function getHelpCategoryBySlug(categorySlug: string): Promise<HelpCategoryPageData | null> {
+export const getHelpCategoryBySlug = cache(async (categorySlug: string): Promise<HelpCategoryPageData | null> => {
   return sanityClient.fetch(
     `*[_type == "helpCategory" && slug.current == $categorySlug][0]{
       _id,
@@ -152,12 +153,12 @@ export async function getHelpCategoryBySlug(categorySlug: string): Promise<HelpC
     }`,
     {categorySlug}
   )
-}
+})
 
-export async function getHelpSubsectionBySlugs(
+export const getHelpSubsectionBySlugs = cache(async (
   categorySlug: string,
   subsectionSlug: string
-): Promise<HelpSubsectionPageData | null> {
+): Promise<HelpSubsectionPageData | null> => {
   return sanityClient.fetch(
     `*[_type == "helpSection" && slug.current == $subsectionSlug && category->slug.current == $categorySlug][0]{
       _id,
@@ -180,13 +181,13 @@ export async function getHelpSubsectionBySlugs(
     }`,
     {categorySlug, subsectionSlug}
   )
-}
+})
 
 /** Article à la racine de la section : /aide/{section}/{article} */
-export async function getHelpRootArticleBySlugs(
+export const getHelpRootArticleBySlugs = cache(async (
   categorySlug: string,
   articleSlug: string
-): Promise<HelpArticlePageData | null> {
+): Promise<HelpArticlePageData | null> => {
   const article = await sanityClient.fetch(
     `*[_type == "helpArticle" && slug.current == $articleSlug && !defined(section)][0]{
       _id,
@@ -213,14 +214,14 @@ export async function getHelpRootArticleBySlugs(
   if (!article) return null
   if (article.category?.slug?.current !== categorySlug) return null
   return article as HelpArticlePageData
-}
+})
 
 /** Article sous sous-section : /aide/{section}/{subsection}/{article} */
-export async function getHelpNestedArticleBySlugs(
+export const getHelpNestedArticleBySlugs = cache(async (
   categorySlug: string,
   subsectionSlug: string,
   articleSlug: string
-): Promise<HelpArticlePageData | null> {
+): Promise<HelpArticlePageData | null> => {
   const article = await sanityClient.fetch(
     `*[_type == "helpArticle" && slug.current == $articleSlug][0]{
       _id,
@@ -249,7 +250,7 @@ export async function getHelpNestedArticleBySlugs(
   if (article.section?.slug?.current !== subsectionSlug) return null
   if (!article.section) return null
   return article as HelpArticlePageData
-}
+})
 
 function groqMatchPattern(raw: string): string | null {
   const t = raw.trim()
@@ -259,7 +260,7 @@ function groqMatchPattern(raw: string): string | null {
   return `*${safe}*`
 }
 
-export async function searchHelpArticles(query: string): Promise<HelpSearchHit[]> {
+export const searchHelpArticles = cache(async (query: string): Promise<HelpSearchHit[]> => {
   const pattern = groqMatchPattern(query)
   if (!pattern) return []
   return sanityClient.fetch(
@@ -279,7 +280,7 @@ export async function searchHelpArticles(query: string): Promise<HelpSearchHit[]
     }`,
     {pattern}
   )
-}
+})
 
 /** URL publique à partir des slugs (catégorie, sous-section optionnelle, article). */
 export function helpArticleHrefFromSlugs(
