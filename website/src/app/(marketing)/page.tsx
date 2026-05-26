@@ -7,7 +7,7 @@ import {HomeHero} from '@/components/home/HomeHero'
 import {HomeStagedHero} from '@/components/home/HomeStagedHero'
 import styles from '@/components/home/homeHero.module.css'
 
-export const revalidate = 30
+export const revalidate = 3600
 
 /** SEO accueil : champs `seo` du document « Page d’accueil » dans Sanity, sinon repli sur le sous-titre hero. */
 export async function generateMetadata(): Promise<Metadata> {

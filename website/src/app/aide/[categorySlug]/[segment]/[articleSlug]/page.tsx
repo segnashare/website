@@ -2,7 +2,7 @@ import {notFound} from 'next/navigation'
 import {HelpArticleContent} from '@/components/help/HelpArticleContent'
 import {getHelpCenterSettings, getHelpNestedArticleBySlugs} from '@/lib/sanity-help'
 
-export const revalidate = 60
+export const revalidate = 3600
 
 type PageProps = {
   params: Promise<{categorySlug: string; segment: string; articleSlug: string}>

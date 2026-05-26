@@ -8,7 +8,7 @@ import {parseCatalogBrowseQueryFromNext} from '@/lib/catalog/catalog-search-para
 import {categoryBySlug} from '@/lib/catalog/catalog-category-tree'
 import {fetchMarketingCatalogPathResolveNav} from '@/lib/catalog/marketing-catalog-items'
 
-export const revalidate = 30
+export const revalidate = 3600
 
 type PageProps = {
   params: Promise<{segment: string; categorySlug: string}>

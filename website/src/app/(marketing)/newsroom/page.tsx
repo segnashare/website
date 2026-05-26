@@ -4,7 +4,7 @@ import {PageSections} from '@/components/cms/PageSections'
 import {PageUnifiedHero} from '@/components/layout/PageUnifiedHero'
 import {getHomePageData, getNewsroomPageData, getPosts, urlFor} from '@/lib/sanity'
 
-export const revalidate = 30
+export const revalidate = 3600
 
 function formatDate(value?: string) {
   if (!value) return null

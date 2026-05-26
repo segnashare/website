@@ -2,7 +2,7 @@ import Link from 'next/link'
 import styles from '@/components/help/help.module.css'
 import {getHelpCategoriesForHome, getHelpCenterSettings} from '@/lib/sanity-help'
 
-export const revalidate = 60
+export const revalidate = 3600
 
 export default async function AideHomePage() {
   const [settings, categories] = await Promise.all([getHelpCenterSettings(), getHelpCategoriesForHome()])

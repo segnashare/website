@@ -4,7 +4,7 @@ import {PageSections} from '@/components/cms/PageSections'
 import {MarketingFullBleedHero} from '@/components/layout/MarketingFullBleedHero'
 import {getHomePageData, getMarketingPageBySlug, getMarketingPageSlugs, getWebsiteHeaderNav, urlFor} from '@/lib/sanity'
 
-export const revalidate = 30
+export const revalidate = 3600
 
 type PageProps = {
   params: Promise<{slug: string}>

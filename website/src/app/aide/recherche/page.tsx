@@ -3,7 +3,7 @@ import {HelpSearchResultLink} from '@/components/help/HelpSearchResultLink'
 import styles from '@/components/help/help.module.css'
 import {getHelpCenterSettings, helpArticleHref, searchHelpArticles} from '@/lib/sanity-help'
 
-export const revalidate = 60
+export const revalidate = 3600
 
 type PageProps = {
   searchParams: Promise<{q?: string}>

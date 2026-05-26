@@ -9,7 +9,7 @@ import {
   getHelpSubsectionBySlugs,
 } from '@/lib/sanity-help'
 
-export const revalidate = 60
+export const revalidate = 3600
 
 type PageProps = {
   params: Promise<{categorySlug: string; segment: string}>

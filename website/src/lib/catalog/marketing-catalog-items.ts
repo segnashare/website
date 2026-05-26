@@ -268,7 +268,7 @@ async function fetchMarketingCatalogPathResolveNavUncached(): Promise<MarketingC
 const fetchMarketingCatalogPathResolveNavCrossRequest = unstable_cache(
   fetchMarketingCatalogPathResolveNavUncached,
   ['marketing_catalog_path_nav_v2'],
-  {revalidate: 30},
+  {revalidate: 3600},
 )
 
 /** Dédup par rendu RSC + cache entre requêtes (résolution de chemin / slugs). */
@@ -334,7 +334,7 @@ const getMarketingCatalogFacetsScopedPayload = unstable_cache(
     }
   },
   ['marketing_catalog_facets_scoped_payload_v2'],
-  {revalidate: 30},
+  {revalidate: 3600},
 )
 
 async function fetchMarketingCatalogBrowseFacetsNavUncached(

@@ -4,7 +4,7 @@ import {loadCatalogBrowseFromPath} from '@/lib/catalog/catalog-page-loader'
 import {parseCatalogBrowseQueryFromNext} from '@/lib/catalog/catalog-search-params'
 import {getMarketingPageBySlug, urlFor} from '@/lib/sanity'
 
-export const revalidate = 30
+export const revalidate = 3600
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>

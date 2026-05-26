@@ -4,7 +4,7 @@ import {HelpBreadcrumbs} from '@/components/help/HelpBreadcrumbs'
 import styles from '@/components/help/help.module.css'
 import {getHelpCategoryBySlug, getHelpCenterSettings} from '@/lib/sanity-help'
 
-export const revalidate = 60
+export const revalidate = 3600
 
 type PageProps = {
   params: Promise<{categorySlug: string}>
