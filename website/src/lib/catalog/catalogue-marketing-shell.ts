@@ -1,3 +1,4 @@
+import {unstable_cache} from 'next/cache'
 import {cache} from 'react'
 import {getHomePageData, getMarketingPageBySlug, getWebsiteHeaderNav} from '@/lib/sanity'
 import type {PageSection} from '@/lib/sanity'
@@ -7,8 +8,7 @@ function withoutDbCatalogSections(sections: PageSection[] | null | undefined): P
   return sections.filter((s) => s._type !== 'websiteDbCatalogSection')
 }
 
-/** Données hero + sections page marketing « catalogue » (une requête dédupliquée par navigation). */
-export const getCatalogueMarketingShell = cache(async () => {
+async function getCatalogueMarketingShellUncached() {
   const [marketingPage, homePage, siteNavFallback] = await Promise.all([
     getMarketingPageBySlug('catalogue'),
     getHomePageData(),
@@ -32,4 +32,9 @@ export const getCatalogueMarketingShell = cache(async () => {
   const sections = withoutDbCatalogSections(marketingPage?.sections)
 
   return {marketingPage, headerNav, cta, sections}
-})
+}
+
+/** Données hero + sections page marketing « catalogue » (cache 1h entre requêtes). */
+export const getCatalogueMarketingShell = cache(
+  unstable_cache(getCatalogueMarketingShellUncached, ['catalogue_marketing_shell_v1'], {revalidate: 3600}),
+)

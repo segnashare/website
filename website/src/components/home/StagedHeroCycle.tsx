@@ -232,7 +232,7 @@ export function StagedHeroCycle({
                 alt={alt}
                 fill
                 sizes={imageSizes}
-                quality={96}
+                quality={85}
                 style={{
                   objectFit: fit,
                   ...(objectPosition ? {objectPosition} : {}),
@@ -272,7 +272,7 @@ export function StagedHeroCycle({
                     alt={alt}
                     fill
                     sizes={imageSizes}
-                    quality={96}
+                    quality={85}
                     style={{
                       objectFit: fit,
                       ...(objectPosition ? {objectPosition} : {}),

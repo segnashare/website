@@ -1,5 +1,8 @@
 import {helpArticleQaItemsGroq, sanityClient, type HelpArticleQaItem} from '@/lib/sanity'
+import {unstable_cache} from 'next/cache'
 import {cache} from 'react'
+
+const HELP_DATA_REVALIDATE_SEC = 3600
 
 export type HelpCenterSettingsData = {
   landingHeroTitle?: string
@@ -103,11 +106,11 @@ const settingsProjection = `{
   accentHex
 }`
 
-export const getHelpCenterSettings = cache(async (): Promise<HelpCenterSettingsData | null> => {
+async function getHelpCenterSettingsUncached(): Promise<HelpCenterSettingsData | null> {
   return sanityClient.fetch(`*[_type == "helpCenterSettings"]|order(_updatedAt desc)[0]${settingsProjection}`)
-})
+}
 
-export const getHelpCategoriesForHome = cache(async (): Promise<HelpCategoryListItem[]> => {
+async function getHelpCategoriesForHomeUncached(): Promise<HelpCategoryListItem[]> {
   return sanityClient.fetch(
     `*[_type == "helpCategory" && (showOnHome != false)]|order(sortOrder asc, title asc){
       _id,
@@ -116,10 +119,10 @@ export const getHelpCategoriesForHome = cache(async (): Promise<HelpCategoryList
       description
     }`
   )
-})
+}
 
 /** Toutes les sections d’aide (liens vers /aide/{slug}) — ex. bloc sur page « Comment ça marche ». */
-export const getHelpCategoriesForHub = cache(async (): Promise<HelpCategoryListItem[]> => {
+async function getHelpCategoriesForHubUncached(): Promise<HelpCategoryListItem[]> {
   return sanityClient.fetch(
     `*[_type == "helpCategory"]|order(sortOrder asc, title asc){
       _id,
@@ -128,9 +131,9 @@ export const getHelpCategoriesForHub = cache(async (): Promise<HelpCategoryListI
       description
     }`,
   )
-})
+}
 
-export const getHelpCategoryBySlug = cache(async (categorySlug: string): Promise<HelpCategoryPageData | null> => {
+async function getHelpCategoryBySlugUncached(categorySlug: string): Promise<HelpCategoryPageData | null> {
   return sanityClient.fetch(
     `*[_type == "helpCategory" && slug.current == $categorySlug][0]{
       _id,
@@ -153,12 +156,12 @@ export const getHelpCategoryBySlug = cache(async (categorySlug: string): Promise
     }`,
     {categorySlug}
   )
-})
+}
 
-export const getHelpSubsectionBySlugs = cache(async (
+async function getHelpSubsectionBySlugsUncached(
   categorySlug: string,
   subsectionSlug: string
-): Promise<HelpSubsectionPageData | null> => {
+): Promise<HelpSubsectionPageData | null> {
   return sanityClient.fetch(
     `*[_type == "helpSection" && slug.current == $subsectionSlug && category->slug.current == $categorySlug][0]{
       _id,
@@ -181,13 +184,13 @@ export const getHelpSubsectionBySlugs = cache(async (
     }`,
     {categorySlug, subsectionSlug}
   )
-})
+}
 
 /** Article à la racine de la section : /aide/{section}/{article} */
-export const getHelpRootArticleBySlugs = cache(async (
+async function getHelpRootArticleBySlugsUncached(
   categorySlug: string,
   articleSlug: string
-): Promise<HelpArticlePageData | null> => {
+): Promise<HelpArticlePageData | null> {
   const article = await sanityClient.fetch(
     `*[_type == "helpArticle" && slug.current == $articleSlug && !defined(section)][0]{
       _id,
@@ -214,14 +217,14 @@ export const getHelpRootArticleBySlugs = cache(async (
   if (!article) return null
   if (article.category?.slug?.current !== categorySlug) return null
   return article as HelpArticlePageData
-})
+}
 
 /** Article sous sous-section : /aide/{section}/{subsection}/{article} */
-export const getHelpNestedArticleBySlugs = cache(async (
+async function getHelpNestedArticleBySlugsUncached(
   categorySlug: string,
   subsectionSlug: string,
   articleSlug: string
-): Promise<HelpArticlePageData | null> => {
+): Promise<HelpArticlePageData | null> {
   const article = await sanityClient.fetch(
     `*[_type == "helpArticle" && slug.current == $articleSlug][0]{
       _id,
@@ -250,7 +253,49 @@ export const getHelpNestedArticleBySlugs = cache(async (
   if (article.section?.slug?.current !== subsectionSlug) return null
   if (!article.section) return null
   return article as HelpArticlePageData
-})
+}
+
+export const getHelpCenterSettings = cache(
+  unstable_cache(getHelpCenterSettingsUncached, ['sanity_help_settings_v1'], {
+    revalidate: HELP_DATA_REVALIDATE_SEC,
+  }),
+)
+
+export const getHelpCategoriesForHome = cache(
+  unstable_cache(getHelpCategoriesForHomeUncached, ['sanity_help_categories_home_v1'], {
+    revalidate: HELP_DATA_REVALIDATE_SEC,
+  }),
+)
+
+export const getHelpCategoriesForHub = cache(
+  unstable_cache(getHelpCategoriesForHubUncached, ['sanity_help_categories_hub_v1'], {
+    revalidate: HELP_DATA_REVALIDATE_SEC,
+  }),
+)
+
+export const getHelpCategoryBySlug = cache(
+  unstable_cache(getHelpCategoryBySlugUncached, ['sanity_help_category_v1'], {
+    revalidate: HELP_DATA_REVALIDATE_SEC,
+  }),
+)
+
+export const getHelpSubsectionBySlugs = cache(
+  unstable_cache(getHelpSubsectionBySlugsUncached, ['sanity_help_subsection_v1'], {
+    revalidate: HELP_DATA_REVALIDATE_SEC,
+  }),
+)
+
+export const getHelpRootArticleBySlugs = cache(
+  unstable_cache(getHelpRootArticleBySlugsUncached, ['sanity_help_root_article_v1'], {
+    revalidate: HELP_DATA_REVALIDATE_SEC,
+  }),
+)
+
+export const getHelpNestedArticleBySlugs = cache(
+  unstable_cache(getHelpNestedArticleBySlugsUncached, ['sanity_help_nested_article_v1'], {
+    revalidate: HELP_DATA_REVALIDATE_SEC,
+  }),
+)
 
 function groqMatchPattern(raw: string): string | null {
   const t = raw.trim()
@@ -260,7 +305,7 @@ function groqMatchPattern(raw: string): string | null {
   return `*${safe}*`
 }
 
-export const searchHelpArticles = cache(async (query: string): Promise<HelpSearchHit[]> => {
+async function searchHelpArticlesUncached(query: string): Promise<HelpSearchHit[]> {
   const pattern = groqMatchPattern(query)
   if (!pattern) return []
   return sanityClient.fetch(
@@ -280,7 +325,11 @@ export const searchHelpArticles = cache(async (query: string): Promise<HelpSearc
     }`,
     {pattern}
   )
-})
+}
+
+export const searchHelpArticles = cache(
+  unstable_cache(searchHelpArticlesUncached, ['sanity_help_search_v1'], {revalidate: HELP_DATA_REVALIDATE_SEC}),
+)
 
 /** URL publique à partir des slugs (catégorie, sous-section optionnelle, article). */
 export function helpArticleHrefFromSlugs(

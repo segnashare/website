@@ -1,7 +1,10 @@
 import {createClient} from '@sanity/client'
 import {createImageUrlBuilder} from '@sanity/image-url'
 import type {PortableTextBlock} from '@portabletext/types'
+import {unstable_cache} from 'next/cache'
 import {cache} from 'react'
+
+const SANITY_DATA_REVALIDATE_SEC = 3600
 
 const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ?? '1qxhnoe8'
 const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET ?? 'production'
@@ -28,7 +31,7 @@ export function urlFor(source: SanityImageSource) {
  * `fit('max')` conserve le ratio. Qualité CDN élevée ; coupler avec `stagedHeroImageSizes` + `quality` sur `<Image>`.
  */
 export function urlForStagedHeroImage(source: SanityImageSource) {
-  return builder.image(source).width(5760).height(5760).fit('max').quality(96).auto('format')
+  return builder.image(source).width(2400).height(2400).fit('max').quality(85).auto('format')
 }
 
 /**
@@ -71,7 +74,7 @@ export const horizontalScrollCardImageSizes =
  * (crop), bonne définition ; le **point focal** est réappliqué côté CSS (`object-position`).
  */
 export function urlForCatalogPuzzleImage(source: SanityImageSource) {
-  return builder.image(source).width(4096).fit('max').quality(96).auto('format')
+  return builder.image(source).width(1600).fit('max').quality(85).auto('format')
 }
 
 /** Point chaud Sanity (éditeur d’image) — sert à `object-position` en cover. */
@@ -1136,7 +1139,7 @@ function combineHomeWithHeader(
   }
 }
 
-export const getHomePageData = cache(async (): Promise<HomePageData | null> => {
+async function getHomePageDataUncached(): Promise<HomePageData | null> {
   const [home, siteNav] = await Promise.all([
     sanityClient.fetch<HomePageDocumentData | null>(
       `*[_type == "homePage"]|order(_updatedAt desc)[0]${homePageProjection}`,
@@ -1147,14 +1150,14 @@ export const getHomePageData = cache(async (): Promise<HomePageData | null> => {
   ])
 
   return combineHomeWithHeader(home, siteNav)
-})
+}
 
 /** Header global seul (ex. autres pages marketing plus tard). */
-export const getWebsiteHeaderNav = cache(async (): Promise<WebsiteHeaderNavData | null> => {
+async function getWebsiteHeaderNavUncached(): Promise<WebsiteHeaderNavData | null> {
   return sanityClient.fetch(`*[_type == "websiteHeaderNav"]|order(_updatedAt desc)[0]${headerNavProjection}`)
-})
+}
 
-export const getWebsiteSiteSettings = cache(async (): Promise<WebsiteSiteSettingsData | null> => {
+async function getWebsiteSiteSettingsUncached(): Promise<WebsiteSiteSettingsData | null> {
   return sanityClient.fetch(`*[_type == "websiteSiteSettings"]|order(_updatedAt desc)[0]{
     defaultSeo{
       metaTitle,
@@ -1165,14 +1168,14 @@ export const getWebsiteSiteSettings = cache(async (): Promise<WebsiteSiteSetting
       }
     }
   }`)
-})
+}
 
 /** Pied de page global (document unique recommandé : id `websiteFooter` dans le desk). */
-export const getWebsiteFooter = cache(async (): Promise<WebsiteFooterData | null> => {
+async function getWebsiteFooterUncached(): Promise<WebsiteFooterData | null> {
   return sanityClient.fetch(`*[_type == "websiteFooter"]|order(_updatedAt desc)[0]${websiteFooterProjection}`)
-})
+}
 
-export const getNewsroomPageData = cache(async (): Promise<NewsroomPageData | null> => {
+async function getNewsroomPageDataUncached(): Promise<NewsroomPageData | null> {
   return sanityClient.fetch(
     `*[_type == "newsroomPage"]|order(_updatedAt desc)[0]{
       seo,
@@ -1196,15 +1199,39 @@ export const getNewsroomPageData = cache(async (): Promise<NewsroomPageData | nu
       ${documentPageSectionsGroq}
     }`,
   )
-})
+}
 
-export const getMarketingPageSlugs = cache(async (): Promise<string[]> => {
+async function getMarketingPageSlugsUncached(): Promise<string[]> {
   const slugs = await sanityClient.fetch<string[] | null>(
     `*[_type == "marketingPage" && defined(slug.current)].slug.current`,
   )
   const fromCms = (slugs ?? []).filter((s): s is string => Boolean(s && String(s).trim()))
   return [...new Set(fromCms)]
-})
+}
+
+export const getHomePageData = cache(
+  unstable_cache(getHomePageDataUncached, ['sanity_home_page_v1'], {revalidate: SANITY_DATA_REVALIDATE_SEC}),
+)
+
+export const getWebsiteHeaderNav = cache(
+  unstable_cache(getWebsiteHeaderNavUncached, ['sanity_header_nav_v1'], {revalidate: SANITY_DATA_REVALIDATE_SEC}),
+)
+
+export const getWebsiteSiteSettings = cache(
+  unstable_cache(getWebsiteSiteSettingsUncached, ['sanity_site_settings_v1'], {revalidate: SANITY_DATA_REVALIDATE_SEC}),
+)
+
+export const getWebsiteFooter = cache(
+  unstable_cache(getWebsiteFooterUncached, ['sanity_footer_v1'], {revalidate: SANITY_DATA_REVALIDATE_SEC}),
+)
+
+export const getNewsroomPageData = cache(
+  unstable_cache(getNewsroomPageDataUncached, ['sanity_newsroom_page_v1'], {revalidate: SANITY_DATA_REVALIDATE_SEC}),
+)
+
+export const getMarketingPageSlugs = cache(
+  unstable_cache(getMarketingPageSlugsUncached, ['sanity_marketing_slugs_v1'], {revalidate: SANITY_DATA_REVALIDATE_SEC}),
+)
 
 export type CatalogBrandEditorial = {
   headline: string | null
@@ -1212,16 +1239,16 @@ export type CatalogBrandEditorial = {
 }
 
 /** Contenu éditorial catalogue pour une marque (`catalogBrandPage.brandSlug` = `item_brands.slug`). */
-export const getCatalogBrandEditorialBySlug = cache(async (slug: string): Promise<CatalogBrandEditorial | null> => {
+async function getCatalogBrandEditorialBySlugUncached(slug: string): Promise<CatalogBrandEditorial | null> {
   const normalized = slug.trim().toLowerCase()
   if (!normalized) return null
   return sanityClient.fetch<CatalogBrandEditorial | null>(
     `*[_type == "catalogBrandPage" && lower(brandSlug) == $slug][0]{headline, description}`,
     {slug: normalized},
   )
-})
+}
 
-export const getMarketingPageBySlug = cache(async (slug: string): Promise<MarketingPageData | null> => {
+async function getMarketingPageBySlugUncached(slug: string): Promise<MarketingPageData | null> {
   const normalized = slug.trim()
   if (!normalized) return null
   return sanityClient.fetch<MarketingPageData | null>(
@@ -1255,9 +1282,9 @@ export const getMarketingPageBySlug = cache(async (slug: string): Promise<Market
     }`,
     {slug: normalized},
   )
-})
+}
 
-export const getPosts = cache(async (): Promise<PostData[]> => {
+async function getPostsUncached(): Promise<PostData[]> {
   return sanityClient.fetch(
     `*[_type == "post"]|order(publishedAt desc){
       _id,
@@ -1270,4 +1297,26 @@ export const getPosts = cache(async (): Promise<PostData[]> => {
       }
     }`,
   )
+}
+
+const getCatalogBrandEditorialBySlugCrossRequest = unstable_cache(
+  getCatalogBrandEditorialBySlugUncached,
+  ['sanity_catalog_brand_editorial_v1'],
+  {revalidate: SANITY_DATA_REVALIDATE_SEC},
+)
+
+const getMarketingPageBySlugCrossRequest = unstable_cache(
+  getMarketingPageBySlugUncached,
+  ['sanity_marketing_page_v1'],
+  {revalidate: SANITY_DATA_REVALIDATE_SEC},
+)
+
+const getPostsCrossRequest = unstable_cache(getPostsUncached, ['sanity_posts_v1'], {
+  revalidate: SANITY_DATA_REVALIDATE_SEC,
 })
+
+export const getCatalogBrandEditorialBySlug = cache(getCatalogBrandEditorialBySlugCrossRequest)
+
+export const getMarketingPageBySlug = cache(getMarketingPageBySlugCrossRequest)
+
+export const getPosts = cache(getPostsCrossRequest)

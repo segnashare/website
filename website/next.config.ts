@@ -11,11 +11,13 @@ try {
 const nextConfig: NextConfig = {
   images: {
     /**
-     * Next.js 16 n’autorise par défaut que `qualities: [75]`. Toute autre valeur
-     * de `quality` sur `<Image>` est ramenée au plus proche (souvent 75), ce qui
-     * dégrade fortement les visuels alors que le code demande 90–96.
+     * Next.js 16 n’autorise par défaut que `qualities: [75]`. Limiter les paliers réduit
+     * les variantes Image Optimization (cache writes / transformations Vercel).
      */
-    qualities: [75, 80, 85, 90, 95, 96, 100],
+    qualities: [75, 85, 90],
+    minimumCacheTTL: 86400,
+    deviceSizes: [640, 828, 1200, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     remotePatterns: [
       {
         protocol: 'https',

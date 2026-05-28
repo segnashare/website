@@ -42,7 +42,7 @@ function ScrollCard({card}: {card: HorizontalScrollCard}) {
             alt={alt}
             fill
             sizes={horizontalScrollCardImageSizes}
-            quality={96}
+            quality={85}
             className={puzzleStyles.cardImage}
             style={{
               objectFit: 'cover',

@@ -50,7 +50,7 @@ function CatalogPuzzleCard({
             alt={alt}
             fill
             sizes={sizes}
-            quality={96}
+            quality={85}
             className={styles.cardImage}
             style={{
               objectFit: 'cover',
