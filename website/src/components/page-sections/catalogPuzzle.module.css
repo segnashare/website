@@ -174,7 +174,7 @@
   }
 }
 
-/* Desktop : grille puzzle. Téléphone : défilement horizontal (voir @media). */
+/* Desktop : grille puzzle. Téléphone : même disposition, miniature (voir @media). */
 .scrollStrip {
   min-width: 0;
 }
@@ -307,82 +307,53 @@
 }
 
 @media (max-width: 767px) {
-  /* Même principe que horizontalScrollCards : bandeau plein écran, 1re carte alignée au chapô (~10 %). */
+  .section {
+    width: 100%;
+  }
+
   .scrollStrip {
-    width: 100vw;
-    margin-left: calc(50% - 50vw);
-    margin-right: calc(50% - 50vw);
-    max-width: none;
-    box-sizing: border-box;
-    overflow-x: hidden;
+    width: 100%;
+    margin: 0;
+    overflow: visible;
   }
 
+  /* Même grille 2×4 que desktop, réduite pour tenir dans l’écran. */
   .grid {
-    display: flex;
-    flex-flow: row nowrap;
-    align-items: stretch;
-    gap: clamp(1.05rem, 3.2vw, 1.75rem);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(4, minmax(0, 1fr));
+    gap: clamp(0.14rem, 0.45vw, 0.28rem);
+    width: 100%;
     min-height: 0;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scroll-snap-type: x mandatory;
-    /* Alignement snap sur la même grille que le chapô (~10 % + marge fin). */
-    scroll-padding-inline-start: 10%;
-    scroll-padding-inline-end: clamp(1rem, 4vw, 2.75rem);
-    padding: 0 0 0.4rem;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-x;
-    overscroll-behavior-x: contain;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    /* 4 rangées / 2 colonnes — cadres plus bas (10/19.2 était trop haut). */
+    aspect-ratio: 10 / 12.5;
+    overflow: visible;
   }
 
-  /* Espace défilant (comme du padding sur la piste) : pas de padding sur le scrollport,
-     sinon WebKit/Blink laisse une zone fixe et le contenu « disparaît » avant le bord écran. */
-  .grid::before,
-  .grid::after {
-    content: '';
-    flex: 0 0 auto;
-    align-self: stretch;
-    min-height: 1px;
-  }
-
-  .grid::before {
-    width: 10%;
-  }
-
-  .grid::after {
-    width: clamp(1rem, 4vw, 2.75rem);
-  }
-
-  .grid::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* Les 2 cartes du bas gauche deviennent des slides sœurs dans la piste flex. */
   .leftSplit {
-    display: contents;
-  }
-
-  .grid .card {
-    flex: 0 0 auto;
-    scroll-snap-align: start;
-    width: clamp(272px, 78vw, 340px);
-    aspect-ratio: 1 / 1;
+    display: grid;
+    grid-column: 1;
+    grid-row: 3 / 5;
+    grid-template-columns: 1fr 1fr;
+    gap: inherit;
     min-height: 0;
   }
 
-  .posLeftTop,
-  .posLeftMiddle,
-  .posLeftBottomLeft,
-  .posLeftBottomRight,
-  .posRightTall,
-  .posRightBottom {
-    grid-column: unset;
-    grid-row: unset;
+  .card {
+    border-radius: clamp(6px, 1.2vw, 10px);
   }
 
-  .posRightTall {
-    order: 0;
+  .cardText {
+    padding: clamp(0.4rem, 1.8vw, 0.65rem) clamp(0.4rem, 1.6vw, 0.6rem);
+  }
+
+  .cardTitle {
+    margin-bottom: 0.08rem;
+    font-size: clamp(0.58rem, 2.65vw, 0.74rem);
+    line-height: 1.15;
+  }
+
+  .cardSubtitle {
+    display: none;
   }
 }
