@@ -320,7 +320,8 @@
   /* Même grille 2×4 que desktop, réduite pour tenir dans l’écran. */
   .grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    /* Colonne gauche plus large, bande droite (tall + bas) plus étroite. */
+    grid-template-columns: 1.15fr 0.85fr;
     grid-template-rows: repeat(4, minmax(0, 1fr));
     gap: clamp(0.14rem, 0.45vw, 0.28rem);
     width: 100%;
