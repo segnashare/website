@@ -12,6 +12,7 @@ import {SectionThreeStepCards} from './SectionThreeStepCards'
 import {SectionTriptych} from './SectionTriptych'
 import {SectionTwoColumnTable} from './SectionTwoColumnTable'
 import {SectionWebsiteDbCatalog} from './SectionWebsiteDbCatalog'
+import {SectionVisibilityGate} from './sectionVisibility'
 import styles from './page-sections.module.css'
 
 export type PageSectionsRendererProps = {
@@ -105,59 +106,65 @@ export function PageSectionsRenderer({
       {sections.map((section, index) => {
         const key = section._key
 
+        const gate = (content: React.ReactNode) => (
+          <SectionVisibilityGate key={key} section={section}>
+            {content}
+          </SectionVisibilityGate>
+        )
+
         if (isHelpCenterHubSection(section)) {
-          return <SectionHelpCenterHub key={key} section={section} />
+          return gate(<SectionHelpCenterHub section={section} />)
         }
 
         if (isStatementBand(section)) {
-          return <SectionStatementBand key={key} section={section} />
+          return gate(<SectionStatementBand section={section} />)
         }
 
         if (isQuoteSection(section)) {
-          return <SectionQuote key={key} section={section} />
+          return gate(<SectionQuote section={section} />)
         }
 
         if (isThreeStepCardsSection(section)) {
-          return <SectionThreeStepCards key={key} section={section} />
+          return gate(<SectionThreeStepCards section={section} />)
         }
 
         if (isTriptychSection(section)) {
-          return <SectionTriptych key={key} section={section} />
+          return gate(<SectionTriptych section={section} />)
         }
 
         if (isCatalogPuzzleSection(section)) {
-          return <SectionCatalogPuzzle key={key} section={section} />
+          return gate(<SectionCatalogPuzzle section={section} />)
         }
 
         if (isHorizontalScrollCardsSection(section)) {
-          return <SectionHorizontalScrollCards key={key} section={section} />
+          return gate(<SectionHorizontalScrollCards section={section} />)
         }
 
         if (isWebsiteDbCatalogSection(section)) {
-          return (
-            <Suspense key={key} fallback={<p className={styles.asyncFallback}>Chargement du catalogue…</p>}>
+          return gate(
+            <Suspense fallback={<p className={styles.asyncFallback}>Chargement du catalogue…</p>}>
               <SectionWebsiteDbCatalog section={section} />
-            </Suspense>
+            </Suspense>,
           )
         }
 
         if (isSplitFeatureSection(section)) {
-          return <SectionSplitFeature key={key} section={section} />
+          return gate(<SectionSplitFeature section={section} />)
         }
 
         if (isRichTextSection(section)) {
-          return <SectionProse key={key} section={section} />
+          return gate(<SectionProse section={section} />)
         }
 
         if (isTwoColumnTableSection(section)) {
-          return <SectionTwoColumnTable key={key} section={section} />
+          return gate(<SectionTwoColumnTable section={section} />)
         }
 
         if (isSectionBlock(section)) {
           const splitCount = sections.slice(0, index).filter((s) => isSectionBlock(s)).length
           const imagePosition = splitCount % 2 === 0 ? 'left' : 'right'
-          return (
-            <SectionSplitMedia key={key} section={section as HomeSection} imagePosition={imagePosition} />
+          return gate(
+            <SectionSplitMedia section={section as HomeSection} imagePosition={imagePosition} />,
           )
         }
 

@@ -149,6 +149,13 @@ export type SectionBlockDualRow = {
   body?: PortableTextBlock[]
 }
 
+export type SectionDeviceVisibility = {
+  /** Défaut : visible sur desktop (≥ 768 px). */
+  showOnDesktop?: boolean
+  /** Défaut : visible sur mobile (< 768 px). */
+  showOnMobile?: boolean
+}
+
 export type HomeSection = {
   _key: string
   _type?: 'sectionBlock'
@@ -530,7 +537,7 @@ export type HelpCenterHubSection = {
   helpArticleRefs?: HelpArticleFaqBundle[] | null
 }
 
-export type PageSection =
+export type PageSection = (
   | HelpCenterHubSection
   | HomeSection
   | RichTextSection
@@ -543,6 +550,8 @@ export type PageSection =
   | HorizontalScrollCardsSection
   | WebsiteDbCatalogSection
   | SplitFeatureSection
+) &
+  SectionDeviceVisibility
 
 export type HomeHeroStagedInfoItem = {
   _key: string
@@ -923,6 +932,8 @@ const threeStepCardItemsGroq = `threeStepItems[]{
 const documentPageSectionsGroq = `sections[]{
         _key,
         _type,
+        showOnDesktop,
+        showOnMobile,
         hubTitle,
         hubIntro,
         hubBackgroundColor,
