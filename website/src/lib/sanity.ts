@@ -4,7 +4,19 @@ import type {PortableTextBlock} from '@portabletext/types'
 import {unstable_cache} from 'next/cache'
 import {cache} from 'react'
 
-const SANITY_DATA_REVALIDATE_SEC = 3600
+/** Durée max sans webhook (sec). 60 s = filet de sécurité ; instantané si webhook OK. */
+const SANITY_DATA_REVALIDATE_SEC = 60
+
+/** ISR pages marketing — même valeur que le cache données Sanity. */
+export const CMS_ISR_REVALIDATE_SEC = SANITY_DATA_REVALIDATE_SEC
+
+/** Tag partagé pour invalider tout le cache Sanity via POST /api/revalidate. */
+export const SANITY_CACHE_TAG = 'sanity-cms'
+
+const sanityCacheOptions = {
+  revalidate: SANITY_DATA_REVALIDATE_SEC,
+  tags: [SANITY_CACHE_TAG],
+}
 
 const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ?? '1qxhnoe8'
 const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET ?? 'production'
@@ -14,8 +26,8 @@ export const sanityClient = createClient({
   projectId,
   dataset,
   apiVersion,
-  // Use Sanity CDN in production to avoid hitting the live API for public content.
-  useCdn: process.env.NODE_ENV === 'production',
+  // API live : le CDN Sanity retarde les mises à jour ~1 min après publication.
+  useCdn: false,
 })
 
 const builder = createImageUrlBuilder(sanityClient)
@@ -1221,27 +1233,27 @@ async function getMarketingPageSlugsUncached(): Promise<string[]> {
 }
 
 export const getHomePageData = cache(
-  unstable_cache(getHomePageDataUncached, ['sanity_home_page_v1'], {revalidate: SANITY_DATA_REVALIDATE_SEC}),
+  unstable_cache(getHomePageDataUncached, ['sanity_home_page_v1'], sanityCacheOptions),
 )
 
 export const getWebsiteHeaderNav = cache(
-  unstable_cache(getWebsiteHeaderNavUncached, ['sanity_header_nav_v1'], {revalidate: SANITY_DATA_REVALIDATE_SEC}),
+  unstable_cache(getWebsiteHeaderNavUncached, ['sanity_header_nav_v1'], sanityCacheOptions),
 )
 
 export const getWebsiteSiteSettings = cache(
-  unstable_cache(getWebsiteSiteSettingsUncached, ['sanity_site_settings_v1'], {revalidate: SANITY_DATA_REVALIDATE_SEC}),
+  unstable_cache(getWebsiteSiteSettingsUncached, ['sanity_site_settings_v1'], sanityCacheOptions),
 )
 
 export const getWebsiteFooter = cache(
-  unstable_cache(getWebsiteFooterUncached, ['sanity_footer_v1'], {revalidate: SANITY_DATA_REVALIDATE_SEC}),
+  unstable_cache(getWebsiteFooterUncached, ['sanity_footer_v1'], sanityCacheOptions),
 )
 
 export const getNewsroomPageData = cache(
-  unstable_cache(getNewsroomPageDataUncached, ['sanity_newsroom_page_v1'], {revalidate: SANITY_DATA_REVALIDATE_SEC}),
+  unstable_cache(getNewsroomPageDataUncached, ['sanity_newsroom_page_v1'], sanityCacheOptions),
 )
 
 export const getMarketingPageSlugs = cache(
-  unstable_cache(getMarketingPageSlugsUncached, ['sanity_marketing_slugs_v1'], {revalidate: SANITY_DATA_REVALIDATE_SEC}),
+  unstable_cache(getMarketingPageSlugsUncached, ['sanity_marketing_slugs_v1'], sanityCacheOptions),
 )
 
 export type CatalogBrandEditorial = {
@@ -1313,18 +1325,16 @@ async function getPostsUncached(): Promise<PostData[]> {
 const getCatalogBrandEditorialBySlugCrossRequest = unstable_cache(
   getCatalogBrandEditorialBySlugUncached,
   ['sanity_catalog_brand_editorial_v1'],
-  {revalidate: SANITY_DATA_REVALIDATE_SEC},
+  sanityCacheOptions,
 )
 
 const getMarketingPageBySlugCrossRequest = unstable_cache(
   getMarketingPageBySlugUncached,
   ['sanity_marketing_page_v1'],
-  {revalidate: SANITY_DATA_REVALIDATE_SEC},
+  sanityCacheOptions,
 )
 
-const getPostsCrossRequest = unstable_cache(getPostsUncached, ['sanity_posts_v1'], {
-  revalidate: SANITY_DATA_REVALIDATE_SEC,
-})
+const getPostsCrossRequest = unstable_cache(getPostsUncached, ['sanity_posts_v1'], sanityCacheOptions)
 
 export const getCatalogBrandEditorialBySlug = cache(getCatalogBrandEditorialBySlugCrossRequest)
 

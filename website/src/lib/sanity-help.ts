@@ -1,8 +1,13 @@
-import {helpArticleQaItemsGroq, sanityClient, type HelpArticleQaItem} from '@/lib/sanity'
+import {helpArticleQaItemsGroq, SANITY_CACHE_TAG, sanityClient, type HelpArticleQaItem} from '@/lib/sanity'
 import {unstable_cache} from 'next/cache'
 import {cache} from 'react'
 
 const HELP_DATA_REVALIDATE_SEC = 3600
+
+const helpCacheOptions = {
+  revalidate: HELP_DATA_REVALIDATE_SEC,
+  tags: [SANITY_CACHE_TAG],
+}
 
 export type HelpCenterSettingsData = {
   landingHeroTitle?: string
@@ -256,45 +261,31 @@ async function getHelpNestedArticleBySlugsUncached(
 }
 
 export const getHelpCenterSettings = cache(
-  unstable_cache(getHelpCenterSettingsUncached, ['sanity_help_settings_v1'], {
-    revalidate: HELP_DATA_REVALIDATE_SEC,
-  }),
+  unstable_cache(getHelpCenterSettingsUncached, ['sanity_help_settings_v1'], helpCacheOptions),
 )
 
 export const getHelpCategoriesForHome = cache(
-  unstable_cache(getHelpCategoriesForHomeUncached, ['sanity_help_categories_home_v1'], {
-    revalidate: HELP_DATA_REVALIDATE_SEC,
-  }),
+  unstable_cache(getHelpCategoriesForHomeUncached, ['sanity_help_categories_home_v1'], helpCacheOptions),
 )
 
 export const getHelpCategoriesForHub = cache(
-  unstable_cache(getHelpCategoriesForHubUncached, ['sanity_help_categories_hub_v1'], {
-    revalidate: HELP_DATA_REVALIDATE_SEC,
-  }),
+  unstable_cache(getHelpCategoriesForHubUncached, ['sanity_help_categories_hub_v1'], helpCacheOptions),
 )
 
 export const getHelpCategoryBySlug = cache(
-  unstable_cache(getHelpCategoryBySlugUncached, ['sanity_help_category_v1'], {
-    revalidate: HELP_DATA_REVALIDATE_SEC,
-  }),
+  unstable_cache(getHelpCategoryBySlugUncached, ['sanity_help_category_v1'], helpCacheOptions),
 )
 
 export const getHelpSubsectionBySlugs = cache(
-  unstable_cache(getHelpSubsectionBySlugsUncached, ['sanity_help_subsection_v1'], {
-    revalidate: HELP_DATA_REVALIDATE_SEC,
-  }),
+  unstable_cache(getHelpSubsectionBySlugsUncached, ['sanity_help_subsection_v1'], helpCacheOptions),
 )
 
 export const getHelpRootArticleBySlugs = cache(
-  unstable_cache(getHelpRootArticleBySlugsUncached, ['sanity_help_root_article_v1'], {
-    revalidate: HELP_DATA_REVALIDATE_SEC,
-  }),
+  unstable_cache(getHelpRootArticleBySlugsUncached, ['sanity_help_root_article_v1'], helpCacheOptions),
 )
 
 export const getHelpNestedArticleBySlugs = cache(
-  unstable_cache(getHelpNestedArticleBySlugsUncached, ['sanity_help_nested_article_v1'], {
-    revalidate: HELP_DATA_REVALIDATE_SEC,
-  }),
+  unstable_cache(getHelpNestedArticleBySlugsUncached, ['sanity_help_nested_article_v1'], helpCacheOptions),
 )
 
 function groqMatchPattern(raw: string): string | null {
@@ -328,7 +319,7 @@ async function searchHelpArticlesUncached(query: string): Promise<HelpSearchHit[
 }
 
 export const searchHelpArticles = cache(
-  unstable_cache(searchHelpArticlesUncached, ['sanity_help_search_v1'], {revalidate: HELP_DATA_REVALIDATE_SEC}),
+  unstable_cache(searchHelpArticlesUncached, ['sanity_help_search_v1'], helpCacheOptions),
 )
 
 /** URL publique à partir des slugs (catégorie, sous-section optionnelle, article). */

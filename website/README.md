@@ -29,18 +29,31 @@ npm run dev
 
 ## Instant CMS sync (Sanity webhook)
 
-This project includes `POST /api/revalidate` to trigger immediate cache refresh after content changes.
+**Sans cette config, les changements Sanity ne s’affichent pas sur le site** (cache + webhook inactif).
 
-1. Set a secret in Vercel / local env:
+### 1. Secret sur Vercel
 
-```bash
+Vercel → projet website → **Settings → Environment Variables** :
+
+```
 SANITY_REVALIDATE_SECRET=your-long-random-secret
 ```
 
-2. In Sanity Manage > API > Webhooks, create a webhook:
+Puis **redéployer**.
 
-- URL: `https://YOUR_DOMAIN/api/revalidate?secret=your-long-random-secret`
-- Trigger: all document changes (create/update/delete/publish) with no type filter
-- Method: `POST`
+Vérifier : `GET https://www.segnashare.com/api/revalidate` → `{"ok":true,"webhookReady":true}`.
 
-3. After each content change, the root layout is revalidated so all routes refresh, including `/` and `/newsroom`.
+### 2. Webhook Sanity
+
+Sanity Manage → API → Webhooks :
+
+- URL : `https://www.segnashare.com/api/revalidate?secret=your-long-random-secret`
+- Dataset : `production`
+- Trigger : create / update / delete / **publish**
+- Method : `POST`
+
+### 3. Publier dans Sanity
+
+Le site lit la version **publiée** (bouton Publish), pas le brouillon.
+
+Avec webhook OK : mise à jour en quelques secondes. Sans webhook : filet de sécurité ~60 s.
