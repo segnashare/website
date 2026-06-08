@@ -7,7 +7,8 @@
   margin-left: -50vw;
   margin-right: -50vw;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
   padding-block: clamp(1.5rem, 4vw, 2.75rem);
 }
 
@@ -30,8 +31,8 @@
   margin-top: clamp(1.25rem, 2.8vw, 2rem);
   width: 100%;
   min-width: 0;
-  /* Clip au bord droit du bandeau plein écran : les cartes « passent » sous le bord du viewport. */
-  overflow-x: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
   box-sizing: border-box;
 }
 
@@ -48,6 +49,7 @@
   max-width: 100%;
   box-sizing: border-box;
   overflow-x: auto;
+  overflow-y: visible;
   scroll-snap-type: x mandatory;
   /* Cohérent avec le retrait sur .trackRow : le snap ne ramène pas la 1re carte contre le bord physique. */
   scroll-padding-inline-start: 10%;
@@ -68,10 +70,9 @@
 .trackRow {
   display: flex;
   flex-flow: row nowrap;
-  align-items: stretch;
+  align-items: flex-start;
   gap: clamp(1.05rem, 3.2vw, 1.75rem);
   width: max-content;
-  min-height: 0;
   box-sizing: border-box;
   padding-inline-start: 10%;
 }
@@ -83,7 +84,6 @@
 .slide {
   flex: 0 0 auto;
   scroll-snap-align: start;
-  min-height: 0;
   isolation: isolate;
 }
 
@@ -92,11 +92,12 @@
   scroll-snap-align: start;
   display: block;
   min-width: 0;
+  height: auto;
   text-decoration: none;
   color: inherit;
 }
 
-/* Grand (défaut) — petit = −30 % en diagonale (×0,7 linéaire). */
+/* Largeur des slides ; le ratio est porté par .editorialCardMedia* / .catalogCardMedia, pas le shell. */
 .scrollBlock[data-card-size='large'] .slidePortrait,
 .scrollBlock[data-card-size='large'] .slideLink.slidePortrait {
   width: clamp(248px, 35vw, 348px);
@@ -104,11 +105,7 @@
 
 .scrollBlock[data-card-size='small'] .slidePortrait,
 .scrollBlock[data-card-size='small'] .slideLink.slidePortrait {
-  width: clamp(174px, 24.5vw, 244px);
-}
-
-.slidePortrait {
-  aspect-ratio: 3 / 4;
+  width: clamp(148px, 20.8vw, 207px);
 }
 
 .scrollBlock[data-card-size='large'] .slideSquare,
@@ -118,11 +115,7 @@
 
 .scrollBlock[data-card-size='small'] .slideSquare,
 .scrollBlock[data-card-size='small'] .slideLink.slideSquare {
-  width: clamp(190px, 27.65vw, 262px);
-}
-
-.slideSquare {
-  aspect-ratio: 1 / 1;
+  width: clamp(162px, 23.5vw, 223px);
 }
 
 .scrollBlock[data-card-size='large'] .slideLandscape,
@@ -132,11 +125,7 @@
 
 .scrollBlock[data-card-size='small'] .slideLandscape,
 .scrollBlock[data-card-size='small'] .slideLink.slideLandscape {
-  width: clamp(244px, 41.3vw, 364px);
-}
-
-.slideLandscape {
-  aspect-ratio: 16 / 9;
+  width: clamp(207px, 35.1vw, 309px);
 }
 
 /* Carte éditoriale type Airbnb : visuel puis légende sous l’image. */
@@ -157,6 +146,7 @@
   background: linear-gradient(145deg, #d4cfc8 0%, #ebe6df 48%, #c9c2ba 100%);
 }
 
+/* Ratio image uniquement (légende en dessous, hors contrainte de hauteur du slide). */
 .editorialCardMediaPortrait {
   aspect-ratio: 3 / 4;
 }

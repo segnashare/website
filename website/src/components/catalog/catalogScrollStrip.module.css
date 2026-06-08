@@ -21,7 +21,8 @@
 .scrollBleed {
   padding-block: 0;
   background: transparent;
-  overflow: visible;
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 .catalogCard {
