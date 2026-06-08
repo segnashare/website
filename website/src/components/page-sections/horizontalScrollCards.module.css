@@ -87,17 +87,125 @@
   isolation: isolate;
 }
 
-.slidePortrait {
+.slideLink {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  display: block;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Grand (défaut) — petit = −30 % en diagonale (×0,7 linéaire). */
+.scrollBlock[data-card-size='large'] .slidePortrait,
+.scrollBlock[data-card-size='large'] .slideLink.slidePortrait {
   width: clamp(248px, 35vw, 348px);
+}
+
+.scrollBlock[data-card-size='small'] .slidePortrait,
+.scrollBlock[data-card-size='small'] .slideLink.slidePortrait {
+  width: clamp(174px, 24.5vw, 244px);
+}
+
+.slidePortrait {
   aspect-ratio: 3 / 4;
 }
 
-.slideSquare {
+.scrollBlock[data-card-size='large'] .slideSquare,
+.scrollBlock[data-card-size='large'] .slideLink.slideSquare {
   width: clamp(272px, 39.5vw, 374px);
+}
+
+.scrollBlock[data-card-size='small'] .slideSquare,
+.scrollBlock[data-card-size='small'] .slideLink.slideSquare {
+  width: clamp(190px, 27.65vw, 262px);
+}
+
+.slideSquare {
   aspect-ratio: 1 / 1;
 }
 
-.slideLandscape {
+.scrollBlock[data-card-size='large'] .slideLandscape,
+.scrollBlock[data-card-size='large'] .slideLink.slideLandscape {
   width: clamp(348px, 59vw, 520px);
+}
+
+.scrollBlock[data-card-size='small'] .slideLandscape,
+.scrollBlock[data-card-size='small'] .slideLink.slideLandscape {
+  width: clamp(244px, 41.3vw, 364px);
+}
+
+.slideLandscape {
   aspect-ratio: 16 / 9;
+}
+
+/* Carte éditoriale type Airbnb : visuel puis légende sous l’image. */
+.editorialCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.editorialCardMedia {
+  position: relative;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  background: linear-gradient(145deg, #d4cfc8 0%, #ebe6df 48%, #c9c2ba 100%);
+}
+
+.editorialCardMediaPortrait {
+  aspect-ratio: 3 / 4;
+}
+
+.editorialCardMediaSquare {
+  aspect-ratio: 1 / 1;
+}
+
+.editorialCardMediaLandscape {
+  aspect-ratio: 16 / 9;
+}
+
+.editorialCardImage {
+  object-fit: cover;
+}
+
+.editorialCardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  padding-inline: 0.05rem;
+}
+
+.editorialCardTitle {
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #14110f;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.editorialCardSubtitle {
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: #6b6560;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.surfaceDark .editorialCardTitle {
+  color: #faf8f5;
+}
+
+.surfaceDark .editorialCardSubtitle {
+  color: rgba(250, 248, 245, 0.72);
 }

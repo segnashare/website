@@ -20,6 +20,7 @@ import {
   catalogListingPath,
   type CatalogPathResolved,
 } from '@/lib/catalog/catalog-path-resolve'
+import {formatCatalogBorrowPriceLabel} from '@/lib/catalog/catalog-borrow-price-label'
 import type {CatalogBrowsePayload} from '@/lib/catalog/catalog-page-loader'
 import {splitMarketingCatalogSizeFacets} from '@/lib/catalog/catalog-size-facet-section'
 import type {
@@ -36,11 +37,6 @@ const SORT_OPTIONS: {id: CatalogSortMode; label: string}[] = [
   {id: 'price_asc', label: 'Prix : croissant'},
   {id: 'price_desc', label: 'Prix : décroissant'},
 ]
-
-function priceLabel(p: number | null): string {
-  if (typeof p === 'number' && !Number.isNaN(p)) return `${p} pts`
-  return '—'
-}
 
 function categoriesAllHref(resolved: CatalogPathResolved): string {
   if (resolved.kind === 'intersection' || resolved.kind === 'brand') {
@@ -111,7 +107,7 @@ function GridCard({it}: {it: MarketingCatalogGridItem}) {
         {brandLine ? <span className={styles.cardBrand}>{brandLine}</span> : null}
         {extraLine ? <span className={styles.cardMetaLine}>{extraLine}</span> : null}
         <span className={styles.cardTitle}>{titleLine}</span>
-        <span className={styles.cardPrice}>{priceLabel(it.price_points)}</span>
+        <span className={styles.cardPrice}>{formatCatalogBorrowPriceLabel(it.price_points)}</span>
       </div>
     </Link>
   )

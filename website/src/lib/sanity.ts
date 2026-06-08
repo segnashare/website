@@ -4,8 +4,8 @@ import type {PortableTextBlock} from '@portabletext/types'
 import {unstable_cache} from 'next/cache'
 import {cache} from 'react'
 
-/** Durée max sans webhook (sec). 60 s = filet de sécurité ; instantané si webhook OK. */
-const SANITY_DATA_REVALIDATE_SEC = 60
+/** Durée max sans webhook (sec). 1 h = filet de sécurité ; instantané si webhook OK. */
+const SANITY_DATA_REVALIDATE_SEC = 3600
 
 /** ISR pages marketing — même valeur que le cache données Sanity. */
 export const CMS_ISR_REVALIDATE_SEC = SANITY_DATA_REVALIDATE_SEC
@@ -26,8 +26,9 @@ export const sanityClient = createClient({
   projectId,
   dataset,
   apiVersion,
-  // API live : le CDN Sanity retarde les mises à jour ~1 min après publication.
-  useCdn: false,
+  // CDN (apicdn) : requêtes ~100× moins chères que l’API live. Invalidation via webhook + tag `sanity-cms`.
+  // Ne jamais mettre useCdn: false en prod — voir facture API Requests Sanity.
+  useCdn: process.env.SANITY_USE_LIVE_API !== 'true',
 })
 
 const builder = createImageUrlBuilder(sanityClient)
@@ -458,6 +459,8 @@ export type HorizontalScrollCardsSection = {
   lead?: string
   /** `light` = bandeau clair ; `dark` = bandeau sombre (texte intro inversé). */
   surfaceTheme?: 'light' | 'dark'
+  /** `small` = cadres −30 % en diagonale (carrés). Défaut : `large`. */
+  cardSize?: 'large' | 'small'
   motionPreset?: MotionPreset
   items?: HorizontalScrollCard[] | null
 }
@@ -476,6 +479,8 @@ export type WebsiteDbCatalogSection = {
   _type: 'websiteDbCatalogSection'
   /** Défaut côté site : `full_catalog` si absent (anciens contenus). */
   catalogMode?: 'full_catalog' | 'curated'
+  /** Taille des cartes en mode sélection (bandeau défilant). Défaut : `large`. */
+  cardSize?: 'large' | 'small'
   heading?: string
   intro?: string
   introCtaLabel?: string
@@ -1010,6 +1015,7 @@ const documentPageSectionsGroq = `sections[]{
         },
         heading,
         catalogMode,
+        cardSize,
         intro,
         introCtaLabel,
         introCtaHref,

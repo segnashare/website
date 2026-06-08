@@ -4,11 +4,17 @@ import {horizontalScrollCardImageSizes, urlForCatalogPuzzleImage} from '@/lib/sa
 import {objectPositionFromHotspot} from '@/lib/homeStagedPlacements'
 import {CtaHrefLink} from '@/components/home/heroShared'
 import {CatalogPuzzleIntroFit} from '@/components/page-sections/CatalogPuzzleIntroFit'
-import puzzleStyles from '@/components/page-sections/catalogPuzzle.module.css'
+import {normalizeScrollCardSize} from '@/lib/catalog/scroll-card-size'
 import styles from '@/components/page-sections/horizontalScrollCards.module.css'
 
 type Props = {
   section: HorizontalScrollCardsSection
+}
+
+function editorialMediaClass(format?: HorizontalScrollCard['frameFormat']) {
+  if (format === 'square') return styles.editorialCardMediaSquare
+  if (format === 'landscape') return styles.editorialCardMediaLandscape
+  return styles.editorialCardMediaPortrait
 }
 
 function slideFrameClass(format?: HorizontalScrollCard['frameFormat']) {
@@ -32,10 +38,12 @@ function ScrollCard({card}: {card: HorizontalScrollCard}) {
   const alt = card.image?.alt?.trim() || title || 'Segna'
   const objectPosition = objectPositionFromHotspot(card.image?.hotspot)
   const frameCls = slideFrameClass(card.frameFormat)
+  const mediaCls = editorialMediaClass(card.frameFormat)
+  const shellCls = `${styles.slide} ${frameCls}`
 
-  const body = (
+  const inner = (
     <>
-      <div className={puzzleStyles.cardMedia} aria-hidden={!imageUrl}>
+      <div className={`${styles.editorialCardMedia} ${mediaCls}`} aria-hidden={!imageUrl}>
         {imageUrl ? (
           <Image
             src={imageUrl}
@@ -43,7 +51,7 @@ function ScrollCard({card}: {card: HorizontalScrollCard}) {
             fill
             sizes={horizontalScrollCardImageSizes}
             quality={85}
-            className={puzzleStyles.cardImage}
+            className={styles.editorialCardImage}
             style={{
               objectFit: 'cover',
               ...(objectPosition ? {objectPosition} : {}),
@@ -51,29 +59,26 @@ function ScrollCard({card}: {card: HorizontalScrollCard}) {
           />
         ) : null}
       </div>
-      <div className={puzzleStyles.cardGradient} aria-hidden />
       {(title || subtitle) && (
-        <div className={puzzleStyles.cardText}>
-          {title ? <span className={puzzleStyles.cardTitle}>{title}</span> : null}
-          {subtitle ? <span className={puzzleStyles.cardSubtitle}>{subtitle}</span> : null}
+        <div className={styles.editorialCardBody}>
+          {title ? <span className={styles.editorialCardTitle}>{title}</span> : null}
+          {subtitle ? <span className={styles.editorialCardSubtitle}>{subtitle}</span> : null}
         </div>
       )}
     </>
   )
 
-  const shellClass = `${puzzleStyles.card} ${styles.slide} ${frameCls}`
-
   if (href) {
     return (
-      <CtaHrefLink href={href} className={shellClass}>
-        {body}
+      <CtaHrefLink href={href} className={`${styles.slideLink} ${shellCls}`}>
+        <div className={styles.editorialCard}>{inner}</div>
       </CtaHrefLink>
     )
   }
 
   return (
-    <div className={shellClass} tabIndex={-1}>
-      {body}
+    <div className={shellCls}>
+      <div className={styles.editorialCard}>{inner}</div>
     </div>
   )
 }
@@ -87,6 +92,7 @@ export function SectionHorizontalScrollCards({section}: Props) {
 
   const isDark = section.surfaceTheme === 'dark'
   const introTone = isDark ? 'dark' : 'light'
+  const cardSize = normalizeScrollCardSize(section.cardSize)
   const surfaceStyle = {
     backgroundColor: isDark ? '#0a0a0a' : '#ffffff',
   }
@@ -107,7 +113,7 @@ export function SectionHorizontalScrollCards({section}: Props) {
         />
       </div>
 
-      <div className={styles.scrollBlock}>
+      <div className={styles.scrollBlock} data-card-size={cardSize}>
         <div className={styles.scrollViewport}>
           <div className={styles.track}>
             <div className={styles.trackRow}>

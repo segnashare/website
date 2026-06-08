@@ -7,9 +7,9 @@ import {fetchMarketingCatalogItemsByIds, gridItemsFromRows, resolveCoverUrlsForI
 import {loadCatalogBrowseFromPath} from '@/lib/catalog/catalog-page-loader'
 import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
 import {objectPositionFromHotspot} from '@/lib/homeStagedPlacements'
+import {CatalogScrollStrip} from '@/components/catalog/CatalogScrollStrip'
 import {CatalogBrowseLinked} from '@/components/page-sections/CatalogBrowseLinked'
 import {CatalogPuzzleIntroFit} from '@/components/page-sections/CatalogPuzzleIntroFit'
-import {WebsiteCatalogBrowse} from '@/components/page-sections/WebsiteCatalogBrowse'
 import styles from './websiteDbCatalog.module.css'
 
 const UUID_RE =
@@ -211,18 +211,14 @@ export async function SectionWebsiteDbCatalog({section}: Props) {
   }
 
   return (
-    <section className={styles.section} aria-labelledby={heading ? `db-catalog-${section._key}` : undefined}>
-      {showIntro ? (
-        <header>
-          <CatalogPuzzleIntroFit
-            heading={heading || undefined}
-            lead={intro || undefined}
-            introCtaLabel={section.introCtaLabel}
-            introCtaHref={section.introCtaHref}
-          />
-        </header>
-      ) : null}
-      <WebsiteCatalogBrowse mode="local" items={browseItems} />
-    </section>
+    <CatalogScrollStrip
+      items={browseItems}
+      heading={heading || undefined}
+      intro={intro || undefined}
+      introCtaLabel={section.introCtaLabel}
+      introCtaHref={section.introCtaHref}
+      cardSize={section.cardSize ?? 'small'}
+      sectionKey={section._key}
+    />
   )
 }

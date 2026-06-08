@@ -2,6 +2,7 @@ import type {Metadata} from 'next'
 import Link from 'next/link'
 import {notFound} from 'next/navigation'
 import {CatalogPieceGallery} from '@/components/catalog/CatalogPieceGallery'
+import {formatCatalogBorrowPriceLabel} from '@/lib/catalog/catalog-borrow-price-label'
 import {
   fetchMarketingCatalogItemsByIds,
   resolveItemGallerySlots,
@@ -53,7 +54,7 @@ export default async function CatalogPieceDetailPage({params}: PageProps) {
     {label: 'Couleur', value: row.color_label},
     {label: 'Matières', value: row.materials_label},
     {label: 'État', value: row.condition_label},
-    {label: 'Prix (points)', value: row.price_points != null ? String(row.price_points) : null},
+    {label: 'Prix', value: row.price_points != null ? formatCatalogBorrowPriceLabel(row.price_points) : null},
     {label: 'Statut catalogue', value: row.status},
   ]
 

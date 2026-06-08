@@ -56,4 +56,4 @@ Sanity Manage → API → Webhooks :
 
 Le site lit la version **publiée** (bouton Publish), pas le brouillon.
 
-Avec webhook OK : mise à jour en quelques secondes. Sans webhook : filet de sécurité ~60 s.
+Avec webhook OK : mise à jour en quelques secondes. Sans webhook : filet de sécurité ~1 h.

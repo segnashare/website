@@ -5,6 +5,27 @@ import {SANITY_CACHE_TAG} from '@/lib/sanity'
 type WebhookPayload = {
   _type?: string
   type?: string
+  _id?: string
+  documentId?: string
+  /** Sanity transaction webhook: create | update | delete | publish | unpublish */
+  transition?: string
+}
+
+/** Ignore draft autosaves and non-publish edits — they were busting cache every keystroke. */
+function shouldRevalidateFromWebhook(payload: WebhookPayload | null): boolean {
+  if (!payload) return true
+
+  const docId = payload._id ?? payload.documentId ?? ''
+  if (typeof docId === 'string' && docId.startsWith('drafts.')) {
+    return false
+  }
+
+  const transition = payload.transition?.toLowerCase()
+  if (transition && transition !== 'publish' && transition !== 'unpublish' && transition !== 'delete') {
+    return false
+  }
+
+  return true
 }
 
 const REVALIDATED_PATHS = ['/', '/newsroom', '/catalogue', '/aide'] as const
@@ -48,6 +69,17 @@ export async function POST(request: NextRequest) {
     payload = null
   }
 
+  if (!shouldRevalidateFromWebhook(payload)) {
+    return NextResponse.json({
+      ok: true,
+      skipped: true,
+      reason: 'draft-or-non-publish',
+      type: payload?._type ?? payload?.type ?? null,
+      transition: payload?.transition ?? null,
+      timestamp: new Date().toISOString(),
+    })
+  }
+
   revalidateTag(SANITY_CACHE_TAG, 'max')
 
   for (const path of REVALIDATED_PATHS) {
@@ -59,6 +91,7 @@ export async function POST(request: NextRequest) {
     revalidated: REVALIDATED_PATHS,
     tag: SANITY_CACHE_TAG,
     type: payload?._type ?? payload?.type ?? null,
+    transition: payload?.transition ?? null,
     timestamp: new Date().toISOString(),
   })
 }

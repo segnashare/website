@@ -1,0 +1,82 @@
+.section {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding-block: clamp(1.25rem, 2.5vw, 2rem);
+}
+
+.introWrap {
+  width: 80%;
+  max-width: 100%;
+  margin-inline: auto;
+  box-sizing: border-box;
+}
+
+.catalogSlide {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.scrollBleed {
+  padding-block: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+.catalogCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.catalogCardMedia {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #ece8e2;
+}
+
+.catalogCardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  padding-inline: 0.05rem;
+}
+
+.catalogCardTitle {
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #14110f;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.catalogCardMeta {
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: #6b6560;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.catalogCardPrice {
+  margin-top: 0.1rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: #14110f;
+}
+
+@media (max-width: 640px) {
+  .introWrap {
+    width: 92%;
+  }
+}
