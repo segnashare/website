@@ -1,6 +1,6 @@
 'use client'
 
-import {useEffect, useState, type CSSProperties} from 'react'
+import {useEffect, useRef, useState, type CSSProperties} from 'react'
 import type {
   HorizontalScrollCard as HorizontalScrollCardData,
   HorizontalScrollScrollDirection,
@@ -27,6 +27,25 @@ function marqueeDuration(items: HorizontalScrollCardData[], speed: HorizontalScr
   return Math.max(12, items.length * SECONDS_PER_ITEM[speed])
 }
 
+/** Détecte un geste horizontal (scroll manuel) sans couper un simple tap sur une carte. */
+function isHorizontalScrollGesture(startX: number, startY: number, currentX: number, currentY: number): boolean {
+  const dx = Math.abs(currentX - startX)
+  const dy = Math.abs(currentY - startY)
+  return dx > 10 && dx > dy * 1.15
+}
+
+function ManualTrack({items}: {items: HorizontalScrollCardData[]}) {
+  return (
+    <div className={styles.track}>
+      <div className={styles.trackRow}>
+        {items.map((card) => (
+          <HorizontalScrollCardView key={card._key} card={card} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export function HorizontalScrollTrack({
   items,
   scrollMotion = 'manual',
@@ -34,6 +53,8 @@ export function HorizontalScrollTrack({
   scrollSpeed = 'normal',
 }: Props) {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
+  const [manualOverride, setManualOverride] = useState(false)
+  const touchStartRef = useRef<{x: number; y: number} | null>(null)
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -43,35 +64,55 @@ export function HorizontalScrollTrack({
     return () => mq.removeEventListener('change', update)
   }, [])
 
-  const useMarquee = scrollMotion === 'auto_loop' && !prefersReducedMotion && items.length > 0
+  const useMarquee =
+    scrollMotion === 'auto_loop' && !prefersReducedMotion && !manualOverride && items.length > 0
   const loopItems = [...items, ...items]
 
-  if (useMarquee) {
-    const duration = marqueeDuration(items, scrollSpeed)
-    const directionCls = scrollDirection === 'to-right' ? styles.marqueeToRight : styles.marqueeToLeft
-
-    return (
-      <div className={styles.marqueeViewport} aria-label="Carrousel défilant">
-        <div
-          className={`${styles.marqueeTrack} ${directionCls}`}
-          style={{'--marquee-duration': `${duration}s`} as CSSProperties}
-        >
-          <div className={styles.marqueeRow}>
-            {loopItems.map((card, index) => (
-              <HorizontalScrollCardView key={`${card._key}-${index}`} card={card} />
-            ))}
-          </div>
-        </div>
-      </div>
-    )
+  const handleTouchStart = (event: React.TouchEvent) => {
+    const touch = event.touches[0]
+    if (!touch) return
+    touchStartRef.current = {x: touch.clientX, y: touch.clientY}
   }
 
+  const handleTouchMove = (event: React.TouchEvent) => {
+    const start = touchStartRef.current
+    const touch = event.touches[0]
+    if (!start || !touch) return
+    if (isHorizontalScrollGesture(start.x, start.y, touch.clientX, touch.clientY)) {
+      setManualOverride(true)
+      touchStartRef.current = null
+    }
+  }
+
+  const clearTouchStart = () => {
+    touchStartRef.current = null
+  }
+
+  if (!useMarquee) {
+    return <ManualTrack items={items} />
+  }
+
+  const duration = marqueeDuration(items, scrollSpeed)
+  const directionCls = scrollDirection === 'to-right' ? styles.marqueeToRight : styles.marqueeToLeft
+
   return (
-    <div className={styles.track}>
-      <div className={styles.trackRow}>
-        {items.map((card) => (
-          <HorizontalScrollCardView key={card._key} card={card} />
-        ))}
+    <div
+      className={styles.marqueeViewport}
+      aria-label="Carrousel défilant"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={clearTouchStart}
+      onTouchCancel={clearTouchStart}
+    >
+      <div
+        className={`${styles.marqueeTrack} ${directionCls}`}
+        style={{'--marquee-duration': `${duration}s`} as CSSProperties}
+      >
+        <div className={styles.marqueeRow}>
+          {loopItems.map((card, index) => (
+            <HorizontalScrollCardView key={`${card._key}-${index}`} card={card} />
+          ))}
+        </div>
       </div>
     </div>
   )

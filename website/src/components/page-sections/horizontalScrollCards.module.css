@@ -220,6 +220,7 @@
   width: 100%;
   overflow: hidden;
   box-sizing: border-box;
+  touch-action: pan-y pinch-zoom;
 }
 
 .marqueeTrack {
