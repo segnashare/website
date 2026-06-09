@@ -223,6 +223,10 @@
   touch-action: pan-y pinch-zoom;
 }
 
+.marqueeViewportDragging {
+  touch-action: none;
+}
+
 .marqueeTrack {
   display: flex;
   width: max-content;
@@ -238,6 +242,15 @@
   box-sizing: border-box;
 }
 
+.marqueeRowPadded {
+  padding-inline-start: 10%;
+}
+
+.marqueeTrackDragging {
+  animation: none !important;
+  will-change: transform;
+}
+
 .marqueeToLeft {
   animation: marquee-left var(--marquee-duration, 40s) linear infinite;
 }
@@ -246,7 +259,7 @@
   animation: marquee-right var(--marquee-duration, 40s) linear infinite;
 }
 
-.marqueeViewport:hover .marqueeTrack {
+.marqueeViewport:hover .marqueeTrack:not(.marqueeTrackDragging) {
   animation-play-state: paused;
 }
 
