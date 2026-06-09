@@ -43,6 +43,8 @@
 }
 
 .scrollBlock {
+  /* ~10 % viewport : aligné sur le titre (.inner = 80 % centré). */
+  --scroll-strip-inset: 10vw;
   margin-top: clamp(1.25rem, 2.8vw, 2rem);
   width: 100%;
   min-width: 0;
@@ -89,7 +91,7 @@
   gap: clamp(1.05rem, 3.2vw, 1.75rem);
   width: max-content;
   box-sizing: border-box;
-  padding-inline-start: 10%;
+  padding-inline-start: var(--scroll-strip-inset, 10vw);
 }
 
 .track::-webkit-scrollbar {
@@ -178,6 +180,14 @@
   object-fit: cover;
 }
 
+.editorialCardImageNative {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 .editorialCardBody {
   display: flex;
   flex-direction: column;
@@ -221,6 +231,20 @@
   overflow: hidden;
   box-sizing: border-box;
   touch-action: pan-y pinch-zoom;
+  -webkit-touch-callout: none;
+  /* Retrait fixe (hors boucle) : 1re carte visible pour to-left ET to-right. */
+  padding-inline-start: var(--scroll-strip-inset, 10vw);
+  /* Garde la hauteur même si le transform décale visuellement le contenu. */
+  min-height: clamp(11rem, 34vw, 20rem);
+}
+
+.editorialCardMediaClone {
+  background-repeat: no-repeat;
+}
+
+.marqueeViewport .editorialCardImage {
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
 .marqueeViewportDragging {
@@ -242,15 +266,6 @@
   box-sizing: border-box;
 }
 
-.marqueeRowPadded {
-  padding-inline-start: 10%;
-}
-
-.marqueeTrackDragging {
-  animation: none !important;
-  will-change: transform;
-}
-
 .marqueeToLeft {
   animation: marquee-left var(--marquee-duration, 40s) linear infinite;
 }
@@ -259,7 +274,7 @@
   animation: marquee-right var(--marquee-duration, 40s) linear infinite;
 }
 
-.marqueeViewport:hover .marqueeTrack:not(.marqueeTrackDragging) {
+.marqueeViewport:hover .marqueeTrack {
   animation-play-state: paused;
 }
 

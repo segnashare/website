@@ -7,7 +7,8 @@ import {usePathname} from 'next/navigation'
 import {motion} from 'framer-motion'
 import type {HomeCatalogSearchNav} from '@/lib/catalog/home-catalog-search-nav'
 import type {HomePageData} from '@/lib/sanity'
-import {HomeCatalogQuickSearch} from './HomeCatalogQuickSearch'
+import {HomeHeroSearchRow} from './HomeHeroSearchRow'
+import {homeHeroCtaFromPage} from '@/lib/home-hero-cta'
 import {visibleMobileMainNavItems} from '@/lib/mobileMainNav'
 import {CtaHrefLink} from './heroShared'
 import {useNavScrollElevated} from './useNavScrollElevated'
@@ -80,6 +81,8 @@ export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeH
   const catalogSearchPlaceholder =
     homePage.heroStagedSearchPlaceholder?.trim() || 'Marque ou catégorie…'
   const catalogSearchButtonLabel = homePage.heroStagedSearchButtonLabel?.trim() || 'Rechercher'
+  const heroSubtitle = homePage.heroSubtitle?.trim()
+  const heroCta = homeHeroCtaFromPage(homePage)
   const introLetters = 'Segna'.split('')
   const contentAnimationState = shouldReduceMotion || isIntroComplete ? 'visible' : 'hidden'
   const navElevated = useNavScrollElevated()
@@ -250,6 +253,24 @@ export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeH
             >
               {homePage.heroTitle}
             </motion.h1>
+            {heroSubtitle ? (
+              <motion.p
+                className={styles.heroSubtitle}
+                initial="hidden"
+                animate={contentAnimationState}
+                variants={{
+                  hidden: {opacity: 0, y: 24},
+                  visible: {opacity: 1, y: 0},
+                }}
+                transition={{
+                  duration: shouldReduceMotion ? 0 : 0.72,
+                  ease: [0.16, 1, 0.3, 1],
+                  delay: shouldReduceMotion ? 0 : 1.32,
+                }}
+              >
+                {heroSubtitle}
+              </motion.p>
+            ) : null}
             <motion.div
               initial="hidden"
               animate={contentAnimationState}
@@ -263,12 +284,13 @@ export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeH
                 delay: shouldReduceMotion ? 0 : 1.38,
               }}
             >
-              <HomeCatalogQuickSearch
+              <HomeHeroSearchRow
                 nav={catalogSearchNav}
                 surface="single"
                 placeholder={catalogSearchPlaceholder}
                 searchButtonLabel={catalogSearchButtonLabel}
                 inputId="home-hero-search"
+                cta={heroCta}
               />
             </motion.div>
           </div>
@@ -298,6 +320,24 @@ export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeH
             >
               {homePage.heroTitle}
             </motion.h1>
+            {heroSubtitle ? (
+              <motion.p
+                className={styles.heroSubtitle}
+                initial="hidden"
+                animate={contentAnimationState}
+                variants={{
+                  hidden: {opacity: 0, y: 24},
+                  visible: {opacity: 1, y: 0},
+                }}
+                transition={{
+                  duration: shouldReduceMotion ? 0 : 0.72,
+                  ease: [0.16, 1, 0.3, 1],
+                  delay: shouldReduceMotion ? 0 : 1.32,
+                }}
+              >
+                {heroSubtitle}
+              </motion.p>
+            ) : null}
             <motion.div
               initial="hidden"
               animate={contentAnimationState}
@@ -311,12 +351,13 @@ export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeH
                 delay: shouldReduceMotion ? 0 : 1.38,
               }}
             >
-              <HomeCatalogQuickSearch
+              <HomeHeroSearchRow
                 nav={catalogSearchNav}
                 surface="single"
                 placeholder={catalogSearchPlaceholder}
                 searchButtonLabel={catalogSearchButtonLabel}
                 inputId="home-hero-search-mobile"
+                cta={heroCta}
               />
             </motion.div>
           </div>

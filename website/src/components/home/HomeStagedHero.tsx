@@ -6,7 +6,8 @@ import {motion} from 'framer-motion'
 import type {HomeCatalogSearchNav} from '@/lib/catalog/home-catalog-search-nav'
 import type {HomeHeroStagedInfoItem, HomePageData} from '@/lib/sanity'
 import {urlFor} from '@/lib/sanity'
-import {HomeCatalogQuickSearch} from './HomeCatalogQuickSearch'
+import {HomeHeroSearchRow} from './HomeHeroSearchRow'
+import {homeHeroCtaFromPage} from '@/lib/home-hero-cta'
 import {StagedHeroCycle} from './StagedHeroCycle'
 import {SiteNavChrome} from './SiteNavChrome'
 import styles from './homeHero.module.css'
@@ -59,6 +60,8 @@ export function HomeStagedHero({homePage, catalogSearchNav}: Props) {
   const searchPlaceholder =
     homePage.heroStagedSearchPlaceholder?.trim() || 'Que souhaitez-vous porter ?'
   const searchButtonLabel = homePage.heroStagedSearchButtonLabel?.trim() || 'Rechercher'
+  const heroSubtitle = homePage.heroSubtitle?.trim()
+  const heroCta = homeHeroCtaFromPage(homePage)
 
   const stagedSizes =
     '(max-width: 1200px) min(82vw, 420px), min(92vw, 2400px)'
@@ -98,6 +101,24 @@ export function HomeStagedHero({homePage, catalogSearchNav}: Props) {
               >
                 {homePage.heroTitle}
               </motion.h1>
+              {heroSubtitle ? (
+                <motion.p
+                  className={staged.stagedHeroSubtitle}
+                  initial="hidden"
+                  animate={contentAnimationState}
+                  variants={{
+                    hidden: {opacity: 0, y: 24},
+                    visible: {opacity: 1, y: 0},
+                  }}
+                  transition={{
+                    duration: shouldReduceMotion ? 0 : 0.72,
+                    ease: [0.16, 1, 0.3, 1],
+                    delay: shouldReduceMotion ? 0 : 0.1,
+                  }}
+                >
+                  {heroSubtitle}
+                </motion.p>
+              ) : null}
             </div>
 
             <motion.div
@@ -110,12 +131,13 @@ export function HomeStagedHero({homePage, catalogSearchNav}: Props) {
               }}
               transition={{duration: shouldReduceMotion ? 0 : 0.72, ease: [0.16, 1, 0.3, 1], delay: 0.12}}
             >
-              <HomeCatalogQuickSearch
+              <HomeHeroSearchRow
                 nav={catalogSearchNav}
                 surface="staged"
                 placeholder={searchPlaceholder}
                 searchButtonLabel={searchButtonLabel}
                 inputId="staged-hero-search"
+                cta={heroCta}
               />
               <StagedHeroInfoRow items={homePage.heroStagedInfoItems} />
             </motion.div>

@@ -52,6 +52,13 @@ function loopProgress(
   return ((raw % 1) + 1) % 1
 }
 
+function clearTrackInlineMotion(track: HTMLElement) {
+  track.style.animation = ''
+  track.style.animationDelay = ''
+  track.style.animationPlayState = ''
+  track.style.transform = ''
+}
+
 function ManualTrack({items}: {items: HorizontalScrollCardData[]}) {
   return (
     <div className={styles.track}>
@@ -73,7 +80,6 @@ function LoopMarqueeTrack({
   scrollDirection: HorizontalScrollScrollDirection
   scrollSpeed: HorizontalScrollScrollSpeed
 }) {
-  const [isDragging, setIsDragging] = useState(false)
   const [animationDelay, setAnimationDelay] = useState('0s')
   const viewportRef = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLDivElement>(null)
@@ -87,14 +93,14 @@ function LoopMarqueeTrack({
     end: (event: TouchEvent) => void
   } | null>(null)
 
-  const loopItems = [...items, ...items]
   const duration = marqueeDuration(items, scrollSpeed)
   const directionCls = scrollDirection === 'to-right' ? styles.marqueeToRight : styles.marqueeToLeft
 
   const measureLoopWidth = () => {
     const row = rowRef.current
     if (!row) return
-    loopWidthRef.current = row.scrollWidth / 2
+    const total = row.scrollWidth
+    if (total > 0) loopWidthRef.current = total / 2
   }
 
   const applyDragTransform = () => {
@@ -102,26 +108,28 @@ function LoopMarqueeTrack({
     if (!track) return
     track.style.animation = 'none'
     track.style.animationDelay = ''
+    track.style.animationPlayState = 'paused'
     track.style.transform = `translate3d(${offsetRef.current}px, 0, 0)`
   }
 
   const resumeAutoAnimation = () => {
     const track = trackRef.current
+    const viewport = viewportRef.current
     if (!track) return
 
+    viewport?.classList.remove(styles.marqueeViewportDragging)
     measureLoopWidth()
+
     const loopW = loopWidthRef.current
     offsetRef.current = wrapOffset(offsetRef.current, loopW)
 
     const progress = loopProgress(offsetRef.current, loopW, scrollDirection)
-    const delay = -(progress * duration)
+    const delay = loopW > 0 ? -(progress * duration) : 0
 
-    track.style.animation = 'none'
-    track.style.transform = ''
+    clearTrackInlineMotion(track)
     void track.offsetWidth
 
     setAnimationDelay(`${delay}s`)
-    setIsDragging(false)
   }
 
   const clearTouchListeners = () => {
@@ -138,12 +146,16 @@ function LoopMarqueeTrack({
   useEffect(() => () => clearTouchListeners(), [])
 
   const beginDrag = () => {
-    measureLoopWidth()
     const track = trackRef.current
-    if (!track) return
+    const viewport = viewportRef.current
+    if (!track || !viewport) return
 
-    offsetRef.current = wrapOffset(readTranslateX(track), loopWidthRef.current)
-    setIsDragging(true)
+    viewport.classList.add(styles.marqueeViewportDragging)
+    measureLoopWidth()
+
+    const loopW = loopWidthRef.current
+    const current = loopW > 0 ? wrapOffset(readTranslateX(track), loopW) : readTranslateX(track)
+    offsetRef.current = current
     applyDragTransform()
   }
 
@@ -189,38 +201,25 @@ function LoopMarqueeTrack({
     viewport.addEventListener('touchcancel', onTouchEnd)
   }
 
-  const trackClass = [
-    styles.marqueeTrack,
-    isDragging ? styles.marqueeTrackDragging : directionCls,
-  ]
-    .filter(Boolean)
-    .join(' ')
-
-  const viewportClass = [
-    styles.marqueeViewport,
-    isDragging ? styles.marqueeViewportDragging : '',
-  ]
-    .filter(Boolean)
-    .join(' ')
-
-  const trackStyle: CSSProperties | undefined = isDragging
-    ? undefined
-    : ({
-        '--marquee-duration': `${duration}s`,
-        animationDelay,
-      } as CSSProperties)
+  const trackStyle = {
+    '--marquee-duration': `${duration}s`,
+    animationDelay,
+  } as CSSProperties
 
   return (
     <div
       ref={viewportRef}
-      className={viewportClass}
+      className={styles.marqueeViewport}
       aria-label="Carrousel défilant"
       onTouchStart={handleTouchStart}
     >
-      <div ref={trackRef} className={trackClass} style={trackStyle}>
-        <div ref={rowRef} className={`${styles.marqueeRow} ${styles.marqueeRowPadded}`}>
-          {loopItems.map((card, index) => (
-            <HorizontalScrollCardView key={`${card._key}-${index}`} card={card} />
+      <div ref={trackRef} className={`${styles.marqueeTrack} ${directionCls}`} style={trackStyle}>
+        <div ref={rowRef} className={styles.marqueeRow}>
+          {items.map((card) => (
+            <HorizontalScrollCardView key={card._key} card={card} eagerLoad />
+          ))}
+          {items.map((card) => (
+            <HorizontalScrollCardView key={`clone-${card._key}`} card={card} visualClone />
           ))}
         </div>
       </div>

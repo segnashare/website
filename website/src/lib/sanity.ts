@@ -600,6 +600,9 @@ export type HomePageDocumentData = {
   heroStagedInfoItems?: HomeHeroStagedInfoItem[]
   heroTitle: string
   heroSubtitle?: string
+  heroCtaLabel?: string
+  heroCtaHref?: string
+  heroCtaPosition?: 'left' | 'right'
   heroImage?: SanityImage
   sections?: PageSection[]
   seo?: SeoMetadata | null
@@ -1098,6 +1101,9 @@ const homePageProjection = `{
   },
   heroTitle,
   heroSubtitle,
+  heroCtaLabel,
+  heroCtaHref,
+  heroCtaPosition,
   heroImage{
     ...,
     alt

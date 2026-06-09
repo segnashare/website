@@ -169,6 +169,10 @@
 
 /** Cadre titre élargi ×1,5 par rapport à la colonne ; la meta (recherche) reste à 100% de colonne. */
 .stagedHeroTitleWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: clamp(0.65rem, 1.4vw, 0.95rem);
   width: 100%;
   align-self: flex-start;
 }
@@ -185,6 +189,78 @@
   width: 100%;
   font-size: var(--segna-type-h1-size-staged);
   line-height: var(--segna-type-h1-leading-staged);
+}
+
+.stagedHeroSubtitle {
+  margin: 0;
+  max-width: min(36rem, 100%);
+  font-size: clamp(1rem, 1.35vw, 1.15rem);
+  line-height: 1.55;
+  font-weight: 400;
+  color: rgb(255 255 255 / 0.92);
+  text-wrap: pretty;
+}
+
+.heroSearchRow {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.65rem, 1.2vw, 0.85rem);
+  width: 100%;
+  max-width: min(48rem, 100%);
+}
+
+.heroSearchField {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+}
+
+.heroSearchField > * {
+  max-width: none;
+}
+
+.heroSearchCta {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.85rem;
+  padding: 0.62rem 1.25rem;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid rgb(255 255 255 / 0.55);
+  color: #111;
+  font-size: clamp(0.86rem, 0.95vw, 0.96rem);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+  white-space: nowrap;
+}
+
+.heroSearchCta:hover {
+  background: rgb(255 255 255 / 0.94);
+}
+
+@media (max-width: 1200px) {
+  .heroSearchRow {
+    flex-direction: column;
+    align-items: stretch;
+    max-width: min(27.5rem, 94vw);
+  }
+
+  .heroSearchCta {
+    align-self: flex-start;
+    background: #111;
+    border-color: #111;
+    color: #fff;
+    box-shadow: none;
+  }
+
+  .heroSearchCta:hover {
+    background: rgb(17 17 17 / 0.88);
+  }
 }
 
 .stagedHeroMeta {
@@ -457,6 +533,10 @@
     font-size: clamp(2.2rem, 7.2vw, 3.05rem);
     color: #111;
     text-wrap: balance;
+  }
+
+  .stagedHeroRoot .stagedHeroContentLayer .stagedHeroSubtitle {
+    color: rgb(15 17 22 / 0.78);
   }
 
   .stagedHeroColumn .stagedHeroMeta {
