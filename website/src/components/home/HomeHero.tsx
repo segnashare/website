@@ -7,8 +7,8 @@ import {usePathname} from 'next/navigation'
 import {motion} from 'framer-motion'
 import type {HomeCatalogSearchNav} from '@/lib/catalog/home-catalog-search-nav'
 import type {HomePageData} from '@/lib/sanity'
-import {HomeHeroSearchRow} from './HomeHeroSearchRow'
-import {homeHeroCtaFromPage} from '@/lib/home-hero-cta'
+import {HomeHeroActionBlock} from './HomeHeroActionBlock'
+import {homeHeroActionFromPage} from '@/lib/home-hero-action'
 import {visibleMobileMainNavItems} from '@/lib/mobileMainNav'
 import {CtaHrefLink} from './heroShared'
 import {useNavScrollElevated} from './useNavScrollElevated'
@@ -82,7 +82,7 @@ export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeH
     homePage.heroStagedSearchPlaceholder?.trim() || 'Marque ou catégorie…'
   const catalogSearchButtonLabel = homePage.heroStagedSearchButtonLabel?.trim() || 'Rechercher'
   const heroSubtitle = homePage.heroSubtitle?.trim()
-  const heroCta = homeHeroCtaFromPage(homePage)
+  const heroAction = homeHeroActionFromPage(homePage)
   const introLetters = 'Segna'.split('')
   const contentAnimationState = shouldReduceMotion || isIntroComplete ? 'visible' : 'hidden'
   const navElevated = useNavScrollElevated()
@@ -284,13 +284,13 @@ export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeH
                 delay: shouldReduceMotion ? 0 : 1.38,
               }}
             >
-              <HomeHeroSearchRow
+              <HomeHeroActionBlock
                 nav={catalogSearchNav}
                 surface="single"
                 placeholder={catalogSearchPlaceholder}
                 searchButtonLabel={catalogSearchButtonLabel}
                 inputId="home-hero-search"
-                cta={heroCta}
+                action={heroAction}
               />
             </motion.div>
           </div>
@@ -351,13 +351,13 @@ export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeH
                 delay: shouldReduceMotion ? 0 : 1.38,
               }}
             >
-              <HomeHeroSearchRow
+              <HomeHeroActionBlock
                 nav={catalogSearchNav}
                 surface="single"
                 placeholder={catalogSearchPlaceholder}
                 searchButtonLabel={catalogSearchButtonLabel}
                 inputId="home-hero-search-mobile"
-                cta={heroCta}
+                action={heroAction}
               />
             </motion.div>
           </div>

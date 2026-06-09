@@ -600,9 +600,12 @@ export type HomePageDocumentData = {
   heroStagedInfoItems?: HomeHeroStagedInfoItem[]
   heroTitle: string
   heroSubtitle?: string
+  heroActionLayout?: 'search_only' | 'single_cta' | 'cta_and_search' | 'dual_cta'
   heroCtaLabel?: string
   heroCtaHref?: string
   heroCtaPosition?: 'left' | 'right'
+  heroSecondaryCtaLabel?: string
+  heroSecondaryCtaHref?: string
   heroImage?: SanityImage
   sections?: PageSection[]
   seo?: SeoMetadata | null
@@ -1101,9 +1104,12 @@ const homePageProjection = `{
   },
   heroTitle,
   heroSubtitle,
+  heroActionLayout,
   heroCtaLabel,
   heroCtaHref,
   heroCtaPosition,
+  heroSecondaryCtaLabel,
+  heroSecondaryCtaHref,
   heroImage{
     ...,
     alt
@@ -1267,7 +1273,7 @@ async function getMarketingPageSlugsUncached(): Promise<string[]> {
 }
 
 export const getHomePageData = cache(
-  unstable_cache(getHomePageDataUncached, ['sanity_home_page_v2'], sanityCacheOptions),
+  unstable_cache(getHomePageDataUncached, ['sanity_home_page_v3'], sanityCacheOptions),
 )
 
 export const getWebsiteHeaderNav = cache(

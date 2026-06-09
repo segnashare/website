@@ -202,6 +202,11 @@
 }
 
 .heroSearchRow {
+  --hero-search-control-h: 3rem;
+  --hero-search-bar-py: 0;
+  --hero-search-bar-px-start: 1rem;
+  --hero-search-bar-px-end: 0.32rem;
+  --hero-search-button-size: calc(var(--hero-search-control-h) - 0.85rem);
   display: flex;
   align-items: center;
   gap: clamp(0.65rem, 1.2vw, 0.85rem);
@@ -224,8 +229,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 2.85rem;
-  padding: 0.62rem 1.25rem;
+  box-sizing: border-box;
+  min-height: var(--hero-search-control-h);
+  height: var(--hero-search-control-h);
+  padding: 0 1.3rem;
   border-radius: 999px;
   background: #fff;
   border: 1px solid rgb(255 255 255 / 0.55);
@@ -243,14 +250,54 @@
   background: rgb(255 255 255 / 0.94);
 }
 
+.heroSearchCtaSecondary {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: var(--hero-search-control-h);
+  height: var(--hero-search-control-h);
+  padding: 0 1.3rem;
+  border-radius: 999px;
+  background: transparent;
+  border: 1px solid rgb(255 255 255 / 0.88);
+  color: #fff;
+  font-size: clamp(0.86rem, 0.95vw, 0.96rem);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.heroSearchCtaSecondary:hover {
+  background: rgb(255 255 255 / 0.1);
+  border-color: #fff;
+}
+
+.heroActionRowCtasOnly {
+  max-width: none;
+  flex-wrap: wrap;
+}
+
 @media (max-width: 1200px) {
   .heroSearchRow {
+    --hero-search-control-h: initial;
+    --hero-search-bar-py: initial;
+    --hero-search-bar-px-start: initial;
+    --hero-search-bar-px-end: initial;
+    --hero-search-button-size: initial;
     flex-direction: column;
     align-items: stretch;
     max-width: min(27.5rem, 94vw);
   }
 
   .heroSearchCta {
+    min-height: 2.85rem;
+    height: auto;
+    padding: 0.62rem 1.25rem;
     align-self: flex-start;
     background: #111;
     border-color: #111;
@@ -260,6 +307,28 @@
 
   .heroSearchCta:hover {
     background: rgb(17 17 17 / 0.88);
+  }
+
+  .heroSearchCtaSecondary {
+    min-height: 2.85rem;
+    height: auto;
+    padding: 0.62rem 1.25rem;
+    align-self: flex-start;
+    background: transparent;
+    border-color: #111;
+    color: #111;
+  }
+
+  .heroSearchCtaSecondary:hover {
+    background: rgb(17 17 17 / 0.06);
+    border-color: #111;
+  }
+
+  .heroActionRowCtasOnly {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    max-width: min(27.5rem, 94vw);
   }
 }
 
