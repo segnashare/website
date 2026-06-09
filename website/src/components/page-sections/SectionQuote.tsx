@@ -38,6 +38,7 @@ export function SectionQuote({section}: Props) {
           primaryCtaHref={section.primaryCtaHref}
           secondaryCtaLabel={section.secondaryCtaLabel}
           secondaryCtaHref={section.secondaryCtaHref}
+          size="large"
         />
       </div>
     </section>

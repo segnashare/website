@@ -1,13 +1,15 @@
+import {CMS_ISR_REVALIDATE_SEC} from '@/lib/sanity-cache'
 import type {Metadata} from 'next'
 import {PageSections} from '@/components/cms/PageSections'
 import {homeCatalogSearchNavFromFacets} from '@/lib/catalog/home-catalog-search-nav'
 import {fetchMarketingCatalogPathResolveNav} from '@/lib/catalog/marketing-catalog-items'
+import {heroTitlePlainText} from '@/lib/hero-title'
 import {getHomePageData, urlFor} from '@/lib/sanity'
 import {HomeHero} from '@/components/home/HomeHero'
 import {HomeStagedHero} from '@/components/home/HomeStagedHero'
 import styles from '@/components/home/homeHero.module.css'
 
-export const revalidate = 3600
+export const revalidate = CMS_ISR_REVALIDATE_SEC
 
 /** SEO accueil : champs `seo` du document « Page d’accueil » dans Sanity, sinon repli sur le sous-titre hero. */
 export async function generateMetadata(): Promise<Metadata> {
@@ -15,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
   if (!homePage) {
     return {title: 'Segna'}
   }
-  const titleBase = homePage.seo?.metaTitle?.trim() || homePage.heroTitle
+  const titleBase = homePage.seo?.metaTitle?.trim() || heroTitlePlainText(homePage.heroTitle)
   const description =
     homePage.seo?.metaDescription?.trim() || homePage.heroSubtitle?.trim() || undefined
   const share = homePage.seo?.shareImage

@@ -34,6 +34,7 @@
   line-height: var(--segna-type-h1-leading-staged);
   letter-spacing: var(--segna-type-h1-tracking);
   max-width: 20ch;
+  white-space: pre-line;
 }
 
 .subtitle {

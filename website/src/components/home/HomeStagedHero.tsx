@@ -67,7 +67,9 @@ export function HomeStagedHero({homePage, catalogSearchNav}: Props) {
     '(max-width: 1200px) min(82vw, 420px), min(92vw, 2400px)'
 
   return (
-    <div className={`${styles.hero} ${styles.heroStagedStack} ${staged.stagedHeroRoot}`}>
+    <div
+      className={`${styles.hero} ${styles.heroStagedStack} ${styles.heroWithSectionSpacing} ${staged.stagedHeroRoot}`}
+    >
       <div className={staged.stagedHeroBackdrop}>
         <div className={staged.stagedHeroBackdropInset}>
           {states.length > 0 ? (

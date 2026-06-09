@@ -3,6 +3,7 @@
 import {useMemo, type ReactNode} from 'react'
 import Image from 'next/image'
 import {motion} from 'framer-motion'
+import {heroTitlePlainText} from '@/lib/hero-title'
 import type {MarketingPageData, WebsiteHeaderNavData} from '@/lib/sanity'
 import {urlFor} from '@/lib/sanity'
 import {objectPositionFromHotspot} from '@/lib/homeStagedPlacements'
@@ -60,7 +61,7 @@ export function MarketingFullBleedHero({marketing, headerNav, cta, children}: Pr
               <div className={m.photoRoot}>
                 <Image
                   src={backgroundImageUrl}
-                  alt={marketing.heroImage?.alt?.trim() || marketing.heroTitle}
+                  alt={marketing.heroImage?.alt?.trim() || heroTitlePlainText(marketing.heroTitle)}
                   fill
                   priority
                   sizes="100vw"

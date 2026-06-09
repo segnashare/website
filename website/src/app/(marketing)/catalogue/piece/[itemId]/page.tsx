@@ -1,3 +1,4 @@
+import {CMS_ISR_REVALIDATE_SEC} from '@/lib/sanity-cache'
 import type {Metadata} from 'next'
 import Link from 'next/link'
 import {notFound} from 'next/navigation'
@@ -11,7 +12,7 @@ import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
 import {CatalogItemViewTracker} from '@/components/analytics/CatalogItemViewTracker'
 import styles from './catalogPieceDetail.module.css'
 
-export const revalidate = 3600
+export const revalidate = CMS_ISR_REVALIDATE_SEC
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i

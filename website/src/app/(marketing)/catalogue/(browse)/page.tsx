@@ -1,10 +1,12 @@
+import {CMS_ISR_REVALIDATE_SEC} from '@/lib/sanity-cache'
 import type {Metadata} from 'next'
 import {CatalogBrowseLinked} from '@/components/page-sections/CatalogBrowseLinked'
 import {loadCatalogBrowseFromPath} from '@/lib/catalog/catalog-page-loader'
 import {parseCatalogBrowseQueryFromNext} from '@/lib/catalog/catalog-search-params'
+import {heroTitlePlainText} from '@/lib/hero-title'
 import {getMarketingPageBySlug, urlFor} from '@/lib/sanity'
 
-export const revalidate = 3600
+export const revalidate = CMS_ISR_REVALIDATE_SEC
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
@@ -13,7 +15,7 @@ type PageProps = {
 export async function generateMetadata(): Promise<Metadata> {
   const page = await getMarketingPageBySlug('catalogue')
   if (!page) return {title: 'Catalogue | Segna'}
-  const title = page.seo?.metaTitle?.trim() || page.heroTitle
+  const title = page.seo?.metaTitle?.trim() || heroTitlePlainText(page.heroTitle)
   const description = page.seo?.metaDescription?.trim() || page.heroSubtitle?.trim() || undefined
   const share = page.seo?.shareImage
   const ogImage =

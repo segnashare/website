@@ -6,6 +6,7 @@ import Link from 'next/link'
 import {usePathname} from 'next/navigation'
 import {motion} from 'framer-motion'
 import type {HomeCatalogSearchNav} from '@/lib/catalog/home-catalog-search-nav'
+import {heroTitlePlainText} from '@/lib/hero-title'
 import type {HomePageData} from '@/lib/sanity'
 import {HomeHeroActionBlock} from './HomeHeroActionBlock'
 import {homeHeroActionFromPage} from '@/lib/home-hero-action'
@@ -89,12 +90,12 @@ export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeH
   const navRootClass = `${styles.navChromeRoot} ${navElevated ? styles.navChromeRootScrolled : ''}`
 
   return (
-    <div className={styles.hero}>
+    <div className={`${styles.hero} ${styles.heroWithSectionSpacing}`}>
       {backgroundImageUrl ? (
         <div className={styles.backgroundLayer}>
           <Image
             src={backgroundImageUrl}
-            alt={homePage.heroImage?.alt ?? homePage.heroTitle}
+            alt={homePage.heroImage?.alt ?? heroTitlePlainText(homePage.heroTitle)}
             fill
             priority
             sizes="100vw"

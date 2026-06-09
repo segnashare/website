@@ -189,6 +189,7 @@
   width: 100%;
   font-size: var(--segna-type-h1-size-staged);
   line-height: var(--segna-type-h1-leading-staged);
+  white-space: pre-line;
 }
 
 .stagedHeroSubtitle {
@@ -282,6 +283,19 @@
   flex-wrap: wrap;
 }
 
+@media (min-width: 1201px) {
+  .heroActionRowCtasOnly {
+    --hero-search-control-h: 3.75rem;
+    gap: 1rem;
+  }
+
+  .heroActionRowCtasOnly .heroSearchCta,
+  .heroActionRowCtasOnly .heroSearchCtaSecondary {
+    padding: 0 1.9rem;
+    font-size: clamp(1rem, 1.12vw, 1.12rem);
+  }
+}
+
 @media (max-width: 1200px) {
   .heroSearchRow {
     --hero-search-control-h: initial;
@@ -324,11 +338,27 @@
     border-color: #111;
   }
 
-  .heroActionRowCtasOnly {
+  .heroSearchRow.heroActionRowCtasOnly {
     flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    max-width: min(27.5rem, 94vw);
+    flex-wrap: nowrap;
+    align-items: stretch;
+    width: 100%;
+    max-width: 100%;
+    gap: 0.5rem;
+  }
+
+  .heroActionRowCtasOnly .heroSearchCta,
+  .heroActionRowCtasOnly .heroSearchCtaSecondary {
+    flex: 1 1 0;
+    min-width: 0;
+    align-self: stretch;
+    height: auto;
+    min-height: 2.65rem;
+    padding: 0.5rem 0.55rem;
+    font-size: clamp(0.68rem, 2.8vw, 0.82rem);
+    line-height: 1.15;
+    text-align: center;
+    white-space: normal;
   }
 }
 
@@ -491,8 +521,7 @@
     overflow-x: clip;
     /* Pas de min-height plein écran : 100dvh laissait une grande zone blanche sous le visu avant les sections. */
     background: #fff;
-    /* Air modéré entre le bas du visu et la 1re section (citation), sans retrouver l’excès d’avant. */
-    margin-bottom: clamp(1.2rem, 4vw, 2.1rem);
+    margin-bottom: 0;
   }
 
   .stagedHeroRoot .stagedHeroContentLayer {

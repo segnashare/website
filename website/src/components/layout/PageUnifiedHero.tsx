@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import {heroTitlePlainText} from '@/lib/hero-title'
 import type {HomeHeroStagedState, SanityImage} from '@/lib/sanity'
 import {urlFor} from '@/lib/sanity'
 import {CtaHrefLink} from '@/components/home/heroShared'
@@ -74,7 +75,7 @@ export function PageUnifiedHero({
                 <Image
                   className={styles.staticImg}
                   src={staticSrc}
-                  alt={staticImage?.alt?.trim() || title}
+                  alt={staticImage?.alt?.trim() || heroTitlePlainText(title)}
                   fill
                   sizes="(max-width: 1024px) 96vw, 36vw"
                   priority

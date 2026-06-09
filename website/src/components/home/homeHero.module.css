@@ -10,6 +10,11 @@
   z-index: 30;
 }
 
+/* Marge sous le hero (= 1 écart) ; le shell ajoute le 2e via padding-top (comme entre 2 sections). */
+.heroWithSectionSpacing {
+  margin-bottom: var(--page-section-stack-gap);
+}
+
 /* HomeStagedHero : le wrapper réutilise `.hero` (100vh) ; en pile mobile ça laissait un vide blanc énorme sous le visu. */
 /* Nav : 1200px (au lieu de 1024) pour afficher la barre hamburger avant que les liens + CTA desktop ne wrappent. */
 @media (max-width: 1200px) {
@@ -251,6 +256,7 @@
   line-height: var(--segna-type-h1-leading);
   letter-spacing: var(--segna-type-h1-tracking);
   color: #fff;
+  white-space: pre-line;
 }
 
 .heroSubtitle {
@@ -345,6 +351,7 @@
   letter-spacing: var(--segna-type-h1-tracking);
   max-width: 12ch;
   color: #fff;
+  white-space: pre-line;
 }
 
 .mobileMenuOverlay {

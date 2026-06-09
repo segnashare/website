@@ -10,6 +10,7 @@
   /* Au-dessus des sections suivantes (tryptique, etc.) pour que la nav ne soit pas recouverte au scroll. */
   position: relative;
   z-index: 30;
+  margin-bottom: var(--page-section-stack-gap);
 }
 
 /**

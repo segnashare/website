@@ -16,6 +16,8 @@ type Props = {
   secondaryCtaHref?: string | null
   /** `dark` = fond sombre → boutons inversés (blanc plein, contour blanc). */
   tone?: 'light' | 'dark'
+  /** `large` = boutons plus grands (desktop), ex. section Citation. */
+  size?: 'default' | 'large'
 }
 
 export function SectionIntroCtas({
@@ -24,6 +26,7 @@ export function SectionIntroCtas({
   secondaryCtaLabel,
   secondaryCtaHref,
   tone = 'light',
+  size = 'default',
 }: Props) {
   const primary = ctaPair(primaryCtaLabel, primaryCtaHref)
   const secondary = ctaPair(secondaryCtaLabel, secondaryCtaHref)
@@ -33,7 +36,9 @@ export function SectionIntroCtas({
   const toneCls = tone === 'dark' ? styles.onDark : styles.onLight
 
   return (
-    <div className={`${styles.row} ${toneCls}`}>
+    <div
+      className={`${styles.row} ${toneCls} ${size === 'large' ? styles.sizeLarge : ''}`.trim()}
+    >
       {primary ? (
         <CtaHrefLink href={primary.href} className={styles.primary}>
           {primary.label}

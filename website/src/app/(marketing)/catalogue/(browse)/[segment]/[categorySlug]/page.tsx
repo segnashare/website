@@ -1,3 +1,4 @@
+import {CMS_ISR_REVALIDATE_SEC} from '@/lib/sanity-cache'
 import type {Metadata} from 'next'
 import {notFound} from 'next/navigation'
 import {CatalogBrandEditorial} from '@/components/catalog/CatalogBrandEditorial'
@@ -8,7 +9,7 @@ import {parseCatalogBrowseQueryFromNext} from '@/lib/catalog/catalog-search-para
 import {categoryBySlug} from '@/lib/catalog/catalog-category-tree'
 import {fetchMarketingCatalogPathResolveNav} from '@/lib/catalog/marketing-catalog-items'
 
-export const revalidate = 3600
+export const revalidate = CMS_ISR_REVALIDATE_SEC
 
 type PageProps = {
   params: Promise<{segment: string; categorySlug: string}>

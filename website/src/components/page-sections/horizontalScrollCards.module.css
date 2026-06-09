@@ -163,6 +163,111 @@
   background: linear-gradient(145deg, #d4cfc8 0%, #ebe6df 48%, #c9c2ba 100%);
 }
 
+/* ——— Carte retournable (citation au verso, sans lien) ——— */
+.flipCard.editorialCardMedia {
+  background: #fff;
+}
+
+.flipCard {
+  perspective: 1100px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.flipCardInner {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 0.62s cubic-bezier(0.4, 0.2, 0.2, 1);
+  background: #fff;
+}
+
+.flipCardFace {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+.flipCardFront {
+  z-index: 2;
+  background: #fff;
+  overflow: hidden;
+  transform: rotateY(0deg) translateZ(1px);
+}
+
+.flipCardBack {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: clamp(0.45rem, 3.2%, 0.75rem);
+  box-sizing: border-box;
+  background: #fff;
+  color: #111;
+  transform: rotateY(180deg) translateZ(1px);
+}
+
+.flipCardQuoteShell {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  overflow: hidden;
+}
+
+.flipCardQuote {
+  width: 100%;
+  max-height: 100%;
+  font-family: var(--font-playfair-display), Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  text-align: left;
+  text-wrap: pretty;
+  color: #111;
+  overflow: hidden;
+  align-self: flex-start;
+}
+
+.flipCardQuote :global(p) {
+  margin: 0;
+}
+
+.flipCardQuote :global(p + p) {
+  margin-top: 0.35em;
+}
+
+.flipCardQuote :global(em),
+.flipCardQuote :global(blockquote) {
+  font-style: italic;
+}
+
+.flipCardQuote :global(a) {
+  color: #111;
+}
+
+.flipCardQuote :global(.segnaQuoteHighlight) {
+  color: #111;
+  background: transparent;
+  box-shadow: none;
+}
+
+.flipCardFlipped .flipCardInner {
+  transform: rotateY(180deg);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .flipCard:hover .flipCardInner,
+  .flipCard:focus-visible .flipCardInner {
+    transform: rotateY(180deg);
+  }
+}
+
 /* Ratio image uniquement (légende en dessous, hors contrainte de hauteur du slide). */
 .editorialCardMediaPortrait {
   aspect-ratio: 3 / 4;

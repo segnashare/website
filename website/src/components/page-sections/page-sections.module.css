@@ -9,17 +9,17 @@
 .shell {
   width: 100%;
   box-sizing: border-box;
-  /* Espace net sous le hero / au-dessus du 1er bloc ; + air entre chaque section modulaire. */
+  /* Espace au-dessus du 1er bloc (hors hero plein écran) ; + air entre chaque section modulaire. */
   padding: clamp(3.25rem, 8vw, 6.5rem) clamp(1rem, 4vw, 2.75rem) 4.5rem;
   display: flex;
   flex-direction: column;
-  gap: clamp(2.75rem, 6vw, 5.5rem);
+  gap: var(--page-section-stack-gap);
   /* Visible : les blocs 100vw (split, carrousel horizontal) doivent pouvoir déborder jusqu’aux bords du viewport. */
   overflow-x: visible;
 }
 
 .shellAfterFullBleed {
-  padding-top: clamp(1.35rem, 4vw, 2.35rem);
+  padding-top: var(--page-section-stack-gap);
 }
 
 .shellOnDark {

@@ -14,7 +14,7 @@ import {
 import {createSignedUrlForStoragePath, type StorageSignClient} from '@/lib/catalog/storage-signed-url'
 import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
 import type {SupabaseClient} from '@supabase/supabase-js'
-import {unstable_cache} from 'next/cache'
+import {catalogDataRevalidateSec, withDataCache} from '@/lib/sanity-cache'
 import {cache} from 'react'
 
 export type CatalogSortMode = 'recent' | 'price_asc' | 'price_desc'
@@ -93,7 +93,7 @@ export type MarketingCatalogItemRow = {
 const SIGNED_TTL_SEC = 60 * 60 * 24
 const SIGNED_URL_CACHE_REVALIDATE_SEC = 60 * 60 * 12
 
-const getCachedSignedUrlForStoragePath = unstable_cache(
+const getCachedSignedUrlForStoragePath = withDataCache(
   async (rawPath: string): Promise<string | null> => {
     const supabase = getSupabaseServiceRoleClient()
     if (!supabase) return null
@@ -283,10 +283,10 @@ async function fetchMarketingCatalogPathResolveNavUncached(): Promise<MarketingC
   return out
 }
 
-const fetchMarketingCatalogPathResolveNavCrossRequest = unstable_cache(
+const fetchMarketingCatalogPathResolveNavCrossRequest = withDataCache(
   fetchMarketingCatalogPathResolveNavUncached,
   ['marketing_catalog_path_nav_v2'],
-  {revalidate: 3600},
+  {revalidate: catalogDataRevalidateSec()},
 )
 
 /** Dédup par rendu RSC + cache entre requêtes (résolution de chemin / slugs). */
@@ -326,7 +326,7 @@ function facetsScopedRpcCacheKey(p: FacetsScopedRpcPayload): string {
 }
 
 /** Résultat brut facettes scopées (même `revalidate` que le path nav). */
-const getMarketingCatalogFacetsScopedPayload = unstable_cache(
+const getMarketingCatalogFacetsScopedPayload = withDataCache(
   async (scopeKey: string) => {
     const payload = JSON.parse(scopeKey) as FacetsScopedRpcPayload
     const supabase = getSupabaseServiceRoleClient()
@@ -352,7 +352,7 @@ const getMarketingCatalogFacetsScopedPayload = unstable_cache(
     }
   },
   ['marketing_catalog_facets_scoped_payload_v2'],
-  {revalidate: 3600},
+  {revalidate: catalogDataRevalidateSec()},
 )
 
 async function fetchMarketingCatalogBrowseFacetsNavUncached(

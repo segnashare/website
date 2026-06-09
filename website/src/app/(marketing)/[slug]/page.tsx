@@ -1,10 +1,12 @@
+import {CMS_ISR_REVALIDATE_SEC} from '@/lib/sanity-cache'
 import type {Metadata} from 'next'
 import {notFound} from 'next/navigation'
 import {PageSections} from '@/components/cms/PageSections'
 import {MarketingFullBleedHero} from '@/components/layout/MarketingFullBleedHero'
+import {heroTitlePlainText} from '@/lib/hero-title'
 import {getHomePageData, getMarketingPageBySlug, getMarketingPageSlugs, getWebsiteHeaderNav, urlFor} from '@/lib/sanity'
 
-export const revalidate = 3600
+export const revalidate = CMS_ISR_REVALIDATE_SEC
 
 type PageProps = {
   params: Promise<{slug: string}>
@@ -20,7 +22,7 @@ export async function generateMetadata({params}: PageProps): Promise<Metadata> {
   const {slug} = await params
   const page = await getMarketingPageBySlug(slug)
   if (!page) return {title: 'Page introuvable'}
-  const title = page.seo?.metaTitle?.trim() || page.heroTitle
+  const title = page.seo?.metaTitle?.trim() || heroTitlePlainText(page.heroTitle)
   const description = page.seo?.metaDescription?.trim() || page.heroSubtitle?.trim() || undefined
   const share = page.seo?.shareImage
   const ogImage =

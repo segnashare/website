@@ -15,6 +15,7 @@ type Props = {
   scrollMotion?: HorizontalScrollScrollMotion
   scrollDirection?: HorizontalScrollScrollDirection
   scrollSpeed?: HorizontalScrollScrollSpeed
+  flipEnabled?: boolean
 }
 
 const SECONDS_PER_ITEM: Record<HorizontalScrollScrollSpeed, number> = {
@@ -65,12 +66,12 @@ function clearTrackInlineMotion(track: HTMLElement) {
   track.style.transform = ''
 }
 
-function ManualTrack({items}: {items: HorizontalScrollCardData[]}) {
+function ManualTrack({items, flipEnabled}: {items: HorizontalScrollCardData[]; flipEnabled: boolean}) {
   return (
     <div className={styles.track}>
       <div className={styles.trackRow}>
         {items.map((card) => (
-          <HorizontalScrollCardView key={card._key} card={card} />
+          <HorizontalScrollCardView key={card._key} card={card} flipEnabled={flipEnabled} />
         ))}
       </div>
     </div>
@@ -81,10 +82,12 @@ function LoopMarqueeTrack({
   items,
   scrollDirection,
   scrollSpeed,
+  flipEnabled,
 }: {
   items: HorizontalScrollCardData[]
   scrollDirection: HorizontalScrollScrollDirection
   scrollSpeed: HorizontalScrollScrollSpeed
+  flipEnabled: boolean
 }) {
   const [animationDelay, setAnimationDelay] = useState('0s')
   const animationDelayRef = useRef('0s')
@@ -340,10 +343,15 @@ function LoopMarqueeTrack({
       <div ref={trackRef} className={`${styles.marqueeTrack} ${directionCls}`} style={trackStyle}>
         <div ref={rowRef} className={styles.marqueeRow}>
           {items.map((card) => (
-            <HorizontalScrollCardView key={card._key} card={card} eagerLoad />
+            <HorizontalScrollCardView key={card._key} card={card} eagerLoad flipEnabled={flipEnabled} />
           ))}
           {items.map((card) => (
-            <HorizontalScrollCardView key={`clone-${card._key}`} card={card} visualClone />
+            <HorizontalScrollCardView
+              key={`clone-${card._key}`}
+              card={card}
+              visualClone
+              flipEnabled={flipEnabled}
+            />
           ))}
         </div>
       </div>
@@ -356,6 +364,7 @@ export function HorizontalScrollTrack({
   scrollMotion = 'manual',
   scrollDirection = 'to-left',
   scrollSpeed = 'normal',
+  flipEnabled = true,
 }: Props) {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
 
@@ -371,9 +380,14 @@ export function HorizontalScrollTrack({
 
   if (useAutoLoop) {
     return (
-      <LoopMarqueeTrack items={items} scrollDirection={scrollDirection} scrollSpeed={scrollSpeed} />
+      <LoopMarqueeTrack
+        items={items}
+        scrollDirection={scrollDirection}
+        scrollSpeed={scrollSpeed}
+        flipEnabled={flipEnabled}
+      />
     )
   }
 
-  return <ManualTrack items={items} />
+  return <ManualTrack items={items} flipEnabled={flipEnabled} />
 }

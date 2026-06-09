@@ -1,10 +1,11 @@
+import {CMS_ISR_REVALIDATE_SEC} from '@/lib/sanity-cache'
 import Link from 'next/link'
 import {notFound} from 'next/navigation'
 import {HelpBreadcrumbs} from '@/components/help/HelpBreadcrumbs'
 import styles from '@/components/help/help.module.css'
 import {getHelpCategoryBySlug, getHelpCenterSettings} from '@/lib/sanity-help'
 
-export const revalidate = 3600
+export const revalidate = CMS_ISR_REVALIDATE_SEC
 
 type PageProps = {
   params: Promise<{categorySlug: string}>

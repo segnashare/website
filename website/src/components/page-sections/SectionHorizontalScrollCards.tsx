@@ -1,6 +1,6 @@
 import type {HorizontalScrollCardsSection} from '@/lib/sanity'
 import {CatalogPuzzleIntroFit} from '@/components/page-sections/CatalogPuzzleIntroFit'
-import {cardHasContent} from '@/components/page-sections/HorizontalScrollCard'
+import {cardHasContent} from '@/lib/horizontal-scroll-card-utils'
 import {HorizontalScrollTrack} from '@/components/page-sections/HorizontalScrollTrack'
 import {normalizeScrollCardSize} from '@/lib/catalog/scroll-card-size'
 import styles from '@/components/page-sections/horizontalScrollCards.module.css'
@@ -26,6 +26,7 @@ export function SectionHorizontalScrollCards({
   const isDark = section.surfaceTheme === 'dark'
   const introTone = isDark ? 'dark' : 'light'
   const cardSize = normalizeScrollCardSize(section.cardSize)
+  const flipEnabled = section.cardFlipEnabled !== false
   const surfaceStyle = {
     backgroundColor: isDark ? '#0a0a0a' : '#ffffff',
   }
@@ -65,6 +66,7 @@ export function SectionHorizontalScrollCards({
             scrollMotion={section.scrollMotion}
             scrollDirection={section.scrollDirection}
             scrollSpeed={section.scrollSpeed}
+            flipEnabled={flipEnabled}
           />
         </div>
       </div>
