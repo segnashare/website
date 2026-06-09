@@ -1,5 +1,6 @@
 import {Suspense} from 'react'
 import type {HomeSection, PageSection} from '@/lib/sanity'
+import {normalizeScrollCardSize} from '@/lib/catalog/scroll-card-size'
 import {SectionCatalogPuzzle} from './SectionCatalogPuzzle'
 import {SectionHorizontalScrollCards} from './SectionHorizontalScrollCards'
 import {SectionHelpCenterHub} from './SectionHelpCenterHub'
@@ -86,6 +87,11 @@ function isSectionBlock(section: PageSection): boolean {
   return false
 }
 
+function isSmallHorizontalScrollBand(section: PageSection): boolean {
+  if (!isHorizontalScrollCardsSection(section)) return false
+  return normalizeScrollCardSize(section.cardSize) === 'small'
+}
+
 export function PageSectionsRenderer({
   sections,
   variant = 'onLight',
@@ -137,7 +143,17 @@ export function PageSectionsRenderer({
         }
 
         if (isHorizontalScrollCardsSection(section)) {
-          return gate(<SectionHorizontalScrollCards section={section} />)
+          const prev = index > 0 ? sections[index - 1] : null
+          const next = index < sections.length - 1 ? sections[index + 1] : null
+          const stackedAfterSmall = Boolean(prev && isSmallHorizontalScrollBand(prev) && isSmallHorizontalScrollBand(section))
+          const stackedBeforeSmall = Boolean(next && isSmallHorizontalScrollBand(next) && isSmallHorizontalScrollBand(section))
+          return gate(
+            <SectionHorizontalScrollCards
+              section={section}
+              stackedAfterSmall={stackedAfterSmall}
+              stackedBeforeSmall={stackedBeforeSmall}
+            />,
+          )
         }
 
         if (isWebsiteDbCatalogSection(section)) {

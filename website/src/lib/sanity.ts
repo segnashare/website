@@ -122,6 +122,10 @@ export type NavItem = {
 
 export type MotionPreset = 'none' | 'fade-up' | 'stagger'
 
+export type HorizontalScrollScrollMotion = 'manual' | 'auto_loop'
+export type HorizontalScrollScrollDirection = 'to-left' | 'to-right'
+export type HorizontalScrollScrollSpeed = 'slow' | 'normal' | 'fast'
+
 /** Q/R saisie sur un article d’aide (objet dans `qaItems[]`). */
 export type HelpArticleQaItem = {
   _key: string
@@ -230,6 +234,10 @@ export type QuoteSection = {
   _key: string
   _type: 'quoteSection'
   body?: PortableTextBlock[]
+  primaryCtaLabel?: string
+  primaryCtaHref?: string
+  secondaryCtaLabel?: string
+  secondaryCtaHref?: string
   backgroundColor: string
   textColor?: string
   typographyPreset?: 'sans' | 'serif' | 'custom'
@@ -457,10 +465,17 @@ export type HorizontalScrollCardsSection = {
   introCtaLabel?: string
   introCtaHref?: string
   lead?: string
+  primaryCtaLabel?: string
+  primaryCtaHref?: string
+  secondaryCtaLabel?: string
+  secondaryCtaHref?: string
   /** `light` = bandeau clair ; `dark` = bandeau sombre (texte intro inversé). */
   surfaceTheme?: 'light' | 'dark'
   /** `small` = cadres −30 % en diagonale (carrés). Défaut : `large`. */
   cardSize?: 'large' | 'small'
+  scrollMotion?: HorizontalScrollScrollMotion
+  scrollDirection?: HorizontalScrollScrollDirection
+  scrollSpeed?: HorizontalScrollScrollSpeed
   motionPreset?: MotionPreset
   items?: HorizontalScrollCard[] | null
 }
@@ -1019,6 +1034,10 @@ const documentPageSectionsGroq = `sections[]{
         intro,
         introCtaLabel,
         introCtaHref,
+        primaryCtaLabel,
+        primaryCtaHref,
+        secondaryCtaLabel,
+        secondaryCtaHref,
         ${portableTextInSection},
         firstColumnHeader,
         secondColumnHeader,
@@ -1044,6 +1063,9 @@ const documentPageSectionsGroq = `sections[]{
         rightTall{${catalogPuzzleTileGroq}},
         rightBottom{${catalogPuzzleTileGroq}},
         surfaceTheme,
+        scrollMotion,
+        scrollDirection,
+        scrollSpeed,
         ${horizontalScrollItemsGroq},
         ${websiteDbCatalogItemsGroq},
         dualTabsEnabled,
@@ -1239,7 +1261,7 @@ async function getMarketingPageSlugsUncached(): Promise<string[]> {
 }
 
 export const getHomePageData = cache(
-  unstable_cache(getHomePageDataUncached, ['sanity_home_page_v1'], sanityCacheOptions),
+  unstable_cache(getHomePageDataUncached, ['sanity_home_page_v2'], sanityCacheOptions),
 )
 
 export const getWebsiteHeaderNav = cache(
@@ -1255,7 +1277,7 @@ export const getWebsiteFooter = cache(
 )
 
 export const getNewsroomPageData = cache(
-  unstable_cache(getNewsroomPageDataUncached, ['sanity_newsroom_page_v1'], sanityCacheOptions),
+  unstable_cache(getNewsroomPageDataUncached, ['sanity_newsroom_page_v2'], sanityCacheOptions),
 )
 
 export const getMarketingPageSlugs = cache(
@@ -1336,7 +1358,7 @@ const getCatalogBrandEditorialBySlugCrossRequest = unstable_cache(
 
 const getMarketingPageBySlugCrossRequest = unstable_cache(
   getMarketingPageBySlugUncached,
-  ['sanity_marketing_page_v1'],
+  ['sanity_marketing_page_v2'],
   sanityCacheOptions,
 )
 

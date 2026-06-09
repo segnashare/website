@@ -12,6 +12,21 @@
   padding-block: clamp(1.5rem, 4vw, 2.75rem);
 }
 
+/* Bandeaux petits consécutifs : compense le gap du shell et réduit le padding interne. */
+.fullBleedStackedAfter {
+  margin-top: clamp(-2.5rem, -5.5vw, -4.75rem);
+  padding-top: clamp(0.45rem, 1.1vw, 0.75rem);
+}
+
+.fullBleedStackedBefore {
+  padding-bottom: clamp(0.45rem, 1.1vw, 0.75rem);
+}
+
+.fullBleedStackedAfter .scrollBlock,
+.fullBleedStackedBefore .scrollBlock {
+  margin-top: clamp(0.75rem, 1.6vw, 1.1rem);
+}
+
 .inner {
   width: 80%;
   max-width: 100%;
@@ -198,4 +213,56 @@
 
 .surfaceDark .editorialCardSubtitle {
   color: rgba(250, 248, 245, 0.72);
+}
+
+/* ——— Défilement automatique en boucle ——— */
+.marqueeViewport {
+  width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.marqueeTrack {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+
+.marqueeRow {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: flex-start;
+  gap: clamp(1.05rem, 3.2vw, 1.75rem);
+  width: max-content;
+  box-sizing: border-box;
+}
+
+.marqueeToLeft {
+  animation: marquee-left var(--marquee-duration, 40s) linear infinite;
+}
+
+.marqueeToRight {
+  animation: marquee-right var(--marquee-duration, 40s) linear infinite;
+}
+
+.marqueeViewport:hover .marqueeTrack {
+  animation-play-state: paused;
+}
+
+@keyframes marquee-left {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes marquee-right {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }

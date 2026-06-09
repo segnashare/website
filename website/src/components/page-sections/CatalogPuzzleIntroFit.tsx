@@ -1,4 +1,5 @@
 import {CtaHrefLink} from '@/components/home/heroShared'
+import {SectionIntroCtas} from '@/components/page-sections/SectionIntroCtas'
 import styles from './catalogPuzzle.module.css'
 
 /** Évite flèche en doublon avec l’icône du lien, et caractères parasites (copier-coller HTML). */
@@ -29,8 +30,14 @@ type Props = {
   lead?: string
   introCtaLabel?: string
   introCtaHref?: string
+  primaryCtaLabel?: string
+  primaryCtaHref?: string
+  secondaryCtaLabel?: string
+  secondaryCtaHref?: string
   /** `dark` = titres / chapô clairs (bandeau scroll sur fond sombre). Défaut : fond clair, texte foncé. */
   introTone?: 'light' | 'dark'
+  /** Réduit la marge sous l’intro (bandeaux petits empilés). */
+  compact?: boolean
 }
 
 /**
@@ -42,7 +49,12 @@ export function CatalogPuzzleIntroFit({
   lead,
   introCtaLabel,
   introCtaHref,
+  primaryCtaLabel,
+  primaryCtaHref,
+  secondaryCtaLabel,
+  secondaryCtaHref,
   introTone = 'light',
+  compact,
 }: Props) {
   const h = heading?.trim() ?? ''
   const l = lead?.trim() ?? ''
@@ -56,7 +68,9 @@ export function CatalogPuzzleIntroFit({
   }
 
   return (
-    <div className={`${styles.sectionIntro}${introTone === 'dark' ? ` ${styles.introOnDark}` : ''}`}>
+    <div
+      className={`${styles.sectionIntro}${introTone === 'dark' ? ` ${styles.introOnDark}` : ''}${compact ? ` ${styles.sectionIntroCompact}` : ''}`}
+    >
       {showHeadingRow ? (
         <div className={styles.introHeadingRow}>
           {h ? <h2 className={styles.heading}>{h}</h2> : <div className={styles.introHeadingSpacer} aria-hidden />}
@@ -69,6 +83,13 @@ export function CatalogPuzzleIntroFit({
         </div>
       ) : null}
       {l ? <p className={styles.lead}>{l}</p> : null}
+      <SectionIntroCtas
+        primaryCtaLabel={primaryCtaLabel}
+        primaryCtaHref={primaryCtaHref}
+        secondaryCtaLabel={secondaryCtaLabel}
+        secondaryCtaHref={secondaryCtaHref}
+        tone={introTone}
+      />
     </div>
   )
 }

@@ -1,0 +1,81 @@
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 0.85rem;
+  margin-top: clamp(1rem, 2vw, 1.35rem);
+}
+
+.primary,
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.65rem;
+  padding: 0.62rem 1.35rem;
+  border-radius: 999px;
+  font-family: var(--font-montserrat), ui-sans-serif, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.onLight .primary {
+  color: #ffffff;
+  background: #14110f;
+  border: 1px solid #14110f;
+}
+
+.onLight .primary:hover,
+.onLight .primary:focus-visible {
+  background: #2a2826;
+  border-color: #2a2826;
+  color: #ffffff;
+}
+
+.onLight .secondary {
+  color: #14110f;
+  background: transparent;
+  border: 1px solid #14110f;
+}
+
+.onLight .secondary:hover,
+.onLight .secondary:focus-visible {
+  background: rgb(20 17 15 / 0.05);
+  border-color: #14110f;
+  color: #14110f;
+}
+
+.onDark .primary {
+  color: #14110f;
+  background: #faf8f5;
+  border: 1px solid #faf8f5;
+}
+
+.onDark .primary:hover,
+.onDark .primary:focus-visible {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #14110f;
+}
+
+.onDark .secondary {
+  color: #faf8f5;
+  background: transparent;
+  border: 1px solid rgb(250 248 245 / 0.88);
+}
+
+.onDark .secondary:hover,
+.onDark .secondary:focus-visible {
+  background: rgb(250 248 245 / 0.08);
+  border-color: #faf8f5;
+  color: #ffffff;
+}
+
+.primary:focus-visible,
+.secondary:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}

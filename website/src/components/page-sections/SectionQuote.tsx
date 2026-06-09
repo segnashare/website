@@ -1,5 +1,6 @@
 import type {QuoteSection} from '@/lib/sanity'
 import {PortableRichText} from '@/components/cms/PortableRichText'
+import {SectionIntroCtas} from '@/components/page-sections/SectionIntroCtas'
 import styles from './page-sections.module.css'
 
 type Props = {
@@ -32,6 +33,12 @@ export function SectionQuote({section}: Props) {
     >
       <div className={styles.quoteSectionInner}>
         <PortableRichText value={section.body} className={styles.quoteBody} />
+        <SectionIntroCtas
+          primaryCtaLabel={section.primaryCtaLabel}
+          primaryCtaHref={section.primaryCtaHref}
+          secondaryCtaLabel={section.secondaryCtaLabel}
+          secondaryCtaHref={section.secondaryCtaHref}
+        />
       </div>
     </section>
   )
