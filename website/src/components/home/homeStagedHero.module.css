@@ -89,9 +89,10 @@
   backface-visibility: hidden;
 }
 
-/* --- Bloc bas hero multi-états (titre 2/3, recherche, infos) --- */
+/* --- Bloc hero multi-états (titre ~2/3, recherche, infos) --- */
 
 .stagedHeroLower {
+  --staged-hero-gutter-x: clamp(1rem, 4vw, 2.75rem);
   position: relative;
   z-index: 2;
   box-sizing: border-box;
@@ -99,19 +100,8 @@
   min-height: calc(100vh - 6.3rem);
   display: flex;
   align-items: flex-end;
-  padding-inline: clamp(1rem, 4vw, 2.75rem);
-  /* Moins de marge basse : remonte le bloc titre + recherche + infos. */
+  padding-inline: var(--staged-hero-gutter-x);
   padding-bottom: clamp(2.5rem, 3.5vh, 3.75rem);
-}
-
-@media (min-width: 1201px) {
-  /*
-   * Remonter le bloc titre + recherche : avec flex row + align-items flex-end,
-   * un padding-bottom généreux réduit la hauteur utile et place le bloc plus haut dans le hero.
-   */
-  .stagedHeroLower {
-    padding-bottom: clamp(7.5rem, 18vh, 13rem);
-  }
 }
 
 .stagedHeroColumn {
@@ -123,73 +113,54 @@
   gap: clamp(1rem, 2.2vw, 1.55rem);
 }
 
-/* Desktop : un peu plus à droite et un peu plus haut que le coin bas-gauche. */
 @media (min-width: 1201px) {
-  .stagedHeroColumn {
-    margin-left: clamp(10.25rem, 5.5vw, 10.75rem);
-    transform: translateY(clamp(-6.5rem, -14vh, -10rem));
-  }
-}
-
-/*
- * Viewports « bas » (ratio largeur/hauteur modéré) : sans override, le bloc titre reste trop à droite / haut
- * vs un 16:9 large ; on le rapproche du bas-gauche. Les écrans très larges (ratio > 3/2) gardent le desktop ci-dessus.
- */
-@media (min-width: 1201px) and (max-aspect-ratio: 11/10) {
+  /*
+   * Desktop : gouttière gauche un peu sous 1/6 viewport ; bloc titre/CTA juste sous le milieu vertical.
+   * (La section commence sous le spacer nav 6.3rem — le padding-top compense pour viser 50vh écran.)
+   */
   .stagedHeroLower {
-    padding-bottom: clamp(6rem, 15vh, 11rem);
+    --staged-hero-gutter-x: calc(100vw / 7);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    min-height: calc(100vh - 6.3rem);
+    padding-inline: var(--staged-hero-gutter-x);
+    padding-top: calc(50vh - 6.3rem + 1rem);
+    padding-bottom: clamp(2rem, 4vh, 3rem);
   }
 
   .stagedHeroColumn {
-    margin-left: clamp(1.25rem, 3.5vw, 3.75rem);
-    transform: translateY(clamp(-5.5rem, -11vh, -8rem));
-  }
-
-  .stagedHeroTitleWrap {
-    width: 128%;
-    max-width: min(46rem, calc(100vw - clamp(2rem, 5vw, 3.5rem)));
+    position: static;
+    width: min(72vw, 52rem);
+    max-width: 100%;
+    margin-left: 0;
+    transform: none;
   }
 }
 
-@media (min-width: 1201px) and (min-aspect-ratio: 11/10) and (max-aspect-ratio: 3/2) {
-  .stagedHeroLower {
-    padding-bottom: clamp(6.5rem, 16vh, 11.5rem);
-  }
-
-  .stagedHeroColumn {
-    margin-left: clamp(2.75rem, 3.8vw, 5.5rem);
-    transform: translateY(clamp(-6rem, -12vh, -8.5rem));
-  }
-
-  .stagedHeroTitleWrap {
-    width: 136%;
-    max-width: min(48rem, calc(100vw - clamp(2rem, 5vw, 4rem)));
-  }
-}
-
-/** Cadre titre élargi ×1,5 par rapport à la colonne ; la meta (recherche) reste à 100% de colonne. */
 .stagedHeroTitleWrap {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: clamp(0.65rem, 1.4vw, 0.95rem);
   width: 100%;
+  max-width: 100%;
   align-self: flex-start;
 }
 
-@media (min-width: 1201px) {
-  .stagedHeroTitleWrap {
-    width: 150%;
-    max-width: calc(100vw - clamp(2.5rem, 6vw, 5.5rem));
-  }
-}
-
-.stagedHeroTitle {
-  max-width: none;
+.stagedHeroTitleWrap .stagedHeroTitle {
+  max-width: 13ch;
   width: 100%;
   font-size: var(--segna-type-h1-size-staged);
   line-height: var(--segna-type-h1-leading-staged);
   white-space: pre-line;
+}
+
+@media (min-width: 1201px) {
+  .stagedHeroTitleWrap .stagedHeroTitle {
+    max-width: 50ch;
+  }
 }
 
 .stagedHeroSubtitle {
