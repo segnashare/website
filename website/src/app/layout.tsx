@@ -1,7 +1,6 @@
 import type {Metadata} from 'next'
 import {Montserrat, Playfair_Display} from 'next/font/google'
 import {PostHogProvider} from '@/components/analytics/PostHogProvider'
-import {CMS_ISR_REVALIDATE_SEC} from '@/lib/sanity'
 import './globals.css'
 
 const playfairDisplay = Playfair_Display({
@@ -26,7 +25,7 @@ export const metadata: Metadata = {
   },
 }
 
-export const revalidate = CMS_ISR_REVALIDATE_SEC
+export const revalidate = 3600
 
 export default function RootLayout({children}: Readonly<{children: React.ReactNode}>) {
   return (

@@ -1,10 +1,9 @@
-import {CMS_ISR_REVALIDATE_SEC} from '@/lib/sanity-cache'
 import {HelpBreadcrumbs} from '@/components/help/HelpBreadcrumbs'
 import {HelpSearchResultLink} from '@/components/help/HelpSearchResultLink'
 import styles from '@/components/help/help.module.css'
 import {getHelpCenterSettings, helpArticleHref, searchHelpArticles} from '@/lib/sanity-help'
 
-export const revalidate = CMS_ISR_REVALIDATE_SEC
+export const revalidate = 3600
 
 type PageProps = {
   searchParams: Promise<{q?: string}>

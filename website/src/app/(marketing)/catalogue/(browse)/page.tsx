@@ -1,4 +1,3 @@
-import {CMS_ISR_REVALIDATE_SEC} from '@/lib/sanity-cache'
 import type {Metadata} from 'next'
 import {CatalogBrowseLinked} from '@/components/page-sections/CatalogBrowseLinked'
 import {loadCatalogBrowseFromPath} from '@/lib/catalog/catalog-page-loader'
@@ -6,7 +5,7 @@ import {parseCatalogBrowseQueryFromNext} from '@/lib/catalog/catalog-search-para
 import {heroTitlePlainText} from '@/lib/hero-title'
 import {getMarketingPageBySlug, urlFor} from '@/lib/sanity'
 
-export const revalidate = CMS_ISR_REVALIDATE_SEC
+export const revalidate = 3600
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>

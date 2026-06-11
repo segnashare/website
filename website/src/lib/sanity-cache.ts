@@ -7,14 +7,11 @@ export function isDevFreshData(): boolean {
   return process.env.NODE_ENV === 'development' && process.env.SANITY_DEV_CACHE !== 'true'
 }
 
-/** Durée max sans webhook (sec). 1 h en prod ; 0 en dev pour rechargement immédiat. */
-export const SANITY_DATA_REVALIDATE_SEC = isDevFreshData() ? 0 : 3600
-
-/** ISR pages marketing — aligné sur le cache données Sanity. */
-export const CMS_ISR_REVALIDATE_SEC = SANITY_DATA_REVALIDATE_SEC
+/** Durée ISR pages marketing (constante littérale — requis pour `export const revalidate`). */
+export const CMS_ISR_REVALIDATE_SEC = 3600
 
 export const sanityCacheOptions = {
-  revalidate: SANITY_DATA_REVALIDATE_SEC,
+  revalidate: CMS_ISR_REVALIDATE_SEC,
   tags: [SANITY_CACHE_TAG],
 }
 
@@ -34,7 +31,7 @@ export function withDataCache<T extends (...args: any[]) => Promise<any>>(
     return fn
   }
   return unstable_cache(fn, keyParts, {
-    revalidate: options.revalidate ?? SANITY_DATA_REVALIDATE_SEC,
+    revalidate: options.revalidate ?? CMS_ISR_REVALIDATE_SEC,
     tags: options.tags ?? [SANITY_CACHE_TAG],
   }) as unknown as T
 }

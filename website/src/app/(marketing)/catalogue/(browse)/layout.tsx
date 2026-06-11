@@ -1,9 +1,8 @@
-import {CMS_ISR_REVALIDATE_SEC} from '@/lib/sanity-cache'
 import {MarketingFullBleedHero} from '@/components/layout/MarketingFullBleedHero'
 import {PageSections} from '@/components/cms/PageSections'
 import {getCatalogueMarketingShell} from '@/lib/catalog/catalogue-marketing-shell'
 
-export const revalidate = CMS_ISR_REVALIDATE_SEC
+export const revalidate = 3600
 
 export default async function CatalogueBrowseLayout({children}: {children: React.ReactNode}) {
   const {marketingPage, headerNav, cta, sections} = await getCatalogueMarketingShell()

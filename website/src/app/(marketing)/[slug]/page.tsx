@@ -1,4 +1,3 @@
-import {CMS_ISR_REVALIDATE_SEC} from '@/lib/sanity-cache'
 import type {Metadata} from 'next'
 import {notFound} from 'next/navigation'
 import {PageSections} from '@/components/cms/PageSections'
@@ -6,7 +5,7 @@ import {MarketingFullBleedHero} from '@/components/layout/MarketingFullBleedHero
 import {heroTitlePlainText} from '@/lib/hero-title'
 import {getHomePageData, getMarketingPageBySlug, getMarketingPageSlugs, getWebsiteHeaderNav, urlFor} from '@/lib/sanity'
 
-export const revalidate = CMS_ISR_REVALIDATE_SEC
+export const revalidate = 3600
 
 type PageProps = {
   params: Promise<{slug: string}>

@@ -4,7 +4,7 @@ import {CMS_ISR_REVALIDATE_SEC, withDataCache} from '@/lib/sanity-cache'
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.segnashare.com').replace(/\/+$/, '')
 
-export const revalidate = CMS_ISR_REVALIDATE_SEC
+export const revalidate = 3600
 
 type HelpCategoryNode = {
   category?: string

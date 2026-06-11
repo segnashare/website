@@ -1,4 +1,3 @@
-import {CMS_ISR_REVALIDATE_SEC} from '@/lib/sanity-cache'
 import Link from 'next/link'
 import {notFound} from 'next/navigation'
 import {HelpArticleContent} from '@/components/help/HelpArticleContent'
@@ -10,7 +9,7 @@ import {
   getHelpSubsectionBySlugs,
 } from '@/lib/sanity-help'
 
-export const revalidate = CMS_ISR_REVALIDATE_SEC
+export const revalidate = 3600
 
 type PageProps = {
   params: Promise<{categorySlug: string; segment: string}>

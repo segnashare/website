@@ -1,4 +1,3 @@
-import {CMS_ISR_REVALIDATE_SEC} from '@/lib/sanity-cache'
 import type {Metadata} from 'next'
 import {PageSections} from '@/components/cms/PageSections'
 import {homeCatalogSearchNavFromFacets} from '@/lib/catalog/home-catalog-search-nav'
@@ -9,7 +8,7 @@ import {HomeHero} from '@/components/home/HomeHero'
 import {HomeStagedHero} from '@/components/home/HomeStagedHero'
 import styles from '@/components/home/homeHero.module.css'
 
-export const revalidate = CMS_ISR_REVALIDATE_SEC
+export const revalidate = 3600
 
 /** SEO accueil : champs `seo` du document « Page d’accueil » dans Sanity, sinon repli sur le sous-titre hero. */
 export async function generateMetadata(): Promise<Metadata> {

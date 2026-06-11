@@ -1,11 +1,10 @@
-import {CMS_ISR_REVALIDATE_SEC} from '@/lib/sanity-cache'
 import Image from 'next/image'
 import Link from 'next/link'
 import {PageSections} from '@/components/cms/PageSections'
 import {PageUnifiedHero} from '@/components/layout/PageUnifiedHero'
 import {getHomePageData, getNewsroomPageData, getPosts, urlFor} from '@/lib/sanity'
 
-export const revalidate = CMS_ISR_REVALIDATE_SEC
+export const revalidate = 3600
 
 function formatDate(value?: string) {
   if (!value) return null
