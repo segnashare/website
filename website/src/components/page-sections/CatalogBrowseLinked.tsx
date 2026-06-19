@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import {CatalogBrowseLink} from '@/components/catalog/CatalogBrowseLink'
 import {CatalogGridCardMedia} from '@/components/catalog/CatalogGridCardMedia'
 import type {ReactNode} from 'react'
 import {buildPaginationRange} from '@/lib/catalog/catalog-pagination-range'
@@ -99,7 +99,7 @@ function GridCard({it}: {it: MarketingCatalogGridItem}) {
   const brandLine = it.brand_label
   const extraLine = it.displaySubtitle?.trim()
   return (
-    <Link href={`/catalogue/piece/${it.id}`} className={styles.card}>
+    <CatalogBrowseLink href={`/catalogue/piece/${it.id}`} className={styles.card}>
       <div className={styles.cardMedia}>
         <CatalogGridCardMedia item={it} />
       </div>
@@ -109,7 +109,7 @@ function GridCard({it}: {it: MarketingCatalogGridItem}) {
         <span className={styles.cardTitle}>{titleLine}</span>
         <span className={styles.cardPrice}>{formatCatalogBorrowPriceLabel(it.price_points)}</span>
       </div>
-    </Link>
+    </CatalogBrowseLink>
   )
 }
 
@@ -134,9 +134,9 @@ function PaginationLinks({
           ‹&nbsp;PRÉCÉDENTE
         </span>
       ) : (
-        <Link href={prevHref} className={styles.paginationNav}>
+        <CatalogBrowseLink href={prevHref} className={styles.paginationNav}>
           ‹&nbsp;PRÉCÉDENTE
-        </Link>
+        </CatalogBrowseLink>
       )}
       <div className={styles.paginationPages}>
         {range.map((cell, idx) =>
@@ -145,13 +145,13 @@ function PaginationLinks({
               …
             </span>
           ) : (
-            <Link
+            <CatalogBrowseLink
               key={cell}
               href={pageHref(pathname, query, cell)}
               className={`${styles.paginationNum} ${cell === currentPage ? styles.paginationNumActive : ''}`}
             >
               {cell}
-            </Link>
+            </CatalogBrowseLink>
           ),
         )}
       </div>
@@ -160,9 +160,9 @@ function PaginationLinks({
           SUIVANTE&nbsp;›
         </span>
       ) : (
-        <Link href={nextHref} className={styles.paginationNav}>
+        <CatalogBrowseLink href={nextHref} className={styles.paginationNav}>
           SUIVANTE&nbsp;›
-        </Link>
+        </CatalogBrowseLink>
       )}
     </nav>
   )
@@ -186,12 +186,12 @@ export function CatalogBrowseLinked({payload, brandBand}: {payload: CatalogBrows
         <aside className={styles.rail} aria-label="Catégories et marques">
           <div className={styles.railBlock}>
             <h3 className={styles.railTitle}>
-              <Link
+              <CatalogBrowseLink
                 href={catResetHref}
                 className={`${styles.railTitleLink} ${categoriesHeadingActive ? styles.railTitleLinkActive : ''}`}
               >
                 Catégories
-              </Link>
+              </CatalogBrowseLink>
             </h3>
             <ul className={styles.railList}>
               {categoryRoots(facets.categories).map((root) => {
@@ -199,26 +199,26 @@ export function CatalogBrowseLinked({payload, brandBand}: {payload: CatalogBrows
                 const subs = childrenOf(root.id, facets.categories)
                 return (
                   <li key={root.id} className={styles.railItem}>
-                    <Link
+                    <CatalogBrowseLink
                       href={withQuery(categoryItemHref(resolved, root, facets.categories), {...query, page: 1})}
                       className={`${styles.railLink} ${styles.railLinkParent} ${
                         catalogCategoryRootLinkActive(resolved, root, facets.categories) ? styles.railLinkActive : ''
                       }`}
                     >
                       {root.label}
-                    </Link>
+                    </CatalogBrowseLink>
                     {open && subs.length > 0 ? (
                       <ul className={styles.railSubList}>
                         {subs.map((c) => (
                           <li key={c.id} className={styles.railSubItem}>
-                            <Link
+                            <CatalogBrowseLink
                               href={withQuery(categoryItemHref(resolved, c, facets.categories), {...query, page: 1})}
                               className={`${styles.railLink} ${
                                 catalogCategoryChildLinkActive(resolved, c) ? styles.railLinkActive : ''
                               }`}
                             >
                               {c.label}
-                            </Link>
+                            </CatalogBrowseLink>
                           </li>
                         ))}
                       </ul>
@@ -230,12 +230,12 @@ export function CatalogBrowseLinked({payload, brandBand}: {payload: CatalogBrows
           </div>
           <div className={styles.railBlock}>
             <h3 className={styles.railTitle}>
-              <Link
+              <CatalogBrowseLink
                 href={marquesResetHrefFull}
                 className={`${styles.railTitleLink} ${marquesHeadingActive ? styles.railTitleLinkActive : ''}`}
               >
                 Marques
-              </Link>
+              </CatalogBrowseLink>
             </h3>
             <CatalogBrandSearchRail
               brands={facets.brands.map((b) => ({
@@ -263,12 +263,12 @@ export function CatalogBrowseLinked({payload, brandBand}: {payload: CatalogBrows
             <ul className={styles.railList}>
               {SORT_OPTIONS.map((o) => (
                 <li key={o.id} className={styles.railItem}>
-                  <Link
+                  <CatalogBrowseLink
                     href={withSort(pathname, {...query, page: 1}, o.id)}
                     className={`${styles.railLink} ${sortLinkActive(query, o.id) ? styles.railLinkActive : ''}`}
                   >
                     {o.label}
-                  </Link>
+                  </CatalogBrowseLink>
                 </li>
               ))}
             </ul>
@@ -278,12 +278,12 @@ export function CatalogBrowseLinked({payload, brandBand}: {payload: CatalogBrows
             <ul className={styles.railList}>
               {facets.colors.map((c) => (
                 <li key={c.id} className={styles.railItem}>
-                  <Link
+                  <CatalogBrowseLink
                     href={toggleColorHref(pathname, {...query, page: 1}, c.slug)}
                     className={`${styles.railLink} ${query.colorSlugs.includes(c.slug) ? styles.railLinkActive : ''}`}
                   >
                     {c.label}
-                  </Link>
+                  </CatalogBrowseLink>
                 </li>
               ))}
             </ul>
@@ -294,12 +294,12 @@ export function CatalogBrowseLinked({payload, brandBand}: {payload: CatalogBrows
               <ul className={styles.railList}>
                 {shoeSizes.map((s) => (
                   <li key={s.id} className={styles.railItem}>
-                    <Link
+                    <CatalogBrowseLink
                       href={toggleSizeHref(pathname, {...query, page: 1}, s.slug)}
                       className={`${styles.railLink} ${query.sizeSlugs.includes(s.slug) ? styles.railLinkActive : ''}`}
                     >
                       {s.label}
-                    </Link>
+                    </CatalogBrowseLink>
                   </li>
                 ))}
               </ul>
@@ -311,12 +311,12 @@ export function CatalogBrowseLinked({payload, brandBand}: {payload: CatalogBrows
               <ul className={styles.railList}>
                 {apparelSizes.map((s) => (
                   <li key={s.id} className={styles.railItem}>
-                    <Link
+                    <CatalogBrowseLink
                       href={toggleSizeHref(pathname, {...query, page: 1}, s.slug)}
                       className={`${styles.railLink} ${query.sizeSlugs.includes(s.slug) ? styles.railLinkActive : ''}`}
                     >
                       {s.label}
-                    </Link>
+                    </CatalogBrowseLink>
                   </li>
                 ))}
               </ul>

@@ -16,8 +16,57 @@
   object-fit: cover;
 }
 
+@keyframes catalogPhotoShimmer {
+  0% {
+    transform: translate3d(-155%, 0, 0) skewX(-28deg);
+  }
+  42% {
+    transform: translate3d(35%, 0, 0) skewX(-28deg);
+  }
+  68% {
+    transform: translate3d(88%, 0, 0) skewX(-28deg);
+  }
+  86% {
+    transform: translate3d(112%, 0, 0) skewX(-28deg);
+  }
+  100% {
+    transform: translate3d(122%, 0, 0) skewX(-28deg);
+  }
+}
+
 .skeleton {
+  position: relative;
   height: 100%;
   width: 100%;
-  background: #e8e4de;
+  overflow: hidden;
+  background: #e5e5ea;
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  top: -70%;
+  left: -35%;
+  width: 165%;
+  height: 240%;
+  background: linear-gradient(
+    92deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.1) 22%,
+    rgba(255, 255, 255, 0.3) 38%,
+    rgba(255, 255, 255, 0.48) 50%,
+    rgba(255, 255, 255, 0.3) 62%,
+    rgba(255, 255, 255, 0.1) 78%,
+    transparent 100%
+  );
+  filter: blur(14px);
+  opacity: 1;
+  animation: catalogPhotoShimmer 2.85s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+    opacity: 0;
+  }
 }

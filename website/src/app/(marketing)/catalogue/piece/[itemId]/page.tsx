@@ -8,7 +8,6 @@ import {
   resolveItemGallerySlots,
 } from '@/lib/catalog/marketing-catalog-items'
 import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
-import {CatalogItemViewTracker} from '@/components/analytics/CatalogItemViewTracker'
 import styles from './catalogPieceDetail.module.css'
 
 export const revalidate = 3600
@@ -60,13 +59,6 @@ export default async function CatalogPieceDetailPage({params}: PageProps) {
 
   return (
     <main className={styles.wrap}>
-      <CatalogItemViewTracker
-        itemId={row.id}
-        itemTitle={row.title}
-        brand={row.brand_label}
-        category={row.category_label}
-        pricePoints={row.price_points}
-      />
       <Link href="/catalogue" className={styles.back}>
         ← Catalogue
       </Link>

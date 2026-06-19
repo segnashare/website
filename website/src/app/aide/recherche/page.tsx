@@ -1,5 +1,5 @@
 import {HelpBreadcrumbs} from '@/components/help/HelpBreadcrumbs'
-import {HelpSearchResultLink} from '@/components/help/HelpSearchResultLink'
+import Link from 'next/link'
 import styles from '@/components/help/help.module.css'
 import {getHelpCenterSettings, helpArticleHref, searchHelpArticles} from '@/lib/sanity-help'
 
@@ -53,7 +53,7 @@ export default async function HelpSearchPage({searchParams}: PageProps) {
           return (
             <div key={hit._id} className={styles.resultRow}>
               <span className={styles.resultTitle}>
-                <HelpSearchResultLink href={href} title={hit.title} query={trimmed} />
+                <Link href={href}>{hit.title}</Link>
               </span>
               {hit.excerpt ? <p className={styles.resultExcerpt}>{hit.excerpt}</p> : null}
             </div>

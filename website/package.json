@@ -17,7 +17,6 @@
     "@supabase/supabase-js": "^2.98.0",
     "framer-motion": "^12.36.0",
     "next": "latest",
-    "posthog-js": "^1.372.8",
     "react": "latest",
     "react-dom": "latest"
   },

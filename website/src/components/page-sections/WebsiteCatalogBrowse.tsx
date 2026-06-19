@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import {CatalogBrowseLink} from '@/components/catalog/CatalogBrowseLink'
 import {CatalogGridCardMedia} from '@/components/catalog/CatalogGridCardMedia'
 import {
   useCallback,
@@ -13,7 +13,6 @@ import {
   type ReactNode,
   type SetStateAction,
 } from 'react'
-import posthog from 'posthog-js'
 import {buildPaginationRange} from '@/lib/catalog/catalog-pagination-range'
 import {splitMarketingCatalogSizeFacets} from '@/lib/catalog/catalog-size-facet-section'
 import {formatCatalogBorrowPriceLabel} from '@/lib/catalog/catalog-borrow-price-label'
@@ -140,7 +139,7 @@ function renderProductCard(it: MarketingCatalogGridItem) {
   const brandLine = it.brand_label
   const extraLine = it.displaySubtitle?.trim()
   return (
-    <Link key={it.id} href={`/catalogue/piece/${it.id}`} className={styles.card} onClick={() => posthog.capture('catalog_item_clicked', {item_id: it.id, item_title: it.title, brand: it.brand_label, category: it.category_label, price_points: it.price_points})}>
+    <CatalogBrowseLink key={it.id} href={`/catalogue/piece/${it.id}`} className={styles.card}>
       <div className={styles.cardMedia}>
         <CatalogGridCardMedia item={it} />
       </div>
@@ -150,7 +149,7 @@ function renderProductCard(it: MarketingCatalogGridItem) {
         <span className={styles.cardTitle}>{titleLine}</span>
         <span className={styles.cardPrice}>{formatCatalogBorrowPriceLabel(it.price_points)}</span>
       </div>
-    </Link>
+    </CatalogBrowseLink>
   )
 }
 
@@ -259,7 +258,6 @@ function WebsiteCatalogBrowseLocal({items}: {items: MarketingCatalogGridItem[]})
     setSizeIds(new Set(draftSizes))
     setPage(1)
     closeMobile()
-    posthog.capture('catalog_filter_applied', {source: 'mobile_sheet'})
   }
 
   const resetFamilyDraft = (f: FilterFamily) => {
@@ -473,7 +471,6 @@ function WebsiteCatalogBrowseRemote({
     setColorIds(new Set(draftColors))
     setSizeIds(new Set(draftSizes))
     closeMobile()
-    posthog.capture('catalog_filter_applied', {source: 'mobile_sheet'})
   }
 
   const resetFamilyDraft = (f: FilterFamily) => {
@@ -593,7 +590,6 @@ function BrowseLeftRail(p: RailProps) {
                 onChange={() => {
                   p.setCategoryId(null)
                   p.onFilterChange()
-                  posthog.capture('catalog_filter_applied', {filter_type: 'category', value: null})
                 }}
               />
               <span>Toutes</span>
@@ -609,7 +605,6 @@ function BrowseLeftRail(p: RailProps) {
                   onChange={() => {
                     p.setCategoryId(c.id)
                     p.onFilterChange()
-                    posthog.capture('catalog_filter_applied', {filter_type: 'category', value: c.label})
                   }}
                 />
                 <span>{c.label}</span>
@@ -630,7 +625,6 @@ function BrowseLeftRail(p: RailProps) {
                   onChange={() => {
                     toggleIdInSet(p.setBrandIds, b.id)
                     p.onFilterChange()
-                    posthog.capture('catalog_filter_applied', {filter_type: 'brand', value: b.label})
                   }}
                 />
                 <span>{b.label}</span>
@@ -660,7 +654,6 @@ function BrowseRightRail(p: RailProps) {
                   onChange={() => {
                     p.setSortMode(o.id)
                     p.onSortChange?.()
-                    posthog.capture('catalog_sort_changed', {sort_mode: o.id})
                   }}
                 />
                 <span>{o.label}</span>
@@ -681,7 +674,6 @@ function BrowseRightRail(p: RailProps) {
                   onChange={() => {
                     toggleIdInSet(p.setColorIds, c.id)
                     p.onFilterChange()
-                    posthog.capture('catalog_filter_applied', {filter_type: 'color', value: c.label})
                   }}
                 />
                 <span>{c.label}</span>
@@ -703,7 +695,6 @@ function BrowseRightRail(p: RailProps) {
                     onChange={() => {
                       toggleIdInSet(p.setSizeIds, s.id)
                       p.onFilterChange()
-                      posthog.capture('catalog_filter_applied', {filter_type: 'size', value: s.label})
                     }}
                   />
                   <span>{s.label}</span>
@@ -726,7 +717,6 @@ function BrowseRightRail(p: RailProps) {
                     onChange={() => {
                       toggleIdInSet(p.setSizeIds, s.id)
                       p.onFilterChange()
-                      posthog.capture('catalog_filter_applied', {filter_type: 'size', value: s.label})
                     }}
                   />
                   <span>{s.label}</span>
@@ -811,7 +801,6 @@ function BrowseMobileSheet(props: {
                   onClick={() => {
                     setSortMode(o.id)
                     onSortCommit?.()
-                    posthog.capture('catalog_sort_changed', {sort_mode: o.id, source: 'mobile'})
                   }}
                 >
                   {o.label}

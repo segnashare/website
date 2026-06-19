@@ -1,7 +1,6 @@
 'use client'
 
-import Link from 'next/link'
-import posthog from 'posthog-js'
+import {CatalogBrowseLink} from '@/components/catalog/CatalogBrowseLink'
 import {CatalogGridCardMedia} from '@/components/catalog/CatalogGridCardMedia'
 import {CatalogPuzzleIntroFit} from '@/components/page-sections/CatalogPuzzleIntroFit'
 import scrollStyles from '@/components/page-sections/horizontalScrollCards.module.css'
@@ -26,19 +25,9 @@ function CatalogScrollCard({item}: {item: MarketingCatalogGridItem}) {
   const metaLine = item.displaySubtitle?.trim() || item.brand_label || item.category_label || null
 
   return (
-    <Link
+    <CatalogBrowseLink
       href={`/catalogue/piece/${item.id}`}
       className={`${scrollStyles.slideLink} ${scrollStyles.slide} ${scrollStyles.slideSquare}`}
-      onClick={() =>
-        posthog.capture('catalog_item_clicked', {
-          item_id: item.id,
-          item_title: item.title,
-          brand: item.brand_label,
-          category: item.category_label,
-          price_points: item.price_points,
-          source: 'catalog_scroll_strip',
-        })
-      }
     >
       <div className={styles.catalogCard}>
         <div className={styles.catalogCardMedia}>
@@ -50,7 +39,7 @@ function CatalogScrollCard({item}: {item: MarketingCatalogGridItem}) {
           <span className={styles.catalogCardPrice}>{formatCatalogBorrowPriceLabel(item.price_points)}</span>
         </div>
       </div>
-    </Link>
+    </CatalogBrowseLink>
   )
 }
 

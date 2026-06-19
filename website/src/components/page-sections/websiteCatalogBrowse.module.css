@@ -522,3 +522,139 @@
   opacity: 0.35;
   cursor: not-allowed;
 }
+
+/* —— Chargement navigation catalogue —— */
+
+@keyframes catalogBrowseShimmer {
+  0% {
+    transform: translate3d(-155%, 0, 0) skewX(-28deg);
+  }
+  42% {
+    transform: translate3d(35%, 0, 0) skewX(-28deg);
+  }
+  68% {
+    transform: translate3d(88%, 0, 0) skewX(-28deg);
+  }
+  86% {
+    transform: translate3d(112%, 0, 0) skewX(-28deg);
+  }
+  100% {
+    transform: translate3d(122%, 0, 0) skewX(-28deg);
+  }
+}
+
+.catalogBrowseLoadingRoot {
+  padding: clamp(1.25rem, 2.5vw, 2rem) clamp(0.85rem, 4vw, 1.35rem) clamp(2.75rem, 7vw, 5rem);
+}
+
+.catalogLoadingToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.catalogLoadingChip,
+.catalogLoadingChipWide,
+.catalogLoadingLine,
+.catalogLoadingLineShort,
+.catalogLoadingPhoto {
+  position: relative;
+  overflow: hidden;
+  background: #e5e5ea;
+  border-radius: 999px;
+}
+
+.catalogLoadingChip {
+  width: 5.5rem;
+  height: 2rem;
+}
+
+.catalogLoadingChipWide {
+  width: 9rem;
+  height: 2rem;
+}
+
+.catalogLoadingGrid {
+  display: grid;
+  gap: clamp(0.85rem, 2vw, 1.35rem);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 768px) {
+  .catalogLoadingGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1200px) {
+  .catalogLoadingGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.catalogLoadingCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.catalogLoadingPhoto {
+  aspect-ratio: 3 / 4;
+  width: 100%;
+  border-radius: 0.35rem;
+}
+
+.catalogLoadingPhoto::after,
+.catalogLoadingChip::after,
+.catalogLoadingChipWide::after,
+.catalogLoadingLine::after,
+.catalogLoadingLineShort::after {
+  content: '';
+  position: absolute;
+  top: -70%;
+  left: -35%;
+  width: 165%;
+  height: 240%;
+  background: linear-gradient(
+    92deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.1) 22%,
+    rgba(255, 255, 255, 0.3) 38%,
+    rgba(255, 255, 255, 0.48) 50%,
+    rgba(255, 255, 255, 0.3) 62%,
+    rgba(255, 255, 255, 0.1) 78%,
+    transparent 100%
+  );
+  filter: blur(14px);
+  animation: catalogBrowseShimmer 2.85s linear infinite;
+}
+
+.catalogLoadingMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.catalogLoadingLine {
+  width: 72%;
+  height: 0.72rem;
+  border-radius: 0.2rem;
+}
+
+.catalogLoadingLineShort {
+  width: 48%;
+  height: 0.62rem;
+  border-radius: 0.2rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .catalogLoadingPhoto::after,
+  .catalogLoadingChip::after,
+  .catalogLoadingChipWide::after,
+  .catalogLoadingLine::after,
+  .catalogLoadingLineShort::after {
+    animation: none;
+    opacity: 0;
+  }
+}

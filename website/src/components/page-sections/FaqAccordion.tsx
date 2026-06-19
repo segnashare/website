@@ -1,8 +1,5 @@
-'use client'
-
 import type {PortableTextBlock} from '@portabletext/types'
 import Link from 'next/link'
-import posthog from 'posthog-js'
 import {PortableRichText} from '@/components/cms/PortableRichText'
 import type {HelpArticleFaqBundle, HelpArticleQaItem, HelpFaqItem} from '@/lib/sanity'
 import {helpArticleHrefFromSlugs} from '@/lib/sanity-help'
@@ -59,15 +56,7 @@ export function FaqAccordion({items, className, embedded}: Props) {
       aria-label="Questions fréquentes"
     >
       {list.map((item) => (
-        <details
-          key={item._key}
-          className={styles.item}
-          onToggle={(e) => {
-            if ((e.currentTarget as HTMLDetailsElement).open) {
-              posthog.capture('faq_item_opened', {question: item.question.trim()})
-            }
-          }}
-        >
+        <details key={item._key} className={styles.item}>
           <summary className={styles.summary}>
             <span className={styles.question}>{item.question.trim()}</span>
             <span className={styles.chevron} aria-hidden />

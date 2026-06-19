@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import {useRouter} from 'next/navigation'
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
-import posthog from 'posthog-js'
 import {catalogBrowsePath} from '@/lib/catalog/catalog-browse-href'
 import type {HomeCatalogSearchNav} from '@/lib/catalog/home-catalog-search-nav'
 import styles from './homeCatalogQuickSearch.module.css'
@@ -136,11 +135,6 @@ export function HomeCatalogQuickSearch({
 
   const goActive = useCallback(() => {
     const item = flatList.ordered[active]
-    posthog.capture('catalog_quick_search_submitted', {
-      query: q,
-      matched_suggestion: item?.label ?? null,
-      kind: item?.kind ?? null,
-    })
     if (item) router.push(item.href)
     else goCatalog()
   }, [active, flatList.ordered, goCatalog, q, router])
@@ -231,10 +225,7 @@ export function HomeCatalogQuickSearch({
                     role="option"
                     className={`${styles.row} ${idx === active ? styles.rowActive : ''}`}
                     onMouseEnter={() => setActive(idx)}
-                    onClick={() => {
-                      setOpen(false)
-                      posthog.capture('catalog_quick_search_suggestion_clicked', {query: q, kind: 'brand', label: s.label})
-                    }}
+                    onClick={() => setOpen(false)}
                   >
                     {s.label}
                     <span className={styles.rowHint}>Marque</span>
@@ -256,10 +247,7 @@ export function HomeCatalogQuickSearch({
                     role="option"
                     className={`${styles.row} ${idx === active ? styles.rowActive : ''}`}
                     onMouseEnter={() => setActive(idx)}
-                    onClick={() => {
-                      setOpen(false)
-                      posthog.capture('catalog_quick_search_suggestion_clicked', {query: q, kind: 'category', label: s.label})
-                    }}
+                    onClick={() => setOpen(false)}
                   >
                     {s.label}
                   </Link>
