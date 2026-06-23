@@ -4,21 +4,28 @@
   "version": "1.0.0",
   "main": "package.json",
   "license": "UNLICENSED",
+  "engines": {
+    "node": "^20.19.0 || ^22.13.0 || >=24.0.0",
+    "npm": ">=10"
+  },
   "scripts": {
-    "dev": "sanity dev",
+    "dev": "NODE_OPTIONS=--max-old-space-size=8192 sanity dev",
     "start": "sanity start",
-    "build": "sanity build",
-    "deploy": "sanity deploy",
+    "build": "NODE_OPTIONS=--max-old-space-size=8192 sanity build",
+    "deploy": "node ./scripts/assert-node-version.mjs && sanity deploy",
     "deploy-graphql": "sanity graphql deploy"
   },
   "keywords": [
     "sanity"
   ],
   "dependencies": {
-    "@sanity/vision": "^5.13.0",
+    "rxjs": "^7.8.2",
+    "@sanity/icons": "^3.7.4",
+    "@sanity/types": "^5.21.0",
+    "@sanity/vision": "^5.21.0",
     "react": "^19.1",
     "react-dom": "^19.1",
-    "sanity": "^5.13.0",
+    "sanity": "^5.21.0",
     "styled-components": "^6.1.18"
   },
   "devDependencies": {
@@ -33,5 +40,8 @@
     "printWidth": 100,
     "bracketSpacing": false,
     "singleQuote": true
+  },
+  "overrides": {
+    "jsdom": "26.1.0"
   }
 }

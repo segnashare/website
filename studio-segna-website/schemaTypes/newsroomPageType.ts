@@ -1,4 +1,5 @@
-import {defineField, defineType} from 'sanity'
+import {defineField, defineType} from '@sanity/types'
+import {pageSectionsField} from './pageSectionsField'
 
 export const newsroomPageType = defineType({
   name: 'newsroomPage',
@@ -6,9 +7,16 @@ export const newsroomPageType = defineType({
   type: 'document',
   fields: [
     defineField({
+      name: 'seo',
+      title: 'SEO',
+      type: 'seoMetadata',
+    }),
+    defineField({
       name: 'heroTitle',
       title: 'Hero - Titre',
-      type: 'string',
+      type: 'text',
+      rows: 2,
+      description: 'Entrée = passage à la ligne dans le titre affiché sur le site.',
       validation: (rule) => rule.required(),
     }),
     defineField({
@@ -38,12 +46,13 @@ export const newsroomPageType = defineType({
       rows: 5,
       validation: (rule) => rule.required(),
     }),
+    pageSectionsField(),
     defineField({
       name: 'highlightedPost',
       title: 'Post mis en avant',
       type: 'reference',
       to: [{type: 'post'}],
-      description: 'Optionnel. Selectionnez un post a mettre en avant en haut de page.',
+      description: 'Optionnel. Sélectionnez un post à mettre en avant en haut de page.',
     }),
   ],
   preview: {

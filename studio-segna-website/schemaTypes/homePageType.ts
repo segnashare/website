@@ -1,36 +1,84 @@
-import {defineField, defineType} from 'sanity'
+import {defineArrayMember, defineField, defineType} from '@sanity/types'
+import {heroActionFields} from './objects/heroActionFields'
+import {pageSectionsField} from './pageSectionsField'
 
 export const homePageType = defineType({
   name: 'homePage',
   title: 'Page d’accueil',
   type: 'document',
-  initialValue: {
-    brandName: 'Segna',
-    navItems: [
-      {label: 'Accueil', href: ''},
-      {label: 'Fonctionnalites', href: ''},
-      {label: 'Actualites', href: '/newsroom'},
-    ],
-    mobileMenuContact: {
-      label: 'Contact',
-      href: '#',
-    },
-    mobileMenuSocialLinks: [
-      {label: 'X', href: 'https://x.com'},
-      {label: 'Instagram', href: 'https://instagram.com'},
-    ],
-  },
   fields: [
     defineField({
-      name: 'brandName',
-      title: 'Nom de marque',
+      name: 'seo',
+      title: 'SEO (page d’accueil)',
+      type: 'seoMetadata',
+    }),
+    defineField({
+      name: 'heroPresentation',
+      title: 'Type de hero',
       type: 'string',
-      validation: (rule) => rule.required(),
+      initialValue: 'single_photo',
+      options: {
+        layout: 'radio',
+        list: [
+          {title: 'Photo plein écran (comportement actuel)', value: 'single_photo'},
+          {title: 'Multi-états (couleurs + images qui défilent)', value: 'multi_state'},
+        ],
+      },
+    }),
+    defineField({
+      name: 'heroStageTransitionMs',
+      title: 'Multi-états — durée animation des photos (ms)',
+      type: 'number',
+      description:
+        'Durée du mouvement des images (bas → haut uniquement). La couleur de fond change tout de suite, sans fondu.',
+      initialValue: 650,
+      hidden: ({parent}) => parent?.heroPresentation !== 'multi_state',
+      validation: (rule) =>
+        rule.custom((value, context) => {
+          const parent = context.parent as {heroPresentation?: string}
+          if (parent?.heroPresentation !== 'multi_state') return true
+          const n = typeof value === 'number' ? value : Number(value)
+          if (!Number.isFinite(n)) return 'Indiquez une durée en ms (ex. 650)'
+          if (n < 200 || n > 3000) return 'Durée entre 200 et 3000 ms'
+          return true
+        }),
+    }),
+    defineField({
+      name: 'heroStates',
+      title: 'Multi-états — séquence',
+      type: 'array',
+      of: [
+        defineArrayMember({type: 'homeHeroStagedState'}),
+        defineArrayMember({type: 'homeHeroStatePresetRef'}),
+      ],
+      description:
+        'Chaque état : couleur de fond, durée à l’écran, jusqu’à 5 images positionnées en CSS. Vous pouvez aussi réutiliser un préréglage du « Référentiel — États hero » via « Réutiliser un préréglage ».',
+      hidden: ({parent}) => parent?.heroPresentation !== 'multi_state',
+      validation: (rule) =>
+        rule.custom((states, context) => {
+          const parent = context.parent as {heroPresentation?: string}
+          if (parent?.heroPresentation !== 'multi_state') return true
+          if (!Array.isArray(states) || states.length < 1) {
+            return 'Ajoutez au moins un état'
+          }
+          return true
+        }),
+    }),
+    defineField({
+      name: 'heroStagedInfoItems',
+      title: 'Multi-états — ligne d’infos (max 2)',
+      type: 'array',
+      description: 'Sous la recherche : icône + texte, séparés par une barre verticale.',
+      hidden: ({parent}) => parent?.heroPresentation !== 'multi_state',
+      validation: (rule) => rule.max(2),
+      of: [defineArrayMember({type: 'homeHeroStagedInfoItem'})],
     }),
     defineField({
       name: 'heroTitle',
       title: 'Hero - Titre',
-      type: 'string',
+      type: 'text',
+      rows: 2,
+      description: 'Entrée = passage à la ligne dans le titre affiché sur le site.',
       validation: (rule) => rule.required(),
     }),
     defineField({
@@ -38,12 +86,16 @@ export const homePageType = defineType({
       title: 'Hero - Sous-titre',
       type: 'text',
       rows: 3,
+      description: 'Affiché sous le titre principal, au-dessus de la zone d’action (recherche / boutons).',
     }),
+    ...heroActionFields(),
     defineField({
       name: 'heroImage',
-      title: 'Hero - Image',
+      title: 'Hero - Image (mode photo)',
       type: 'image',
+      description: 'Utilisée uniquement en « Photo plein écran ».',
       options: {hotspot: true},
+      hidden: ({parent}) => parent?.heroPresentation === 'multi_state',
       fields: [
         defineField({
           name: 'alt',
@@ -52,184 +104,14 @@ export const homePageType = defineType({
           validation: (rule) => rule.required(),
         }),
       ],
-      validation: (rule) => rule.required(),
-    }),
-    defineField({
-      name: 'primaryCta',
-      title: 'CTA principal',
-      type: 'object',
-      fields: [
-        defineField({
-          name: 'label',
-          title: 'Label',
-          type: 'string',
-          validation: (rule) => rule.required(),
-        }),
-        defineField({
-          name: 'url',
-          title: 'URL',
-          type: 'url',
-          validation: (rule) => rule.required(),
-        }),
-      ],
-    }),
-    defineField({
-      name: 'navItems',
-      title: 'Navigation',
-      type: 'array',
-      of: [
-        defineField({
-          name: 'navItem',
-          title: 'Element de navigation',
-          type: 'object',
-          fields: [
-            defineField({
-              name: 'label',
-              title: 'Label',
-              type: 'string',
-              validation: (rule) => rule.required(),
-            }),
-            defineField({
-              name: 'href',
-              title: 'Lien (href)',
-              type: 'string',
-              initialValue: '',
-            }),
-          ],
-          validation: (rule) =>
-            rule.custom((value) => {
-              if (!value || typeof value !== 'object') return true
-
-              const label = 'label' in value && typeof value.label === 'string' ? value.label.trim().toLowerCase() : ''
-              const href = 'href' in value && typeof value.href === 'string' ? value.href.trim() : ''
-
-              if (label === 'actualites' && href !== '/newsroom') {
-                return 'Pour "Actualites", le lien doit etre /newsroom.'
-              }
-
-              return true
-            }),
-          preview: {
-            select: {
-              title: 'label',
-              subtitle: 'href',
-            },
-          },
-        }),
-      ],
       validation: (rule) =>
-        rule.required().min(1).custom((items) => {
-          if (!Array.isArray(items)) return 'Ajoutez au moins un element de navigation.'
-
-          const hasNewsroomLink = items.some((item) => {
-            if (!item || typeof item !== 'object') return false
-            const label = 'label' in item && typeof item.label === 'string' ? item.label : ''
-            const href = 'href' in item && typeof item.href === 'string' ? item.href : ''
-            return label.trim().toLowerCase() === 'actualites' && href === '/newsroom'
-          })
-
-          return hasNewsroomLink
-            ? true
-            : 'Ajoutez un element "Actualites" qui pointe vers /newsroom.'
+        rule.custom((value, context) => {
+          const parent = context.parent as {heroPresentation?: string}
+          if (parent?.heroPresentation === 'multi_state') return true
+          return value?.asset ? true : 'Image requise en mode photo plein écran'
         }),
     }),
-    defineField({
-      name: 'sections',
-      title: 'Sections',
-      type: 'array',
-      of: [
-        defineField({
-          name: 'sectionBlock',
-          title: 'Section',
-          type: 'object',
-          fields: [
-            defineField({
-              name: 'title',
-              title: 'Titre',
-              type: 'string',
-              validation: (rule) => rule.required(),
-            }),
-            defineField({
-              name: 'text',
-              title: 'Texte',
-              type: 'text',
-              rows: 5,
-              validation: (rule) => rule.required(),
-            }),
-            defineField({
-              name: 'image',
-              title: 'Image',
-              type: 'image',
-              options: {hotspot: true},
-              fields: [
-                defineField({
-                  name: 'alt',
-                  title: 'Texte alternatif',
-                  type: 'string',
-                }),
-              ],
-            }),
-          ],
-          preview: {
-            select: {
-              title: 'title',
-              media: 'image',
-            },
-          },
-        }),
-      ],
-    }),
-    defineField({
-      name: 'mobileMenuContact',
-      title: 'Menu mobile - Contact',
-      type: 'object',
-      fields: [
-        defineField({
-          name: 'label',
-          title: 'Label',
-          type: 'string',
-          validation: (rule) => rule.required(),
-        }),
-        defineField({
-          name: 'href',
-          title: 'Lien',
-          type: 'string',
-          initialValue: '#',
-        }),
-      ],
-    }),
-    defineField({
-      name: 'mobileMenuSocialLinks',
-      title: 'Menu mobile - Reseaux',
-      type: 'array',
-      of: [
-        defineField({
-          name: 'socialLink',
-          title: 'Reseau',
-          type: 'object',
-          fields: [
-            defineField({
-              name: 'label',
-              title: 'Label',
-              type: 'string',
-              validation: (rule) => rule.required(),
-            }),
-            defineField({
-              name: 'href',
-              title: 'Lien',
-              type: 'string',
-              validation: (rule) => rule.required(),
-            }),
-          ],
-          preview: {
-            select: {
-              title: 'label',
-              subtitle: 'href',
-            },
-          },
-        }),
-      ],
-    }),
+    pageSectionsField(),
   ],
   preview: {
     prepare() {
