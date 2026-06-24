@@ -3,13 +3,12 @@ import {notFound} from 'next/navigation'
 import {CatalogBrandEditorial} from '@/components/catalog/CatalogBrandEditorial'
 import {CatalogBrowseLinked} from '@/components/page-sections/CatalogBrowseLinked'
 import {DEFAULT_CATALOG_BROWSE_QUERY} from '@/lib/catalog/catalog-browse-defaults'
-import {CATALOG_ISR_REVALIDATE_SEC} from '@/lib/catalog/catalog-cache'
 import {getBrandEditorialForCatalogPayload} from '@/lib/catalog/catalog-brand-editorial-for-payload'
 import {loadCatalogBrowseFromPath} from '@/lib/catalog/catalog-page-loader'
 import {categoryBySlug} from '@/lib/catalog/catalog-category-tree'
 import {fetchMarketingCatalogPathResolveNav} from '@/lib/catalog/marketing-catalog-items'
 
-export const revalidate = CATALOG_ISR_REVALIDATE_SEC
+export const revalidate = 86400
 
 type PageProps = {
   params: Promise<{segment: string}>

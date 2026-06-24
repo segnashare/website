@@ -2,7 +2,6 @@ import type {Metadata} from 'next'
 import Link from 'next/link'
 import {notFound} from 'next/navigation'
 import {CatalogPieceGallery} from '@/components/catalog/CatalogPieceGallery'
-import {CATALOG_ISR_REVALIDATE_SEC} from '@/lib/catalog/catalog-cache'
 import {formatCatalogBorrowPriceLabel} from '@/lib/catalog/catalog-borrow-price-label'
 import {
   fetchMarketingCatalogItemsByIds,
@@ -11,7 +10,7 @@ import {
 import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
 import styles from './catalogPieceDetail.module.css'
 
-export const revalidate = CATALOG_ISR_REVALIDATE_SEC
+export const revalidate = 86400
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i

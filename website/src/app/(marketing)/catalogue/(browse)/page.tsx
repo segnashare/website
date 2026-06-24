@@ -1,12 +1,11 @@
 import type {Metadata} from 'next'
 import {CatalogBrowseLinked} from '@/components/page-sections/CatalogBrowseLinked'
 import {DEFAULT_CATALOG_BROWSE_QUERY} from '@/lib/catalog/catalog-browse-defaults'
-import {CATALOG_ISR_REVALIDATE_SEC} from '@/lib/catalog/catalog-cache'
 import {loadCatalogBrowseFromPath} from '@/lib/catalog/catalog-page-loader'
 import {heroTitlePlainText} from '@/lib/hero-title'
 import {getMarketingPageBySlug, urlFor} from '@/lib/sanity'
 
-export const revalidate = CATALOG_ISR_REVALIDATE_SEC
+export const revalidate = 86400
 
 export async function generateMetadata(): Promise<Metadata> {
   const page = await getMarketingPageBySlug('catalogue')
