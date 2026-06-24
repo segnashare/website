@@ -14,17 +14,6 @@ type PageProps = {
   params: Promise<{segment: string}>
 }
 
-export async function generateStaticParams() {
-  const nav = await fetchMarketingCatalogPathResolveNav()
-  if (!nav) return []
-  const segments = new Set<string>()
-  for (const b of nav.brands) segments.add(b.slug)
-  for (const c of nav.categories) {
-    if (c.parentId == null) segments.add(c.slug)
-  }
-  return [...segments].map((segment) => ({segment}))
-}
-
 export async function generateMetadata({params}: PageProps): Promise<Metadata> {
   const {segment} = await params
   const facets = await fetchMarketingCatalogPathResolveNav()
