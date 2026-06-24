@@ -37,5 +37,5 @@ export function withDataCache<T extends (...args: any[]) => Promise<any>>(
 }
 
 export function catalogDataRevalidateSec(): number {
-  return isDevFreshData() ? 0 : 3600
+  return isDevFreshData() ? 0 : 86_400
 }

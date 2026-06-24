@@ -1,5 +1,6 @@
 import type {Metadata} from 'next'
 import {Montserrat, Playfair_Display} from 'next/font/google'
+import {GoogleAnalyticsHeadScripts} from '@/components/analytics/GoogleAnalytics'
 import './globals.css'
 
 const playfairDisplay = Playfair_Display({
@@ -29,9 +30,10 @@ export const revalidate = 3600
 export default function RootLayout({children}: Readonly<{children: React.ReactNode}>) {
   return (
     <html lang="fr" className={`${playfairDisplay.variable} ${montserrat.variable}`}>
-      <body>
-        {children}
-      </body>
+      <head>
+        <GoogleAnalyticsHeadScripts />
+      </head>
+      <body>{children}</body>
     </html>
   )
 }

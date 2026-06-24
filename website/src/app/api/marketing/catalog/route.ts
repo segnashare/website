@@ -1,4 +1,5 @@
 import {NextResponse} from 'next/server'
+import {catalogApiCacheHeaders} from '@/lib/catalog/catalog-cache'
 import {parseSortParam} from '@/lib/catalog/catalog-search-params'
 import {
   fetchMarketingCatalogFacets,
@@ -7,9 +8,7 @@ import {
 } from '@/lib/catalog/marketing-catalog-items'
 import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
 
-const CATALOG_CACHE_HEADERS = {
-  'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
-}
+const CATALOG_CACHE_HEADERS = catalogApiCacheHeaders
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i

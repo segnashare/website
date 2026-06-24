@@ -91,7 +91,7 @@ export type MarketingCatalogItemRow = {
 }
 
 const SIGNED_TTL_SEC = 60 * 60 * 24
-const SIGNED_URL_CACHE_REVALIDATE_SEC = 60 * 60 * 12
+const SIGNED_URL_CACHE_REVALIDATE_SEC = 86_400
 
 const getCachedSignedUrlForStoragePath = withDataCache(
   async (rawPath: string): Promise<string | null> => {

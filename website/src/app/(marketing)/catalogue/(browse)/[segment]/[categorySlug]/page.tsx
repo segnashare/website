@@ -2,17 +2,42 @@ import type {Metadata} from 'next'
 import {notFound} from 'next/navigation'
 import {CatalogBrandEditorial} from '@/components/catalog/CatalogBrandEditorial'
 import {CatalogBrowseLinked} from '@/components/page-sections/CatalogBrowseLinked'
+import {DEFAULT_CATALOG_BROWSE_QUERY} from '@/lib/catalog/catalog-browse-defaults'
+import {CATALOG_ISR_REVALIDATE_SEC} from '@/lib/catalog/catalog-cache'
 import {getBrandEditorialForCatalogPayload} from '@/lib/catalog/catalog-brand-editorial-for-payload'
 import {loadCatalogBrowseFromPath} from '@/lib/catalog/catalog-page-loader'
-import {parseCatalogBrowseQueryFromNext} from '@/lib/catalog/catalog-search-params'
 import {categoryBySlug} from '@/lib/catalog/catalog-category-tree'
+import {resolveCatalogIntersection} from '@/lib/catalog/catalog-path-resolve'
 import {fetchMarketingCatalogPathResolveNav} from '@/lib/catalog/marketing-catalog-items'
 
-export const revalidate = 3600
+export const revalidate = CATALOG_ISR_REVALIDATE_SEC
 
 type PageProps = {
   params: Promise<{segment: string; categorySlug: string}>
-  searchParams: Promise<Record<string, string | string[] | undefined>>
+}
+
+export async function generateStaticParams() {
+  const nav = await fetchMarketingCatalogPathResolveNav()
+  if (!nav) return []
+  const out: {segment: string; categorySlug: string}[] = []
+  const seen = new Set<string>()
+  for (const b of nav.brands) {
+    for (const c of nav.categories) {
+      const resolved = resolveCatalogIntersection(nav, b.slug, c.slug)
+      if (resolved?.kind !== 'intersection') continue
+      const key = `${b.slug}/${c.slug}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      out.push({segment: b.slug, categorySlug: c.slug})
+    }
+  }
+  for (const p of nav.categories) {
+    if (p.parentId != null) continue
+    for (const ch of nav.categories) {
+      if (ch.parentId === p.id) out.push({segment: p.slug, categorySlug: ch.slug})
+    }
+  }
+  return out
 }
 
 export async function generateMetadata({params}: PageProps): Promise<Metadata> {
@@ -30,12 +55,13 @@ export async function generateMetadata({params}: PageProps): Promise<Metadata> {
   return {title: 'Catalogue | Segna'}
 }
 
-export default async function CatalogueBrandCategoryPage({params, searchParams}: PageProps) {
+export default async function CatalogueBrandCategoryPage({params}: PageProps) {
   const {segment, categorySlug} = await params
-  const raw = await searchParams
-  const query = parseCatalogBrowseQueryFromNext(raw)
 
-  const payload = await loadCatalogBrowseFromPath({kind: 'pair', brandSlug: segment, categorySlug}, query)
+  const payload = await loadCatalogBrowseFromPath(
+    {kind: 'pair', brandSlug: segment, categorySlug},
+    DEFAULT_CATALOG_BROWSE_QUERY,
+  )
   if (!payload) notFound()
 
   const brandBlock = await getBrandEditorialForCatalogPayload(payload)

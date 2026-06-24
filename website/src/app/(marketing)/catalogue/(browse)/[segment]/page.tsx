@@ -2,17 +2,28 @@ import type {Metadata} from 'next'
 import {notFound} from 'next/navigation'
 import {CatalogBrandEditorial} from '@/components/catalog/CatalogBrandEditorial'
 import {CatalogBrowseLinked} from '@/components/page-sections/CatalogBrowseLinked'
+import {DEFAULT_CATALOG_BROWSE_QUERY} from '@/lib/catalog/catalog-browse-defaults'
+import {CATALOG_ISR_REVALIDATE_SEC} from '@/lib/catalog/catalog-cache'
 import {getBrandEditorialForCatalogPayload} from '@/lib/catalog/catalog-brand-editorial-for-payload'
 import {loadCatalogBrowseFromPath} from '@/lib/catalog/catalog-page-loader'
-import {parseCatalogBrowseQueryFromNext} from '@/lib/catalog/catalog-search-params'
 import {categoryBySlug} from '@/lib/catalog/catalog-category-tree'
 import {fetchMarketingCatalogPathResolveNav} from '@/lib/catalog/marketing-catalog-items'
 
-export const revalidate = 3600
+export const revalidate = CATALOG_ISR_REVALIDATE_SEC
 
 type PageProps = {
   params: Promise<{segment: string}>
-  searchParams: Promise<Record<string, string | string[] | undefined>>
+}
+
+export async function generateStaticParams() {
+  const nav = await fetchMarketingCatalogPathResolveNav()
+  if (!nav) return []
+  const segments = new Set<string>()
+  for (const b of nav.brands) segments.add(b.slug)
+  for (const c of nav.categories) {
+    if (c.parentId == null) segments.add(c.slug)
+  }
+  return [...segments].map((segment) => ({segment}))
 }
 
 export async function generateMetadata({params}: PageProps): Promise<Metadata> {
@@ -26,12 +37,10 @@ export async function generateMetadata({params}: PageProps): Promise<Metadata> {
   return {title: 'Catalogue | Segna'}
 }
 
-export default async function CatalogueSegmentPage({params, searchParams}: PageProps) {
+export default async function CatalogueSegmentPage({params}: PageProps) {
   const {segment} = await params
-  const raw = await searchParams
-  const query = parseCatalogBrowseQueryFromNext(raw)
 
-  const payload = await loadCatalogBrowseFromPath({kind: 'one', segment}, query)
+  const payload = await loadCatalogBrowseFromPath({kind: 'one', segment}, DEFAULT_CATALOG_BROWSE_QUERY)
   if (!payload) notFound()
 
   const brandBlock = await getBrandEditorialForCatalogPayload(payload)

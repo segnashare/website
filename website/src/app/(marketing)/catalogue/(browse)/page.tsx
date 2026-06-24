@@ -1,15 +1,12 @@
 import type {Metadata} from 'next'
 import {CatalogBrowseLinked} from '@/components/page-sections/CatalogBrowseLinked'
+import {DEFAULT_CATALOG_BROWSE_QUERY} from '@/lib/catalog/catalog-browse-defaults'
+import {CATALOG_ISR_REVALIDATE_SEC} from '@/lib/catalog/catalog-cache'
 import {loadCatalogBrowseFromPath} from '@/lib/catalog/catalog-page-loader'
-import {parseCatalogBrowseQueryFromNext} from '@/lib/catalog/catalog-search-params'
 import {heroTitlePlainText} from '@/lib/hero-title'
 import {getMarketingPageBySlug, urlFor} from '@/lib/sanity'
 
-export const revalidate = 3600
-
-type PageProps = {
-  searchParams: Promise<Record<string, string | string[] | undefined>>
-}
+export const revalidate = CATALOG_ISR_REVALIDATE_SEC
 
 export async function generateMetadata(): Promise<Metadata> {
   const page = await getMarketingPageBySlug('catalogue')
@@ -28,10 +25,8 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default async function CatalogueRootPage({searchParams}: PageProps) {
-  const raw = await searchParams
-  const query = parseCatalogBrowseQueryFromNext(raw)
-  const payload = await loadCatalogBrowseFromPath({kind: 'all'}, query)
+export default async function CatalogueRootPage() {
+  const payload = await loadCatalogBrowseFromPath({kind: 'all'}, DEFAULT_CATALOG_BROWSE_QUERY)
 
   if (!payload) {
     return (

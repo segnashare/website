@@ -10,6 +10,7 @@ import {objectPositionFromHotspot} from '@/lib/homeStagedPlacements'
 import {CatalogScrollStrip} from '@/components/catalog/CatalogScrollStrip'
 import {CatalogBrowseLinked} from '@/components/page-sections/CatalogBrowseLinked'
 import {CatalogPuzzleIntroFit} from '@/components/page-sections/CatalogPuzzleIntroFit'
+import {DEFAULT_CATALOG_BROWSE_QUERY} from '@/lib/catalog/catalog-browse-defaults'
 import styles from './websiteDbCatalog.module.css'
 
 const UUID_RE =
@@ -92,8 +93,7 @@ export async function SectionWebsiteDbCatalog({section}: Props) {
   }
 
   if (mode === 'full_catalog') {
-    const defaultQuery = {page: 1, sort: 'recent' as const, colorSlugs: [] as string[], sizeSlugs: [] as string[]}
-    const payload = await loadCatalogBrowseFromPath({kind: 'all'}, defaultQuery)
+    const payload = await loadCatalogBrowseFromPath({kind: 'all'}, DEFAULT_CATALOG_BROWSE_QUERY)
 
     if (!payload) {
       return (
