@@ -52,6 +52,7 @@
 }
 
 button.railLink,
+button.railTitleLink,
 button.paginationNav,
 button.paginationNum {
   background: none;
@@ -241,6 +242,20 @@ button.paginationNum {
   text-decoration: none;
   color: inherit;
   background: #fff;
+}
+
+.cardButton {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+.cardButton:focus-visible {
+  outline: 2px solid #14110f;
+  outline-offset: 2px;
 }
 
 .cardMedia {

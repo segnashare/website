@@ -1,12 +1,16 @@
 'use client'
 
-import {CatalogBrowseLink} from '@/components/catalog/CatalogBrowseLink'
 import {CatalogGridCardMedia} from '@/components/catalog/CatalogGridCardMedia'
+import {CatalogItemDetailModal} from '@/components/catalog/CatalogItemDetailModal'
+import {prefetchCatalogItemDetailClient} from '@/lib/catalog/catalog-item-detail-client-fetch'
 import {CatalogBrandSearchRail} from '@/components/page-sections/CatalogBrandSearchRail'
 import {fetchCatalogBrowseClient, syncCatalogBrowseUrl} from '@/lib/catalog/catalog-browse-client-fetch'
 import {catalogBrowseQueriesEqual} from '@/lib/catalog/catalog-browse-defaults'
 import {
-  catalogBrowsePath,
+  brandItemHref,
+  categoriesAllHref,
+  categoryItemHref,
+  marquesResetHref,
   pageHref,
   toggleColorHref,
   toggleSizeHref,
@@ -16,11 +20,9 @@ import {buildPaginationRange} from '@/lib/catalog/catalog-pagination-range'
 import {categoryRoots, childrenOf} from '@/lib/catalog/catalog-category-tree'
 import type {CatalogBrowsePayload} from '@/lib/catalog/catalog-page-loader'
 import {
-  catalogBrandCategorySecondSegment,
   catalogCategoryChildLinkActive,
   catalogCategoryRootLinkActive,
   catalogCategoryRootNavOpen,
-  catalogListingPath,
   type CatalogPathResolved,
 } from '@/lib/catalog/catalog-path-resolve'
 import {formatCatalogBorrowPriceLabel} from '@/lib/catalog/catalog-borrow-price-label'
@@ -29,7 +31,6 @@ import {parseCatalogBrowseQuery} from '@/lib/catalog/catalog-search-params'
 import {splitMarketingCatalogSizeFacets} from '@/lib/catalog/catalog-size-facet-section'
 import type {
   CatalogSortMode,
-  MarketingCatalogCategoryNavOption,
   MarketingCatalogFacetNavOption,
   MarketingCatalogFacetsNav,
   MarketingCatalogGridItem,
@@ -43,50 +44,6 @@ const SORT_OPTIONS: {id: CatalogSortMode; label: string}[] = [
   {id: 'price_desc', label: 'Prix : décroissant'},
 ]
 
-function categoriesAllHref(resolved: CatalogPathResolved): string {
-  if (resolved.kind === 'intersection' || resolved.kind === 'brand') {
-    return catalogBrowsePath(resolved.brandSlug, null)
-  }
-  return '/catalogue'
-}
-
-function categoryItemHref(
-  resolved: CatalogPathResolved,
-  cat: MarketingCatalogCategoryNavOption,
-  categories: MarketingCatalogCategoryNavOption[],
-): string {
-  if (cat.parentId == null) {
-    const brandSlug = resolved.kind === 'brand' || resolved.kind === 'intersection' ? resolved.brandSlug : null
-    return catalogBrowsePath(brandSlug, cat.slug)
-  }
-  const parent = categories.find((c) => c.id === cat.parentId)
-  if (resolved.kind === 'brand' || resolved.kind === 'intersection') {
-    return catalogBrowsePath(resolved.brandSlug, cat.slug)
-  }
-  if (parent) {
-    return catalogBrowsePath(parent.slug, cat.slug)
-  }
-  return catalogBrowsePath(null, cat.slug)
-}
-
-function brandItemHref(resolved: CatalogPathResolved, brandSlug: string): string {
-  const second = catalogBrandCategorySecondSegment(resolved)
-  if (second) return catalogBrowsePath(brandSlug, second)
-  return catalogBrowsePath(brandSlug, null)
-}
-
-function brandsAllHref(resolved: CatalogPathResolved): string | null {
-  if (resolved.kind === 'all') return null
-  if (resolved.kind === 'brand') return '/catalogue'
-  if (resolved.kind === 'category') return catalogListingPath(resolved)
-  if (resolved.kind === 'intersection') return catalogBrowsePath(null, resolved.categorySlug)
-  return null
-}
-
-function marquesResetHref(resolved: CatalogPathResolved): string {
-  return brandsAllHref(resolved) ?? '/catalogue'
-}
-
 function brandLinkActive(resolved: CatalogPathResolved, brand: MarketingCatalogFacetNavOption): boolean {
   if (resolved.kind === 'brand') return resolved.brandSlug === brand.slug
   if (resolved.kind === 'intersection') return resolved.brandSlug === brand.slug
@@ -97,12 +54,19 @@ function sortLinkActive(query: CatalogBrowseQuery, mode: CatalogSortMode): boole
   return query.sort === mode
 }
 
-function GridCard({it}: {it: MarketingCatalogGridItem}) {
+function GridCard({it, onOpen}: {it: MarketingCatalogGridItem; onOpen: (itemId: string) => void}) {
   const titleLine = it.displayTitle ?? it.title
   const brandLine = it.brand_label
   const extraLine = it.displaySubtitle?.trim()
   return (
-    <CatalogBrowseLink href={`/catalogue/piece/${it.id}`} className={styles.card}>
+    <button
+      type="button"
+      className={`${styles.card} ${styles.cardButton}`}
+      aria-label={`Voir ${titleLine}`}
+      onClick={() => onOpen(it.id)}
+      onMouseEnter={() => prefetchCatalogItemDetailClient(it.id)}
+      onFocus={() => prefetchCatalogItemDetailClient(it.id)}
+    >
       <div className={styles.cardMedia}>
         <CatalogGridCardMedia item={it} />
       </div>
@@ -112,7 +76,7 @@ function GridCard({it}: {it: MarketingCatalogGridItem}) {
         <span className={styles.cardTitle}>{titleLine}</span>
         <span className={styles.cardPrice}>{formatCatalogBorrowPriceLabel(it.price_points)}</span>
       </div>
-    </CatalogBrowseLink>
+    </button>
   )
 }
 
@@ -135,14 +99,12 @@ function QueryRailButton({
 }
 
 function PaginationControls({
-  pathname,
   query,
   currentPage,
   totalPages,
   busy,
   onPage,
 }: {
-  pathname: string
   query: CatalogBrowseQuery
   currentPage: number
   totalPages: number
@@ -200,40 +162,32 @@ function PaginationControls({
   )
 }
 
-export function CatalogBrowseInteractive({
-  payload: initialPayload,
-  brandBand,
-}: {
-  payload: CatalogBrowsePayload
-  brandBand?: ReactNode
-}) {
-  const {pathname, resolved} = initialPayload
+export function CatalogBrowseInteractive({payload: initialPayload}: {payload: CatalogBrowsePayload}) {
+  const {resolved} = initialPayload
   const [facets, setFacets] = useState<MarketingCatalogFacetsNav>(initialPayload.facets)
   const [items, setItems] = useState(initialPayload.items)
   const [total, setTotal] = useState(initialPayload.total)
   const [query, setQuery] = useState(initialPayload.query)
   const [loading, setLoading] = useState(false)
+  const [openItemId, setOpenItemId] = useState<string | null>(null)
   const urlSynced = useRef(false)
 
-  const applyQuery = useCallback(
-    async (nextQuery: CatalogBrowseQuery) => {
-      setLoading(true)
-      try {
-        const data = await fetchCatalogBrowseClient(pathname, nextQuery)
-        if (data.facets) setFacets(data.facets)
-        setItems(data.items)
-        setTotal(data.total)
-        setQuery(data.query)
-        syncCatalogBrowseUrl(pathname, data.query)
-      } catch {
-        setItems([])
-        setTotal(0)
-      } finally {
-        setLoading(false)
-      }
-    },
-    [pathname],
-  )
+  const applyQuery = useCallback(async (nextQuery: CatalogBrowseQuery) => {
+    setLoading(true)
+    try {
+      const data = await fetchCatalogBrowseClient(nextQuery)
+      if (data.facets) setFacets(data.facets)
+      setItems(data.items)
+      setTotal(data.total)
+      setQuery(data.query)
+      syncCatalogBrowseUrl(data.query)
+    } catch {
+      setItems([])
+      setTotal(0)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
     if (urlSynced.current) return
@@ -267,12 +221,13 @@ export function CatalogBrowseInteractive({
         <aside className={styles.rail} aria-label="Catégories et marques">
           <div className={styles.railBlock}>
             <h3 className={styles.railTitle}>
-              <CatalogBrowseLink
-                href={categoriesAllHref(resolved)}
+              <QueryRailButton
                 className={`${styles.railTitleLink} ${categoriesHeadingActive ? styles.railTitleLinkActive : ''}`}
+                disabled={loading}
+                onSelect={() => navigateQuery(categoriesAllHref(resolved, query))}
               >
                 Catégories
-              </CatalogBrowseLink>
+              </QueryRailButton>
             </h3>
             <ul className={styles.railList}>
               {categoryRoots(facets.categories).map((root) => {
@@ -280,26 +235,32 @@ export function CatalogBrowseInteractive({
                 const subs = childrenOf(root.id, facets.categories)
                 return (
                   <li key={root.id} className={styles.railItem}>
-                    <CatalogBrowseLink
-                      href={categoryItemHref(resolved, root, facets.categories)}
+                    <QueryRailButton
                       className={`${styles.railLink} ${styles.railLinkParent} ${
                         catalogCategoryRootLinkActive(resolved, root, facets.categories) ? styles.railLinkActive : ''
                       }`}
+                      disabled={loading}
+                      onSelect={() =>
+                        navigateQuery(categoryItemHref(resolved, root, facets.categories, query))
+                      }
                     >
                       {root.label}
-                    </CatalogBrowseLink>
+                    </QueryRailButton>
                     {open && subs.length > 0 ? (
                       <ul className={styles.railSubList}>
                         {subs.map((c) => (
                           <li key={c.id} className={styles.railSubItem}>
-                            <CatalogBrowseLink
-                              href={categoryItemHref(resolved, c, facets.categories)}
+                            <QueryRailButton
                               className={`${styles.railLink} ${
                                 catalogCategoryChildLinkActive(resolved, c) ? styles.railLinkActive : ''
                               }`}
+                              disabled={loading}
+                              onSelect={() =>
+                                navigateQuery(categoryItemHref(resolved, c, facets.categories, query))
+                              }
                             >
                               {c.label}
-                            </CatalogBrowseLink>
+                            </QueryRailButton>
                           </li>
                         ))}
                       </ul>
@@ -311,29 +272,31 @@ export function CatalogBrowseInteractive({
           </div>
           <div className={styles.railBlock}>
             <h3 className={styles.railTitle}>
-              <CatalogBrowseLink
-                href={marquesResetHref(resolved)}
+              <QueryRailButton
                 className={`${styles.railTitleLink} ${marquesHeadingActive ? styles.railTitleLinkActive : ''}`}
+                disabled={loading}
+                onSelect={() => navigateQuery(marquesResetHref(resolved, query))}
               >
                 Marques
-              </CatalogBrowseLink>
+              </QueryRailButton>
             </h3>
             <CatalogBrandSearchRail
               brands={facets.brands.map((b) => ({
                 id: b.id,
                 label: b.label,
-                href: brandItemHref(resolved, b.slug),
+                slug: b.slug,
                 active: brandLinkActive(resolved, b),
               }))}
+              disabled={loading}
+              onBrandSelect={(brandSlug) => navigateQuery(brandItemHref(resolved, brandSlug, query))}
             />
           </div>
         </aside>
 
         <div className={styles.center}>
-          {brandBand ? <div className={styles.brandBand}>{brandBand}</div> : null}
           <div className={styles.grid}>
             {items.map((it) => (
-              <GridCard key={it.id} it={it} />
+              <GridCard key={it.id} it={it} onOpen={setOpenItemId} />
             ))}
           </div>
         </div>
@@ -347,7 +310,7 @@ export function CatalogBrowseInteractive({
                   <QueryRailButton
                     className={`${styles.railLink} ${sortLinkActive(query, o.id) ? styles.railLinkActive : ''}`}
                     disabled={loading}
-                    onSelect={() => navigateQuery(withSort(pathname, {...query, page: 1}, o.id))}
+                    onSelect={() => navigateQuery(withSort({...query, page: 1}, o.id))}
                   >
                     {o.label}
                   </QueryRailButton>
@@ -363,7 +326,7 @@ export function CatalogBrowseInteractive({
                   <QueryRailButton
                     className={`${styles.railLink} ${query.colorSlugs.includes(c.slug) ? styles.railLinkActive : ''}`}
                     disabled={loading}
-                    onSelect={() => navigateQuery(toggleColorHref(pathname, {...query, page: 1}, c.slug))}
+                    onSelect={() => navigateQuery(toggleColorHref({...query, page: 1}, c.slug))}
                   >
                     {c.label}
                   </QueryRailButton>
@@ -380,7 +343,7 @@ export function CatalogBrowseInteractive({
                     <QueryRailButton
                       className={`${styles.railLink} ${query.sizeSlugs.includes(s.slug) ? styles.railLinkActive : ''}`}
                       disabled={loading}
-                      onSelect={() => navigateQuery(toggleSizeHref(pathname, {...query, page: 1}, s.slug))}
+                      onSelect={() => navigateQuery(toggleSizeHref({...query, page: 1}, s.slug))}
                     >
                       {s.label}
                     </QueryRailButton>
@@ -398,7 +361,7 @@ export function CatalogBrowseInteractive({
                     <QueryRailButton
                       className={`${styles.railLink} ${query.sizeSlugs.includes(s.slug) ? styles.railLinkActive : ''}`}
                       disabled={loading}
-                      onSelect={() => navigateQuery(toggleSizeHref(pathname, {...query, page: 1}, s.slug))}
+                      onSelect={() => navigateQuery(toggleSizeHref({...query, page: 1}, s.slug))}
                     >
                       {s.label}
                     </QueryRailButton>
@@ -412,14 +375,15 @@ export function CatalogBrowseInteractive({
 
       {totalPages > 1 ? (
         <PaginationControls
-          pathname={pathname}
           query={{...query, page: safePage}}
           currentPage={safePage}
           totalPages={totalPages}
           busy={loading}
-          onPage={(page) => navigateQuery(pageHref(pathname, query, page))}
+          onPage={(page) => navigateQuery(pageHref(query, page))}
         />
       ) : null}
+
+      <CatalogItemDetailModal itemId={openItemId} onClose={() => setOpenItemId(null)} />
     </div>
   )
 }

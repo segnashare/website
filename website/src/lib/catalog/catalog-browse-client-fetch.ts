@@ -9,12 +9,8 @@ export type CatalogBrowseFetchResult = {
   facets: MarketingCatalogFacetsNav
 }
 
-export async function fetchCatalogBrowseClient(
-  pathname: string,
-  query: CatalogBrowseQuery,
-): Promise<CatalogBrowseFetchResult> {
+export async function fetchCatalogBrowseClient(query: CatalogBrowseQuery): Promise<CatalogBrowseFetchResult> {
   const sp = serializeCatalogBrowseQuery(query)
-  sp.set('pathname', pathname)
   const res = await fetch(`/api/marketing/catalog/browse?${sp.toString()}`, {cache: 'force-cache'})
   if (!res.ok) throw new Error(String(res.status))
   const data = (await res.json()) as Partial<CatalogBrowseFetchResult>
@@ -26,7 +22,7 @@ export async function fetchCatalogBrowseClient(
   }
 }
 
-export function syncCatalogBrowseUrl(pathname: string, query: CatalogBrowseQuery): void {
-  const href = mergePathAndQuery(pathname, query)
+export function syncCatalogBrowseUrl(query: CatalogBrowseQuery): void {
+  const href = mergePathAndQuery('/catalogue', query)
   window.history.replaceState(window.history.state, '', href)
 }

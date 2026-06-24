@@ -6,6 +6,10 @@ export type CatalogBrowseQuery = {
   sort: CatalogSortMode
   colorSlugs: string[]
   sizeSlugs: string[]
+  /** Équivalent ancien 1er segment d’URL (`/catalogue/nike` → `?segment=nike`). */
+  segmentSlug: string | null
+  /** Équivalent 2e segment (`/catalogue/nike/robes` → `?segment=nike&categorie=robes`). */
+  subSlug: string | null
 }
 
 const SORT_TO_QUERY: Record<CatalogSortMode, string> = {
@@ -77,7 +81,12 @@ export function parseCatalogBrowseQuery(sp: URLSearchParams): CatalogBrowseQuery
   const colorSlugs = splitList(colorsRaw)
   const sizeSlugs = splitList(sizesRaw)
 
-  return {page, sort, colorSlugs, sizeSlugs}
+  const segmentRaw = firstParam(sp, ['segment', 'marque'])
+  const subRaw = firstParam(sp, ['categorie', 'sous-categorie'])
+  const segmentSlug = segmentRaw ? slugifyFr(segmentRaw) : null
+  const subSlug = subRaw ? slugifyFr(subRaw) : null
+
+  return {page, sort, colorSlugs, sizeSlugs, segmentSlug, subSlug}
 }
 
 export function serializeCatalogBrowseQuery(q: CatalogBrowseQuery): URLSearchParams {
@@ -87,6 +96,8 @@ export function serializeCatalogBrowseQuery(q: CatalogBrowseQuery): URLSearchPar
   if (sortQ !== 'nouveautes') out.set('sort', sortQ)
   if (q.colorSlugs.length > 0) out.set('colors', q.colorSlugs.join(','))
   if (q.sizeSlugs.length > 0) out.set('sizes', q.sizeSlugs.join(','))
+  if (q.segmentSlug) out.set('segment', q.segmentSlug)
+  if (q.subSlug) out.set('categorie', q.subSlug)
   return out
 }
 

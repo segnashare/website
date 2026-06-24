@@ -4,7 +4,7 @@ import type {WebsiteDbCatalogSection} from '@/lib/sanity'
 import type {MarketingCatalogGridItem, MarketingCatalogItemRow} from '@/lib/catalog/marketing-catalog-items'
 import {getFirstPhotoCoverMeta} from '@/lib/catalog/item-photos'
 import {fetchMarketingCatalogItemsByIds, gridItemsFromRows, resolveCoverUrlsForItems} from '@/lib/catalog/marketing-catalog-items'
-import {loadCatalogBrowseFromPath} from '@/lib/catalog/catalog-page-loader'
+import {loadCatalogBrowse} from '@/lib/catalog/catalog-page-loader'
 import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
 import {objectPositionFromHotspot} from '@/lib/homeStagedPlacements'
 import {CatalogScrollStrip} from '@/components/catalog/CatalogScrollStrip'
@@ -93,7 +93,7 @@ export async function SectionWebsiteDbCatalog({section}: Props) {
   }
 
   if (mode === 'full_catalog') {
-    const payload = await loadCatalogBrowseFromPath({kind: 'all'}, DEFAULT_CATALOG_BROWSE_QUERY)
+    const payload = await loadCatalogBrowse(DEFAULT_CATALOG_BROWSE_QUERY)
 
     if (!payload) {
       return (

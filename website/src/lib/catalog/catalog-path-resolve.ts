@@ -1,4 +1,4 @@
-import {catalogBrowsePath} from '@/lib/catalog/catalog-browse-href'
+import type {CatalogBrowseQuery} from '@/lib/catalog/catalog-search-params'
 import {
   categoryBySlug,
   categorySubtreeContainsResolvedSlug,
@@ -11,6 +11,7 @@ import type {CatalogPathResolved, CategoryPathSegments} from '@/lib/catalog/cata
 export {idsForCatalogRpc} from '@/lib/catalog/catalog-facet-scope-ids'
 export type {CatalogPathResolved, CategoryPathSegments} from '@/lib/catalog/catalog-path-types'
 
+const CATALOG_PATHNAME = '/catalogue'
 const RESERVED_SEGMENTS = new Set(['piece', 'api'])
 
 function categoryFilterIdsForNode(
@@ -90,16 +91,20 @@ export function resolveCatalogIntersection(
   return resolveCategoryParentChild(facets, firstSlug, secondSlug)
 }
 
-export function catalogListingPath(resolved: CatalogPathResolved): string {
-  if (resolved.kind === 'all') return '/catalogue'
-  if (resolved.kind === 'brand') return catalogBrowsePath(resolved.brandSlug, null)
-  if (resolved.kind === 'category') {
-    if (resolved.segments.shape === 'single') {
-      return catalogBrowsePath(null, resolved.segments.slug)
-    }
-    return catalogBrowsePath(resolved.segments.parentSlug, resolved.segments.childSlug)
-  }
-  return catalogBrowsePath(resolved.brandSlug, resolved.categorySlug)
+/** Résout marque / catégorie depuis les query params (`segment`, `categorie`). */
+export function resolveCatalogFromQuery(
+  facets: MarketingCatalogFacetsNav,
+  query: CatalogBrowseQuery,
+): CatalogPathResolved | null {
+  const seg = query.segmentSlug?.trim()
+  const sub = query.subSlug?.trim()
+  if (!seg) return {kind: 'all'}
+  if (sub) return resolveCatalogIntersection(facets, seg, sub)
+  return resolveCatalogOneSegment(facets, seg)
+}
+
+export function catalogListingPath(_resolved: CatalogPathResolved): string {
+  return CATALOG_PATHNAME
 }
 
 /** Parent dont la colonne doit lister les sous-catégories (URL feuille courte incluse). */

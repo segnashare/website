@@ -2,6 +2,7 @@ import {createClient} from '@sanity/client'
 import {createImageUrlBuilder} from '@sanity/image-url'
 import type {PortableTextBlock} from '@portabletext/types'
 import {cache} from 'react'
+import {enrichDocumentSectionsWithFaq} from '@/lib/sanity-help'
 import {
   CMS_ISR_REVALIDATE_SEC,
   SANITY_CACHE_TAG,
@@ -189,6 +190,7 @@ export type HomeSection = {
   state1Rows?: SectionBlockDualRow[] | null
   state2Rows?: SectionBlockDualRow[] | null
   /** Articles d’aide : Q/R en accordéon + lien vers chaque article. */
+  helpArticlePaths?: string[] | null
   helpArticleRefs?: HelpArticleFaqBundle[] | null
 }
 
@@ -539,6 +541,7 @@ export type SplitPane = {
   ctaLabel?: string
   ctaHref?: string
   /** Colonne texte : Q/R des articles d’aide référencés. */
+  helpArticlePaths?: string[] | null
   helpArticleRefs?: HelpArticleFaqBundle[] | null
 }
 
@@ -567,6 +570,7 @@ export type HelpCenterHubSection = {
   helpHubCtaLabel?: string
   helpHubCtaHref?: string
   /** Articles d’aide : Q/R en accordéon à droite. */
+  helpArticlePaths?: string[] | null
   helpArticleRefs?: HelpArticleFaqBundle[] | null
 }
 
@@ -799,7 +803,7 @@ const splitPaneGroq = `
       cta2Href,
       ctaLabel,
       ctaHref,
-      helpArticleRefs[]->${helpArticleFaqBundleResolvedGroq}`
+      helpArticlePaths`
 
 const portableTextBlocksGroq = `[]{
   ...,
@@ -994,7 +998,7 @@ const documentPageSectionsGroq = `sections[]{
         hubTextColor,
         helpHubCtaLabel,
         helpHubCtaHref,
-        helpArticleRefs[]->${helpArticleFaqBundleResolvedGroq},
+        helpArticlePaths,
         threeStepBandColor,
         threeStepCardsLayout,
         threeStepTextColor,
@@ -1096,7 +1100,7 @@ const documentPageSectionsGroq = `sections[]{
         tab2Label,
         state1Rows[]{${sectionBlockDualRowGroq}},
         state2Rows[]{${sectionBlockDualRowGroq}},
-        helpArticleRefs[]->${helpArticleFaqBundleResolvedGroq}
+        helpArticlePaths
       }`
 
 const homePageProjection = `{
@@ -1229,7 +1233,8 @@ async function getHomePageDataUncached(): Promise<HomePageData | null> {
     ),
   ])
 
-  return combineHomeWithHeader(home, siteNav)
+  const enrichedHome = home ? await enrichDocumentSectionsWithFaq(home) : null
+  return combineHomeWithHeader(enrichedHome, siteNav)
 }
 
 /** Header global seul (ex. autres pages marketing plus tard). */
@@ -1256,7 +1261,7 @@ async function getWebsiteFooterUncached(): Promise<WebsiteFooterData | null> {
 }
 
 async function getNewsroomPageDataUncached(): Promise<NewsroomPageData | null> {
-  return sanityClient.fetch(
+  const page = await sanityClient.fetch<NewsroomPageData | null>(
     `*[_type == "newsroomPage"]|order(_updatedAt desc)[0]{
       seo,
       heroTitle,
@@ -1279,6 +1284,7 @@ async function getNewsroomPageDataUncached(): Promise<NewsroomPageData | null> {
       ${documentPageSectionsGroq}
     }`,
   )
+  return enrichDocumentSectionsWithFaq(page)
 }
 
 async function getMarketingPageSlugsUncached(): Promise<string[]> {
@@ -1331,7 +1337,7 @@ async function getCatalogBrandEditorialBySlugUncached(slug: string): Promise<Cat
 async function getMarketingPageBySlugUncached(slug: string): Promise<MarketingPageData | null> {
   const normalized = slug.trim()
   if (!normalized) return null
-  return sanityClient.fetch<MarketingPageData | null>(
+  const page = await sanityClient.fetch<MarketingPageData | null>(
     `*[_type == "marketingPage" && slug.current == $slug][0]{
       _id,
       title,
@@ -1362,6 +1368,7 @@ async function getMarketingPageBySlugUncached(slug: string): Promise<MarketingPa
     }`,
     {slug: normalized},
   )
+  return enrichDocumentSectionsWithFaq(page)
 }
 
 async function getPostsUncached(): Promise<PostData[]> {

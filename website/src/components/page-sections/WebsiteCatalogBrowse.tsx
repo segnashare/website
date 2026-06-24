@@ -1,6 +1,5 @@
 'use client'
 
-import {CatalogBrowseLink} from '@/components/catalog/CatalogBrowseLink'
 import {CatalogGridCardMedia} from '@/components/catalog/CatalogGridCardMedia'
 import {
   useCallback,
@@ -139,7 +138,7 @@ function renderProductCard(it: MarketingCatalogGridItem) {
   const brandLine = it.brand_label
   const extraLine = it.displaySubtitle?.trim()
   return (
-    <CatalogBrowseLink key={it.id} href={`/catalogue/piece/${it.id}`} className={styles.card}>
+    <article key={it.id} className={styles.card}>
       <div className={styles.cardMedia}>
         <CatalogGridCardMedia item={it} />
       </div>
@@ -149,7 +148,7 @@ function renderProductCard(it: MarketingCatalogGridItem) {
         <span className={styles.cardTitle}>{titleLine}</span>
         <span className={styles.cardPrice}>{formatCatalogBorrowPriceLabel(it.price_points)}</span>
       </div>
-    </CatalogBrowseLink>
+    </article>
   )
 }
 

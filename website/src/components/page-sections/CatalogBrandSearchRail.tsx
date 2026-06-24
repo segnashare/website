@@ -1,13 +1,12 @@
 'use client'
 
-import {CatalogBrowseLink} from '@/components/catalog/CatalogBrowseLink'
 import {useMemo, useState} from 'react'
 import styles from './websiteCatalogBrowse.module.css'
 
 export type CatalogBrandSearchItem = {
   id: string
   label: string
-  href: string
+  slug: string
   active: boolean
 }
 
@@ -21,9 +20,11 @@ function normalizeForSearch(s: string): string {
 
 type Props = {
   brands: CatalogBrandSearchItem[]
+  disabled?: boolean
+  onBrandSelect: (brandSlug: string) => void
 }
 
-export function CatalogBrandSearchRail({brands}: Props) {
+export function CatalogBrandSearchRail({brands, disabled, onBrandSelect}: Props) {
   const [q, setQ] = useState('')
   const needle = normalizeForSearch(q)
   const filtered = useMemo(() => {
@@ -55,12 +56,14 @@ export function CatalogBrandSearchRail({brands}: Props) {
         ) : (
           filtered.map((b) => (
             <li key={b.id} className={styles.railItem}>
-              <CatalogBrowseLink
-                href={b.href}
+              <button
+                type="button"
                 className={`${styles.railLink} ${b.active ? styles.railLinkActive : ''}`}
+                disabled={disabled}
+                onClick={() => onBrandSelect(b.slug)}
               >
                 {b.label}
-              </CatalogBrowseLink>
+              </button>
             </li>
           ))
         )}

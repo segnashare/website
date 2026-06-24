@@ -1,7 +1,7 @@
 import type {Metadata} from 'next'
 import {CatalogBrowseLinked} from '@/components/page-sections/CatalogBrowseLinked'
 import {DEFAULT_CATALOG_BROWSE_QUERY} from '@/lib/catalog/catalog-browse-defaults'
-import {loadCatalogBrowseFromPath} from '@/lib/catalog/catalog-page-loader'
+import {loadCatalogBrowse} from '@/lib/catalog/catalog-page-loader'
 import {heroTitlePlainText} from '@/lib/hero-title'
 import {getMarketingPageBySlug, urlFor} from '@/lib/sanity'
 
@@ -25,7 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function CatalogueRootPage() {
-  const payload = await loadCatalogBrowseFromPath({kind: 'all'}, DEFAULT_CATALOG_BROWSE_QUERY)
+  const payload = await loadCatalogBrowse(DEFAULT_CATALOG_BROWSE_QUERY)
 
   if (!payload) {
     return (

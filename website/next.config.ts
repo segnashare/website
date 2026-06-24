@@ -9,6 +9,17 @@ try {
 }
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      {source: '/catalogue/piece/:itemId', destination: '/catalogue', permanent: true},
+      {
+        source: '/catalogue/:segment/:categorySlug',
+        destination: '/catalogue?segment=:segment&categorie=:categorySlug',
+        permanent: true,
+      },
+      {source: '/catalogue/:segment', destination: '/catalogue?segment=:segment', permanent: true},
+    ]
+  },
   images: {
     /**
      * Next.js 16 n’autorise par défaut que `qualities: [75]`. Limiter les paliers réduit

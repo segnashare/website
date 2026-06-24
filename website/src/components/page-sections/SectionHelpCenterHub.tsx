@@ -55,7 +55,7 @@ export function SectionHelpCenterHub({section}: Props) {
   const ctaHref = section.helpHubCtaHref?.trim()
   const showCta = Boolean(ctaLabel && ctaHref)
 
-  const hasFaq = Boolean(section.helpArticleRefs?.length)
+  const hasFaq = Boolean(section.helpArticleRefs?.length || section.helpArticlePaths?.length)
 
   return (
     <section

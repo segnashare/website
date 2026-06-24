@@ -1,13 +1,15 @@
 'use client'
 
-import {CatalogBrowseLink} from '@/components/catalog/CatalogBrowseLink'
 import {CatalogGridCardMedia} from '@/components/catalog/CatalogGridCardMedia'
+import {CatalogItemDetailModal} from '@/components/catalog/CatalogItemDetailModal'
 import {CatalogPuzzleIntroFit} from '@/components/page-sections/CatalogPuzzleIntroFit'
 import scrollStyles from '@/components/page-sections/horizontalScrollCards.module.css'
 import {formatCatalogBorrowPriceLabel} from '@/lib/catalog/catalog-borrow-price-label'
+import {prefetchCatalogItemDetailClient} from '@/lib/catalog/catalog-item-detail-client-fetch'
 import type {ScrollCardSize} from '@/lib/catalog/scroll-card-size'
 import {normalizeScrollCardSize} from '@/lib/catalog/scroll-card-size'
 import type {MarketingCatalogGridItem} from '@/lib/catalog/marketing-catalog-items'
+import {useState} from 'react'
 import styles from './catalogScrollStrip.module.css'
 
 type Props = {
@@ -20,16 +22,20 @@ type Props = {
   sectionKey?: string
 }
 
-function CatalogScrollCard({item}: {item: MarketingCatalogGridItem}) {
+function CatalogScrollCard({item, onOpen}: {item: MarketingCatalogGridItem; onOpen: (itemId: string) => void}) {
   const titleLine = item.displayTitle ?? item.title
   const metaLine = item.displaySubtitle?.trim() || item.brand_label || item.category_label || null
 
   return (
-    <CatalogBrowseLink
-      href={`/catalogue/piece/${item.id}`}
-      className={`${scrollStyles.slideLink} ${scrollStyles.slide} ${scrollStyles.slideSquare}`}
-    >
-      <div className={styles.catalogCard}>
+    <article className={`${scrollStyles.slide} ${scrollStyles.slideSquare}`}>
+      <button
+        type="button"
+        className={`${styles.catalogCard} ${styles.catalogCardButton}`}
+        aria-label={`Voir ${titleLine}`}
+        onClick={() => onOpen(item.id)}
+        onMouseEnter={() => prefetchCatalogItemDetailClient(item.id)}
+        onFocus={() => prefetchCatalogItemDetailClient(item.id)}
+      >
         <div className={styles.catalogCardMedia}>
           <CatalogGridCardMedia item={item} />
         </div>
@@ -38,8 +44,8 @@ function CatalogScrollCard({item}: {item: MarketingCatalogGridItem}) {
           {metaLine ? <span className={styles.catalogCardMeta}>{metaLine}</span> : null}
           <span className={styles.catalogCardPrice}>{formatCatalogBorrowPriceLabel(item.price_points)}</span>
         </div>
-      </div>
-    </CatalogBrowseLink>
+      </button>
+    </article>
   )
 }
 
@@ -52,6 +58,8 @@ export function CatalogScrollStrip({
   cardSize,
   sectionKey,
 }: Props) {
+  const [openItemId, setOpenItemId] = useState<string | null>(null)
+
   if (items.length === 0) return null
 
   const size = normalizeScrollCardSize(cardSize)
@@ -79,13 +87,15 @@ export function CatalogScrollStrip({
             <div className={scrollStyles.track}>
               <div className={scrollStyles.trackRow}>
                 {items.map((item) => (
-                  <CatalogScrollCard key={item.id} item={item} />
+                  <CatalogScrollCard key={item.id} item={item} onOpen={setOpenItemId} />
                 ))}
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      <CatalogItemDetailModal itemId={openItemId} onClose={() => setOpenItemId(null)} />
     </section>
   )
 }

@@ -1,5 +1,6 @@
 import type {MetadataRoute} from 'next'
-import {getMarketingPageSlugs, sanityClient} from '@/lib/sanity'
+import {faqSanityClient} from '@/lib/sanity-faq'
+import {getMarketingPageSlugs} from '@/lib/sanity'
 import {CMS_ISR_REVALIDATE_SEC, withDataCache} from '@/lib/sanity-cache'
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.segnashare.com').replace(/\/+$/, '')
@@ -31,7 +32,7 @@ function compactSlug(value: string | null | undefined): string | null {
 }
 
 const getHelpCenterPaths = withDataCache(async (): Promise<string[]> => {
-  const categories = await sanityClient.fetch<HelpCategoryNode[]>(
+  const categories = await faqSanityClient.fetch<HelpCategoryNode[]>(
     `*[_type == "helpCategory" && defined(slug.current)]{
       "category": slug.current,
       "sections": *[

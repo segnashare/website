@@ -1,6 +1,36 @@
-import {helpArticleQaItemsGroq, sanityClient, type HelpArticleQaItem} from '@/lib/sanity'
-import {SANITY_CACHE_TAG, sanityCacheOptions, withDataCache} from '@/lib/sanity-cache'
+import type {HelpArticleFaqBundle, HelpArticleQaItem} from '@/lib/sanity'
+import {faqSanityClient} from '@/lib/sanity-faq'
+import {sanityCacheOptions, withDataCache} from '@/lib/sanity-cache'
 import {cache} from 'react'
+
+const portableTextBlockProjection = (field: string) => `${field}[]{
+  ...,
+  markDefs[]{
+    ...,
+    _type == "link" => {
+      href
+    }
+  },
+  _type == "image" => {
+    ...,
+    asset->
+  }
+}`
+
+const helpArticleQaItemsGroq = `qaItems[]{
+  _key,
+  question,
+  ${portableTextBlockProjection('answer')}
+}`
+
+const helpArticleFaqBundleGroq = `{
+  _id,
+  title,
+  "articleSlug": slug.current,
+  "categorySlug": category->slug.current,
+  "sectionSlug": section->slug.current,
+  ${helpArticleQaItemsGroq}
+}`
 
 export type HelpCenterSettingsData = {
   landingHeroTitle?: string
@@ -105,11 +135,11 @@ const settingsProjection = `{
 }`
 
 async function getHelpCenterSettingsUncached(): Promise<HelpCenterSettingsData | null> {
-  return sanityClient.fetch(`*[_type == "helpCenterSettings"]|order(_updatedAt desc)[0]${settingsProjection}`)
+  return faqSanityClient.fetch(`*[_type == "helpCenterSettings"]|order(_updatedAt desc)[0]${settingsProjection}`)
 }
 
 async function getHelpCategoriesForHomeUncached(): Promise<HelpCategoryListItem[]> {
-  return sanityClient.fetch(
+  return faqSanityClient.fetch(
     `*[_type == "helpCategory" && (showOnHome != false)]|order(sortOrder asc, title asc){
       _id,
       title,
@@ -121,7 +151,7 @@ async function getHelpCategoriesForHomeUncached(): Promise<HelpCategoryListItem[
 
 /** Toutes les sections d’aide (liens vers /aide/{slug}) — ex. bloc sur page « Comment ça marche ». */
 async function getHelpCategoriesForHubUncached(): Promise<HelpCategoryListItem[]> {
-  return sanityClient.fetch(
+  return faqSanityClient.fetch(
     `*[_type == "helpCategory"]|order(sortOrder asc, title asc){
       _id,
       title,
@@ -132,7 +162,7 @@ async function getHelpCategoriesForHubUncached(): Promise<HelpCategoryListItem[]
 }
 
 async function getHelpCategoryBySlugUncached(categorySlug: string): Promise<HelpCategoryPageData | null> {
-  return sanityClient.fetch(
+  return faqSanityClient.fetch(
     `*[_type == "helpCategory" && slug.current == $categorySlug][0]{
       _id,
       title,
@@ -160,7 +190,7 @@ async function getHelpSubsectionBySlugsUncached(
   categorySlug: string,
   subsectionSlug: string
 ): Promise<HelpSubsectionPageData | null> {
-  return sanityClient.fetch(
+  return faqSanityClient.fetch(
     `*[_type == "helpSection" && slug.current == $subsectionSlug && category->slug.current == $categorySlug][0]{
       _id,
       title,
@@ -189,7 +219,7 @@ async function getHelpRootArticleBySlugsUncached(
   categorySlug: string,
   articleSlug: string
 ): Promise<HelpArticlePageData | null> {
-  const article = await sanityClient.fetch(
+  const article = await faqSanityClient.fetch(
     `*[_type == "helpArticle" && slug.current == $articleSlug && !defined(section)][0]{
       _id,
       title,
@@ -223,7 +253,7 @@ async function getHelpNestedArticleBySlugsUncached(
   subsectionSlug: string,
   articleSlug: string
 ): Promise<HelpArticlePageData | null> {
-  const article = await sanityClient.fetch(
+  const article = await faqSanityClient.fetch(
     `*[_type == "helpArticle" && slug.current == $articleSlug][0]{
       _id,
       title,
@@ -292,7 +322,7 @@ function groqMatchPattern(raw: string): string | null {
 async function searchHelpArticlesUncached(query: string): Promise<HelpSearchHit[]> {
   const pattern = groqMatchPattern(query)
   if (!pattern) return []
-  return sanityClient.fetch(
+  return faqSanityClient.fetch(
     `*[_type == "helpArticle" && (title match $pattern || excerpt match $pattern)]|order(title asc){
       _id,
       title,
@@ -336,4 +366,104 @@ export function helpArticleHref(hit: Pick<HelpSearchHit, 'category' | 'section' 
     hit.section?.slug?.current,
     hit.slug?.current,
   )
+}
+
+function normalizeHelpArticlePaths(raw: string[] | null | undefined): string[] {
+  if (!raw?.length) return []
+  return [...new Set(raw.map((p) => p.trim()).filter(Boolean))]
+}
+
+function helpArticlePathFromBundle(bundle: HelpArticleFaqBundle): string | null {
+  return helpArticleHrefFromSlugs(bundle.categorySlug, bundle.sectionSlug, bundle.articleSlug)?.replace(
+    /^\/aide\//,
+    '',
+  ) ?? null
+}
+
+/** Résout des chemins FAQ (ex. `compte/connexion`) depuis le projet Sanity dédié. */
+export async function resolveHelpArticleFaqBundles(
+  paths: string[] | null | undefined,
+): Promise<HelpArticleFaqBundle[]> {
+  const normalized = normalizeHelpArticlePaths(paths)
+  if (!normalized.length) return []
+
+  return faqSanityClient.fetch(
+    `*[_type == "helpArticle" && (
+      (!defined(section) && category->slug.current + "/" + slug.current in $paths)
+      || (defined(section) && category->slug.current + "/" + section->slug.current + "/" + slug.current in $paths)
+    )]|order(title asc)${helpArticleFaqBundleGroq}`,
+    {paths: normalized},
+  )
+}
+
+type FaqPaneLike = {
+  helpArticlePaths?: string[] | null
+  helpArticleRefs?: HelpArticleFaqBundle[] | null
+}
+
+type FaqSectionLike = FaqPaneLike & {
+  leftPane?: FaqPaneLike | null
+  rightPane?: FaqPaneLike | null
+}
+
+function collectHelpArticlePaths(sections: FaqSectionLike[] | null | undefined): string[] {
+  const paths: string[] = []
+  for (const section of sections ?? []) {
+    paths.push(...normalizeHelpArticlePaths(section.helpArticlePaths))
+    paths.push(...normalizeHelpArticlePaths(section.leftPane?.helpArticlePaths))
+    paths.push(...normalizeHelpArticlePaths(section.rightPane?.helpArticlePaths))
+  }
+  return [...new Set(paths)]
+}
+
+function assignFaqBundlesToPane<T extends FaqPaneLike>(
+  pane: T | null | undefined,
+  bundlesByPath: Map<string, HelpArticleFaqBundle>,
+): T | null | undefined {
+  if (!pane) return pane
+  const paths = normalizeHelpArticlePaths(pane.helpArticlePaths)
+  if (!paths.length) return {...pane, helpArticleRefs: null}
+  const bundles = paths
+    .map((path) => bundlesByPath.get(path))
+    .filter((bundle): bundle is HelpArticleFaqBundle => Boolean(bundle))
+  return {...pane, helpArticleRefs: bundles.length ? bundles : null}
+}
+
+function assignFaqBundlesToSection<T extends FaqSectionLike>(
+  section: T,
+  bundlesByPath: Map<string, HelpArticleFaqBundle>,
+): T {
+  const paths = normalizeHelpArticlePaths(section.helpArticlePaths)
+  const sectionBundles = paths
+    .map((path) => bundlesByPath.get(path))
+    .filter((bundle): bundle is HelpArticleFaqBundle => Boolean(bundle))
+
+  return {
+    ...section,
+    helpArticleRefs: sectionBundles.length ? sectionBundles : null,
+    leftPane: assignFaqBundlesToPane(section.leftPane, bundlesByPath) ?? section.leftPane,
+    rightPane: assignFaqBundlesToPane(section.rightPane, bundlesByPath) ?? section.rightPane,
+  }
+}
+
+/** Enrichit les blocs marketing avec les Q/R du projet FAQ (à partir de `helpArticlePaths`). */
+export async function enrichDocumentSectionsWithFaq<T extends {sections?: unknown[] | null}>(
+  doc: T | null,
+): Promise<T | null> {
+  if (!doc?.sections?.length) return doc
+  const sections = doc.sections as FaqSectionLike[]
+  const paths = collectHelpArticlePaths(sections)
+  if (!paths.length) return doc
+
+  const bundles = await resolveHelpArticleFaqBundles(paths)
+  const bundlesByPath = new Map<string, HelpArticleFaqBundle>()
+  for (const bundle of bundles) {
+    const path = helpArticlePathFromBundle(bundle)
+    if (path) bundlesByPath.set(path, bundle)
+  }
+
+  return {
+    ...doc,
+    sections: sections.map((section) => assignFaqBundlesToSection(section, bundlesByPath)),
+  }
 }

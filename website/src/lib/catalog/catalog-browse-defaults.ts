@@ -6,6 +6,8 @@ export const DEFAULT_CATALOG_BROWSE_QUERY: CatalogBrowseQuery = {
   sort: 'recent',
   colorSlugs: [],
   sizeSlugs: [],
+  segmentSlug: null,
+  subSlug: null,
 }
 
 export function catalogBrowseQueriesEqual(a: CatalogBrowseQuery, b: CatalogBrowseQuery): boolean {
@@ -13,6 +15,8 @@ export function catalogBrowseQueriesEqual(a: CatalogBrowseQuery, b: CatalogBrows
     a.page === b.page &&
     a.sort === b.sort &&
     a.colorSlugs.join(',') === b.colorSlugs.join(',') &&
-    a.sizeSlugs.join(',') === b.sizeSlugs.join(',')
+    a.sizeSlugs.join(',') === b.sizeSlugs.join(',') &&
+    a.segmentSlug === b.segmentSlug &&
+    a.subSlug === b.subSlug
   )
 }
