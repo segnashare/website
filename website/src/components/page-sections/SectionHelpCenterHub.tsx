@@ -26,7 +26,7 @@ function isExternalHref(href: string) {
 }
 
 function HubCta({href, label}: {href: string; label: string}) {
-  const raw = href.trim() || '/aide'
+  const raw = href.trim() || 'https://help.segnashare.com'
   if (isExternalHref(raw)) {
     return (
       <a href={raw} className={styles.cta} target="_blank" rel="noopener noreferrer">

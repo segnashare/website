@@ -11,6 +11,11 @@ try {
 const nextConfig: NextConfig = {
   async redirects() {
     return [
+      {
+        source: '/aide/:path*',
+        destination: 'https://help.segnashare.com/:path*',
+        permanent: true,
+      },
       {source: '/catalogue/piece/:itemId', destination: '/catalogue', permanent: true},
       {
         source: '/catalogue/:segment/:categorySlug',

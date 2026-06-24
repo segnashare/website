@@ -3,6 +3,11 @@ import {faqSanityClient} from '@/lib/sanity-faq'
 import {sanityCacheOptions, withDataCache} from '@/lib/sanity-cache'
 import {cache} from 'react'
 
+const HELP_SITE_URL = (process.env.NEXT_PUBLIC_HELP_SITE_URL || 'https://help.segnashare.com').replace(
+  /\/+$/,
+  '',
+)
+
 const portableTextBlockProjection = (field: string) => `${field}[]{
   ...,
   markDefs[]{
@@ -355,8 +360,8 @@ export function helpArticleHrefFromSlugs(
   const art = articleSlug?.trim()
   if (!cat || !art) return null
   const sub = subsectionSlug?.trim()
-  if (sub) return `/aide/${cat}/${sub}/${art}`
-  return `/aide/${cat}/${art}`
+  if (sub) return `${HELP_SITE_URL}/${cat}/${sub}/${art}`
+  return `${HELP_SITE_URL}/${cat}/${art}`
 }
 
 /** URL publique d’un article d’aide */
@@ -374,10 +379,12 @@ function normalizeHelpArticlePaths(raw: string[] | null | undefined): string[] {
 }
 
 function helpArticlePathFromBundle(bundle: HelpArticleFaqBundle): string | null {
-  return helpArticleHrefFromSlugs(bundle.categorySlug, bundle.sectionSlug, bundle.articleSlug)?.replace(
-    /^\/aide\//,
-    '',
-  ) ?? null
+  const cat = bundle.categorySlug?.trim()
+  const art = bundle.articleSlug?.trim()
+  if (!cat || !art) return null
+  const sub = bundle.sectionSlug?.trim()
+  if (sub) return `${cat}/${sub}/${art}`
+  return `${cat}/${art}`
 }
 
 /** Résout des chemins FAQ (ex. `compte/connexion`) depuis le projet Sanity dédié. */

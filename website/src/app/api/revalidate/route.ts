@@ -28,7 +28,7 @@ function shouldRevalidateFromWebhook(payload: WebhookPayload | null): boolean {
   return true
 }
 
-const REVALIDATED_PATHS = ['/', '/newsroom', '/catalogue', '/aide'] as const
+const REVALIDATED_PATHS = ['/', '/newsroom', '/catalogue'] as const
 
 function revalidateConfigured(): boolean {
   return Boolean(process.env.SANITY_REVALIDATE_SECRET?.trim())

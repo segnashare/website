@@ -1,6 +1,8 @@
 import type {Metadata} from 'next'
 import {Montserrat, Playfair_Display} from 'next/font/google'
 import {GoogleAnalyticsHeadScripts} from '@/components/analytics/GoogleAnalytics'
+import {CookiebotScript} from '@/components/consent/Cookiebot'
+import {GoogleConsentModeDefault} from '@/components/consent/GoogleConsentModeDefault'
 import './globals.css'
 
 const playfairDisplay = Playfair_Display({
@@ -31,6 +33,8 @@ export default function RootLayout({children}: Readonly<{children: React.ReactNo
   return (
     <html lang="fr" className={`${playfairDisplay.variable} ${montserrat.variable}`}>
       <head>
+        <GoogleConsentModeDefault />
+        <CookiebotScript />
         <GoogleAnalyticsHeadScripts />
       </head>
       <body>{children}</body>

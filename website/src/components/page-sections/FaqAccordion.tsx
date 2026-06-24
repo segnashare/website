@@ -44,6 +44,11 @@ function isFaqRenderable(
   return Boolean(it.question?.trim() && Array.isArray(it.answer) && it.answer.length > 0)
 }
 
+function isExternalHref(href: string) {
+  const t = href.trim().toLowerCase()
+  return t.startsWith('http://') || t.startsWith('https://') || t.startsWith('//')
+}
+
 /** Accordéon Q/R (natif `<details>`), couleurs héritées du parent. */
 export function FaqAccordion({items, className, embedded}: Props) {
   const list = normalizeFaqItems(items).filter(isFaqRenderable)
@@ -65,9 +70,20 @@ export function FaqAccordion({items, className, embedded}: Props) {
             <PortableRichText value={item.answer} className={styles.answerRich} />
             {item.helpArticleHref ? (
               <p className={styles.articleLinkWrap}>
-                <Link href={item.helpArticleHref} className={styles.articleLink}>
-                  Voir l’article
-                </Link>
+                {isExternalHref(item.helpArticleHref) ? (
+                  <a
+                    href={item.helpArticleHref}
+                    className={styles.articleLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Voir l’article
+                  </a>
+                ) : (
+                  <Link href={item.helpArticleHref} className={styles.articleLink}>
+                    Voir l’article
+                  </Link>
+                )}
               </p>
             ) : null}
           </div>
