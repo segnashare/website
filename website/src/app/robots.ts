@@ -7,6 +7,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
+      // Centre d’aide migré vers help.segnashare.com — évite le crawl des redirections /aide/*
+      disallow: '/aide/',
     },
     sitemap: `${SITE_URL}/sitemap.xml`,
     host: SITE_URL,

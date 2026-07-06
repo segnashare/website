@@ -2,7 +2,6 @@ const SINGLETON_DOCUMENT_TYPES = new Set([
   'websiteSiteSettings',
   'websiteHeaderNav',
   'websiteFooter',
-  'helpCenterSettings',
 ])
 
 /** Types pour lesquels on propose « Dupliquer » avec titre / slug adaptés. */
@@ -11,9 +10,6 @@ const CUSTOM_DUPLICATE_SCHEMA_TYPES = new Set([
   'newsroomPage',
   'marketingPage',
   'post',
-  'helpArticle',
-  'helpSection',
-  'helpCategory',
 ])
 
 export function normalizePublishedId(raw: string | undefined): string {

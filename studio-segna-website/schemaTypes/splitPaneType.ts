@@ -189,15 +189,14 @@ export const splitPaneType = defineType({
         parent?.contentKind !== 'text' || parent?.dualTabsEnabled,
     }),
     defineField({
-      name: 'helpArticleRefs',
+      name: 'helpArticlePaths',
       title: 'Articles d’aide (Q/R)',
       description:
-        'Articles du centre d’aide : leurs Q/R s’affichent sous le texte, avec un lien vers chaque article.',
+        'Chemins vers le centre d’aide (projet FAQ séparé). Ex. compte/connexion ou livraison/suivi/delais',
       type: 'array',
       of: [
         defineArrayMember({
-          type: 'reference',
-          to: [{type: 'helpArticle'}],
+          type: 'string',
         }),
       ],
       hidden: ({parent}) => parent?.contentKind !== 'text',

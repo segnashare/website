@@ -159,15 +159,14 @@ export const sectionBlockType = defineType({
     }),
     motionPresetField(),
     defineField({
-      name: 'helpArticleRefs',
+      name: 'helpArticlePaths',
       title: 'Articles d’aide (Q/R)',
       description:
-        'Références vers des articles du centre d’aide : leurs questions / réponses s’affichent en accordéon, avec un lien vers l’article.',
+        'Chemins vers le centre d’aide (projet FAQ séparé). Ex. compte/connexion ou livraison/suivi/delais',
       type: 'array',
       of: [
         defineArrayMember({
-          type: 'reference',
-          to: [{type: 'helpArticle'}],
+          type: 'string',
         }),
       ],
     }),

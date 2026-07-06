@@ -48,51 +48,5 @@ export default defineConfig({
 
   schema: {
     types: schemaTypes,
-    templates: (prev) => [
-      ...prev,
-      {
-        id: 'help-article-from-category',
-        title: 'Article (section pré-remplie, sans sous-section)',
-        schemaType: 'helpArticle',
-        parameters: [{name: 'categoryId', type: 'string'}],
-        value: (params: {categoryId?: string}) => ({
-          category: {
-            _type: 'reference',
-            _ref: String(params?.categoryId ?? ''),
-          },
-        }),
-      },
-      {
-        id: 'help-section-from-category',
-        title: 'Sous-section (section pré-remplie)',
-        schemaType: 'helpSection',
-        parameters: [{name: 'categoryId', type: 'string'}],
-        value: (params: {categoryId?: string}) => ({
-          category: {
-            _type: 'reference',
-            _ref: String(params?.categoryId ?? ''),
-          },
-        }),
-      },
-      {
-        id: 'help-article-from-section',
-        title: 'Article (sous-section pré-remplie)',
-        schemaType: 'helpArticle',
-        parameters: [
-          {name: 'categoryId', type: 'string'},
-          {name: 'sectionId', type: 'string'},
-        ],
-        value: (params: {categoryId?: string; sectionId?: string}) => ({
-          category: {
-            _type: 'reference',
-            _ref: String(params?.categoryId ?? ''),
-          },
-          section: {
-            _type: 'reference',
-            _ref: String(params?.sectionId ?? ''),
-          },
-        }),
-      },
-    ],
   },
 })

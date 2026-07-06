@@ -59,19 +59,25 @@ export const helpCenterHubSectionType = defineType({
       name: 'helpHubCtaHref',
       title: 'Lien du CTA',
       type: 'string',
-      initialValue: '/aide',
-      description: 'Chemin interne (ex. /aide) ou URL absolue.',
+      initialValue: 'https://help.segnashare.com',
+      description: 'URL du centre d’aide (ex. https://help.segnashare.com).',
     }),
     defineField({
-      name: 'helpArticleRefs',
-      title: 'Articles d’aide (Q/R affichées à droite)',
+      name: 'helpArticlePaths',
+      title: 'Articles d’aide (Q/R)',
       description:
-        'Références vers des articles : leurs questions / réponses apparaissent en accordéon, avec un lien vers chaque article.',
+        'Chemins vers le centre d’aide (projet FAQ séparé). Ex. compte/connexion ou livraison/suivi/delais',
       type: 'array',
       of: [
         defineArrayMember({
-          type: 'reference',
-          to: [{type: 'helpArticle'}],
+          type: 'string',
+          validation: (rule) =>
+            rule.custom((val) => {
+              const t = String(val ?? '').trim()
+              if (!t) return 'Chemin requis'
+              if (/\s/.test(t)) return 'Pas d’espaces — utiliser des /'
+              return true
+            }),
         }),
       ],
     }),

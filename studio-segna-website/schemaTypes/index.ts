@@ -1,10 +1,6 @@
 import type {SchemaTypeDefinition} from '@sanity/types'
 import {blockContentType} from './blockContentType'
-import {helpArticleType} from './helpArticleType'
-import {helpCategoryType} from './helpCategoryType'
-import {helpSectionType} from './helpSectionType'
 import {helpCenterHubSectionType} from './helpCenterHubSectionType'
-import {helpCenterSettingsType} from './helpCenterSettingsType'
 import {homeHeroStagedLayoutSlotType} from './homeHeroStagedLayoutSlotType'
 import {homeHeroStagedImageType} from './homeHeroStagedImageType'
 import {homeHeroStagedInfoItemType} from './homeHeroStagedInfoItemType'
@@ -63,10 +59,6 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   websiteHeaderNavType,
   websiteFooterType,
   helpCenterHubSectionType,
-  helpCenterSettingsType,
-  helpCategoryType,
-  helpSectionType,
-  helpArticleType,
   postType,
   homeHeroStagedLayoutSlotType,
   homeHeroStagedStateFrameLayoutType,

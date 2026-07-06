@@ -1,0 +1,13 @@
+{
+  "name": "segna-web",
+  "private": true,
+  "description": "Racine du dépôt : site Next dans website/, Studio Sanity dans studio-segna-website/.",
+  "scripts": {
+    "dev": "npm run dev --prefix website",
+    "build": "npm run build --prefix website",
+    "start": "npm run start --prefix website",
+    "lint": "npm run lint --prefix website",
+    "dev:studio": "npm run dev --prefix studio-segna-website",
+    "build:studio": "npm run build --prefix studio-segna-website"
+  }
+}
