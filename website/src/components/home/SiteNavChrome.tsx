@@ -16,13 +16,25 @@ type Props = {
   mobileNavId: string
   /** Barre mobile : transparent (sur image), clair, ou noir (hero marketing clair). */
   mobileSurface?: 'transparent' | 'light' | 'dark'
+  /**
+   * Fond de page : `light` = barre lisible sur fond clair (pas de hero photo),
+   * style « scroll » dès le départ.
+   */
+  surface?: 'transparent' | 'light'
 }
 
-export function SiteNavChrome({header, mobileNavId, mobileSurface = 'transparent'}: Props) {
+export function SiteNavChrome({
+  header,
+  mobileNavId,
+  mobileSurface = 'transparent',
+  surface = 'transparent',
+}: Props) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const pathname = usePathname() || '/'
   const shouldReduceMotion = useHydrationSafeReducedMotion()
   const contentAnimationState = 'visible' as const
+  const onLightSurface = surface === 'light'
+  const resolvedMobileSurface = onLightSurface ? 'light' : mobileSurface
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
@@ -62,8 +74,14 @@ export function SiteNavChrome({header, mobileNavId, mobileSurface = 'transparent
   const showNavDivider =
     navItems.length > 0 && (showSecondaryCta || Boolean(header?.primaryCta?.label?.trim()))
 
-  const navElevated = useNavScrollElevated()
-  const navRootClass = `${styles.navChromeRoot} ${navElevated ? styles.navChromeRootScrolled : ''}`
+  const navElevated = useNavScrollElevated() || onLightSurface
+  const navRootClass = [
+    styles.navChromeRoot,
+    navElevated ? styles.navChromeRootScrolled : '',
+    onLightSurface ? styles.surfaceLight : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   return (
     <div className={navRootClass}>
@@ -109,7 +127,7 @@ export function SiteNavChrome({header, mobileNavId, mobileSurface = 'transparent
       </motion.header>
 
       <motion.header
-        className={`${styles.mobileHeader} ${mobileSurface === 'light' ? styles.mobileHeaderOnLight : ''} ${mobileSurface === 'dark' ? styles.mobileHeaderOnDark : ''}`}
+        className={`${styles.mobileHeader} ${resolvedMobileSurface === 'light' ? styles.mobileHeaderOnLight : ''} ${resolvedMobileSurface === 'dark' ? styles.mobileHeaderOnDark : ''}`}
         initial="hidden"
         animate={contentAnimationState}
         variants={{

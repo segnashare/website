@@ -16,13 +16,13 @@ const nextConfig: NextConfig = {
         destination: 'https://help.segnashare.com/:path*',
         permanent: true,
       },
-      {source: '/catalogue/piece/:itemId', destination: '/catalogue', permanent: true},
+      // Anciennes URLs catalogue (marque / catégorie). Ne pas matcher `piece`
+      // (page détail `/catalogue/piece/:itemId` — gérée par l’App Router).
       {
-        source: '/catalogue/:segment/:categorySlug',
+        source: '/catalogue/:segment/categorie/:categorySlug',
         destination: '/catalogue?segment=:segment&categorie=:categorySlug',
         permanent: true,
       },
-      {source: '/catalogue/:segment', destination: '/catalogue?segment=:segment', permanent: true},
     ]
   },
   images: {

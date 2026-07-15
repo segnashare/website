@@ -1,10 +1,11 @@
 'use client'
 
-import {CatalogItemPhotoCover} from '@/components/catalog/CatalogItemPhotoCover'
-import {formatCatalogPurchasePriceLabel} from '@/lib/catalog/catalog-borrow-price-label'
-import {isMarketingCatalogItemSold} from '@/lib/catalog/catalog-card-badges'
+import {CatalogItemDetailView} from '@/components/catalog/CatalogItemDetailView'
+import {CatalogRingDotSpinner} from '@/components/catalog/CatalogRingDotSpinner'
+import {catalogItemPagePath} from '@/lib/catalog/catalog-app-links'
 import type {CatalogItemDetailPayload} from '@/lib/catalog/catalog-item-detail'
 import {fetchCatalogItemDetailClient} from '@/lib/catalog/catalog-item-detail-client-fetch'
+import {useRouter} from 'next/navigation'
 import {useCallback, useEffect, useState} from 'react'
 import styles from './catalogItemDetailModal.module.css'
 
@@ -13,82 +14,8 @@ type CatalogItemDetailModalProps = {
   onClose: () => void
 }
 
-function DetailMeta({label, value}: {label: string; value: string | null | undefined}) {
-  if (!value?.trim()) return null
-  return (
-    <li className={styles.metaItem}>
-      <span className={styles.metaKey}>{label}</span>
-      <span className={styles.metaValue}>{value}</span>
-    </li>
-  )
-}
-
-function DetailContent({detail}: {detail: CatalogItemDetailPayload}) {
-  const [photoIndex, setPhotoIndex] = useState(0)
-  const slots = detail.gallery
-  const active = slots[photoIndex] ?? slots[0]
-  const sizeLine = [detail.size_label, detail.size_code].filter(Boolean).join(' · ') || null
-
-  useEffect(() => {
-    setPhotoIndex(0)
-  }, [detail.id])
-
-  return (
-    <div className={styles.body}>
-      <div className={styles.galleryCol}>
-        {active ? (
-          <div className={styles.hero}>
-            <CatalogItemPhotoCover imageUrl={active.url} position={active.position} />
-          </div>
-        ) : null}
-        {slots.length > 1 ? (
-          <div className={styles.thumbs} aria-label="Photos de la pièce">
-            {slots.map((slot, i) => (
-              <button
-                key={`${slot.url}-${i}`}
-                type="button"
-                className={`${styles.thumb} ${i === photoIndex ? styles.thumbActive : ''}`}
-                aria-label={`Photo ${i + 1}`}
-                aria-current={i === photoIndex ? 'true' : undefined}
-                onClick={() => setPhotoIndex(i)}
-              >
-                <CatalogItemPhotoCover imageUrl={slot.url} position={slot.position} />
-              </button>
-            ))}
-          </div>
-        ) : null}
-      </div>
-
-      <div className={styles.infoCol}>
-        {detail.brand_label ? <span className={styles.brand}>{detail.brand_label}</span> : null}
-        <h2 className={styles.title} id="catalog-item-modal-title">
-          {detail.title}
-        </h2>
-        {isMarketingCatalogItemSold(detail.status) ? null : (
-          <p className={styles.price}>{formatCatalogPurchasePriceLabel(detail.price_points)}</p>
-        )}
-
-        {sizeLine ? (
-          <div className={styles.sizeBlock}>
-            <span className={styles.sizeLabel}>Taille</span>
-            <span className={styles.sizeValue}>{sizeLine}</span>
-          </div>
-        ) : null}
-
-        <ul className={styles.metaList}>
-          <DetailMeta label="Catégorie" value={detail.category_label} />
-          <DetailMeta label="Couleur" value={detail.color_label} />
-          <DetailMeta label="Matières" value={detail.materials_label} />
-          <DetailMeta label="État" value={detail.condition_label} />
-        </ul>
-
-        {detail.description?.trim() ? <p className={styles.description}>{detail.description.trim()}</p> : null}
-      </div>
-    </div>
-  )
-}
-
 export function CatalogItemDetailModal({itemId, onClose}: CatalogItemDetailModalProps) {
+  const router = useRouter()
   const [detail, setDetail] = useState<CatalogItemDetailPayload | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
@@ -96,6 +23,13 @@ export function CatalogItemDetailModal({itemId, onClose}: CatalogItemDetailModal
   const close = useCallback(() => {
     onClose()
   }, [onClose])
+
+  const openDedicatedPage = useCallback(() => {
+    if (!itemId) return
+    const path = catalogItemPagePath(itemId)
+    router.push(path)
+    close()
+  }, [itemId, router, close])
 
   useEffect(() => {
     if (!itemId) return
@@ -156,15 +90,37 @@ export function CatalogItemDetailModal({itemId, onClose}: CatalogItemDetailModal
         aria-labelledby={!loading && !error && detail ? 'catalog-item-modal-title' : undefined}
         onClick={(e) => e.stopPropagation()}
       >
-        <button type="button" className={styles.close} aria-label="Fermer" onClick={close}>
-          ×
-        </button>
+        <div className={styles.topActions}>
+          <button
+            type="button"
+            className={styles.iconBtn}
+            aria-label="Ouvrir la page de la pièce"
+            onClick={openDedicatedPage}
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M15 3h6v6" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M10 14 21 3" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M21 14v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <button type="button" className={styles.iconBtn} aria-label="Fermer" onClick={close}>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M18 6 6 18M6 6l12 12" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
 
-        {loading ? <p className={styles.loading}>Chargement…</p> : null}
+        {loading ? (
+          <div className={styles.loading}>
+            <CatalogRingDotSpinner aria-label="Chargement de la pièce" />
+          </div>
+        ) : null}
         {!loading && error ? (
           <p className={styles.error}>Impossible d&apos;afficher cette pièce pour le moment.</p>
         ) : null}
-        {!loading && !error && detail ? <DetailContent detail={detail} /> : null}
+        {!loading && !error && detail ? (
+          <CatalogItemDetailView detail={detail} titleId="catalog-item-modal-title" layout="modal" />
+        ) : null}
       </div>
     </div>
   )

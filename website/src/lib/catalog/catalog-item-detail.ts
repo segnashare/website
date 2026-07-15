@@ -18,6 +18,8 @@ export type CatalogItemDetailPayload = {
   color_label: string | null
   materials_label: string | null
   condition_label: string | null
+  item_category_id: string | null
+  item_size_id: string | null
   gallery: MarketingCatalogGallerySlot[]
 }
 
@@ -44,6 +46,8 @@ export async function loadCatalogItemDetail(itemId: string): Promise<CatalogItem
     color_label: row.color_label,
     materials_label: row.materials_label,
     condition_label: row.condition_label,
+    item_category_id: row.item_category_id,
+    item_size_id: row.item_size_id,
     gallery,
   }
 }

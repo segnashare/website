@@ -1,0 +1,47 @@
+.root {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.ring {
+  position: absolute;
+  inset: 0;
+}
+
+.ringSpin {
+  animation-name: catalogRingSpin;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.dot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 999px;
+}
+
+.dotActive {
+  background: #14110f;
+}
+
+.dotIdle {
+  background: #d4d4d4;
+}
+
+@keyframes catalogRingSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ringSpin {
+    animation: none;
+  }
+}

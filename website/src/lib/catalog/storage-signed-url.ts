@@ -34,12 +34,16 @@ export async function createSignedUrlForStoragePath(
   supabase: StorageSignClient,
   rawPath: string,
   expiresIn: number,
+  options?: {explicitBucket?: string | null},
 ): Promise<string | null> {
   const trimmed = rawPath.trim()
   if (/^https?:\/\//i.test(trimmed)) return trimmed
   const objectPath = normalizeStorageObjectPath(rawPath)
   if (!objectPath) return null
-  const buckets = orderedBucketsForStoragePath(objectPath)
+  const explicit = options?.explicitBucket?.trim()
+  const buckets = explicit
+    ? [explicit, ...orderedBucketsForStoragePath(objectPath).filter((b) => b !== explicit)]
+    : orderedBucketsForStoragePath(objectPath)
   for (const bucketId of buckets) {
     const {data, error} = await supabase.storage.from(bucketId).createSignedUrl(objectPath, expiresIn)
     if (!error && data?.signedUrl) return data.signedUrl

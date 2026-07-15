@@ -2,6 +2,7 @@
 
 import {CatalogGridCardMedia} from '@/components/catalog/CatalogGridCardMedia'
 import {CatalogItemDetailModal} from '@/components/catalog/CatalogItemDetailModal'
+import {CatalogRingDotSpinner} from '@/components/catalog/CatalogRingDotSpinner'
 import {prefetchCatalogItemDetailClient} from '@/lib/catalog/catalog-item-detail-client-fetch'
 import {fetchCatalogBrowseClient, syncCatalogBrowseUrl} from '@/lib/catalog/catalog-browse-client-fetch'
 import {catalogBrowseQueriesEqual} from '@/lib/catalog/catalog-browse-defaults'
@@ -321,6 +322,7 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
   const [brandSearch, setBrandSearch] = useState('')
   const urlSynced = useRef(false)
   const filterBarRef = useRef<HTMLDivElement | null>(null)
+  const fetchGenRef = useRef(0)
   /** Facettes complètes pour résoudre marque/catégorie côté client (évite les facettes scopées). */
   const resolveFacetsRef = useRef(initialPayload.facets)
 
@@ -328,15 +330,17 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
     const nextQuery = normalizeCatalogBrowseQuery(rawQuery)
     const optimisticResolved =
       resolveCatalogFromQuery(resolveFacetsRef.current, nextQuery) ?? ({kind: 'all'} as const)
+    const gen = ++fetchGenRef.current
+    // UI immédiate : checks / URL / resolved — la grille reste affichée (fond gris soft + spinner).
     setLoading(true)
     setQuery(nextQuery)
     setResolved(optimisticResolved)
     syncCatalogBrowseUrl(nextQuery)
     try {
       const data = await fetchCatalogBrowseClient(nextQuery)
+      if (gen !== fetchGenRef.current) return
       if (data.facets) {
         setFacets(data.facets)
-        // Enrichir le référentiel de résolution (brands/cats) sans le réduire.
         const prev = resolveFacetsRef.current
         resolveFacetsRef.current = {
           categories:
@@ -352,9 +356,9 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
       if (data.resolved) setResolved(data.resolved)
       syncCatalogBrowseUrl(normalizeCatalogBrowseQuery(data.query))
     } catch {
-      // Garde l’état optimiste (query + resolved) : ne pas vider la grille.
+      // Garde l’état optimiste + ancienne grille.
     } finally {
-      setLoading(false)
+      if (gen === fetchGenRef.current) setLoading(false)
     }
   }, [])
 
@@ -424,7 +428,9 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
   }, [brandSearch, facets.brands])
 
   const sortLabel = SORT_OPTIONS.find((o) => o.id === query.sort)?.label ?? 'Trier'
-  const itemCountLabel = `${total.toLocaleString('fr-FR')} pièce${total === 1 ? '' : 's'}`
+  const itemCountLabel = loading
+    ? '…'
+    : `${total.toLocaleString('fr-FR')} pièce${total === 1 ? '' : 's'}`
 
   return (
     <div className={styles.catalogPageRoot} aria-busy={loading || undefined}>
@@ -440,7 +446,6 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
           >
             <FilterCheckOption
               checked={!categoryActive}
-              disabled={loading}
               onClick={() => navigateQuery(categoriesAllHref(resolved, query))}
             >
               Toutes les catégories
@@ -452,7 +457,6 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
                   <FilterCheckOption
                     checked={categoryRootChecked(resolved, root, facets.categories, query)}
                     className={styles.filterOptionParent}
-                    disabled={loading}
                     onClick={() =>
                       navigateQuery(categoryItemHref(resolved, root, facets.categories, query))
                     }
@@ -465,7 +469,6 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
                         <FilterCheckOption
                           key={c.id}
                           checked={categoryChildChecked(resolved, c, query)}
-                          disabled={loading}
                           onClick={() =>
                             navigateQuery(categoryItemHref(resolved, c, facets.categories, query))
                           }
@@ -501,7 +504,6 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
             </div>
             <FilterCheckOption
               checked={!brandActive}
-              disabled={loading}
               onClick={() => navigateQuery(marquesResetHref(resolved, query))}
             >
               Toutes les marques
@@ -513,7 +515,6 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
                 <FilterCheckOption
                   key={b.id}
                   checked={brandLinkActive(resolved, b, query)}
-                  disabled={loading}
                   onClick={() => navigateQuery(brandItemHref(resolved, b.slug, query))}
                 >
                   {b.label}
@@ -533,7 +534,6 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
               <FilterCheckOption
                 key={c.id}
                 checked={query.colorSlugs.includes(c.slug)}
-                disabled={loading}
                 onClick={() => navigateQuery(toggleColorHref({...query, page: 1}, c.slug))}
               >
                 {c.label}
@@ -556,7 +556,6 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
                   <FilterCheckOption
                     key={s.id}
                     checked={query.sizeSlugs.includes(s.slug)}
-                    disabled={loading}
                     onClick={() => navigateQuery(toggleSizeHref({...query, page: 1}, s.slug))}
                   >
                     {s.label}
@@ -571,7 +570,6 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
                   <FilterCheckOption
                     key={s.id}
                     checked={query.sizeSlugs.includes(s.slug)}
-                    disabled={loading}
                     onClick={() => navigateQuery(toggleSizeHref({...query, page: 1}, s.slug))}
                   >
                     {s.label}
@@ -595,7 +593,6 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
               <FilterCheckOption
                 key={o.id}
                 checked={query.availabilitySlugs.includes(o.id)}
-                disabled={loading}
                 onClick={() => navigateQuery(toggleAvailabilityHref({...query, page: 1}, o.id))}
               >
                 {o.label}
@@ -605,7 +602,10 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
         </div>
 
         <div className={styles.filterBarRight}>
-          <span className={styles.filterCount}>{itemCountLabel}</span>
+          <span className={`${styles.filterCount} ${loading ? styles.filterCountPending : ''}`}>
+            {loading ? <CatalogRingDotSpinner aria-label="Chargement du catalogue" /> : null}
+            <span>{itemCountLabel}</span>
+          </span>
           <FilterDropdown
             id="sort"
             label={sortLabel}
@@ -618,7 +618,6 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
               <FilterCheckOption
                 key={o.id}
                 checked={sortLinkActive(query, o.id)}
-                disabled={loading}
                 onClick={() => navigateQuery(withSort({...query, page: 1}, o.id))}
               >
                 {o.label}
@@ -629,11 +628,18 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
       </div>
 
       <div className={styles.browseMain}>
-        <div className={styles.grid}>
+        <div
+          className={`${styles.grid} ${styles.browseGridSoft} ${loading ? styles.browseGridPending : ''}`}
+        >
           {items.map((it) => (
             <GridCard key={it.id} it={it} onOpen={setOpenItemId} />
           ))}
         </div>
+        {loading ? (
+          <div className={styles.browseLoadingOverlay}>
+            <CatalogRingDotSpinner className={styles.browseLoadingSpinner} aria-label="Mise à jour du catalogue" />
+          </div>
+        ) : null}
       </div>
 
       {totalPages > 1 ? (

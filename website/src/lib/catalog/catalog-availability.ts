@@ -21,21 +21,31 @@ export function parseAvailabilitySlugs(raw: string[]): CatalogAvailabilityId[] {
 
 /**
  * — Disponible : `available` / `listed`
- * — Réservé : `in_cart` (panier) ou `reserved` (emprunt)
- * — Vendu : `sold` (achat définitif)
+ * — Réservé : `in_cart` (panier)
+ * — Vendu : `reserved` (badge Sold)
  */
+export function itemStatusesForAvailability(availabilitySlugs: readonly string[]): string[] {
+  const wanted = parseAvailabilitySlugs([...availabilitySlugs])
+  const statuses = new Set<string>()
+  for (const id of wanted) {
+    if (id === 'disponible') {
+      statuses.add('available')
+      statuses.add('listed')
+    } else if (id === 'reserve') {
+      statuses.add('in_cart')
+    } else if (id === 'vendu') {
+      statuses.add('reserved')
+    }
+  }
+  return [...statuses]
+}
+
 export function itemMatchesAvailabilityFilter(
   item: {id: string; status?: string | null},
   availabilitySlugs: readonly string[],
 ): boolean {
   if (availabilitySlugs.length === 0) return true
-  const wanted = parseAvailabilitySlugs([...availabilitySlugs])
-  if (wanted.length === 0) return true
-  const status = item.status ?? ''
-  return wanted.some((id) => {
-    if (id === 'disponible') return status === 'available' || status === 'listed'
-    if (id === 'reserve') return status === 'in_cart' || status === 'reserved'
-    if (id === 'vendu') return status === 'sold'
-    return false
-  })
+  const statuses = itemStatusesForAvailability(availabilitySlugs)
+  if (statuses.length === 0) return true
+  return statuses.includes(item.status ?? '')
 }

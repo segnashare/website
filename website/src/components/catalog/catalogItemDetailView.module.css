@@ -1,0 +1,494 @@
+.body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.bodyPage {
+  overflow: visible;
+  width: 100%;
+  /* stretch : la col. droite a la hauteur des photos → sticky a de la place pour tenir. */
+  align-items: stretch;
+  /* Séparation au milieu de la page. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: clamp(1rem, 2.5vw, 2rem);
+}
+
+.galleryCol {
+  min-height: 0;
+  overflow-y: auto;
+  background: #f7f4ef;
+  padding: clamp(1rem, 2.5vw, 1.5rem);
+}
+
+.bodyPage .galleryCol {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+  overflow: visible;
+  background: transparent;
+  padding: 0;
+}
+
+.infoCol {
+  min-height: 0;
+  overflow-y: auto;
+  padding: clamp(1.5rem, 3vw, 2.25rem) clamp(1.1rem, 2.5vw, 1.85rem);
+}
+
+.bodyPage .infoCol {
+  /* Conteneur pleine hauteur des photos : bas gauche = bas droite. */
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+  padding: 0 clamp(0.25rem, 1vw, 0.75rem) 0 0;
+  min-width: 0;
+}
+
+/**
+ * Reste collée pendant le scroll des photos ; se décroche quand le bas des photos
+ * arrive au même niveau que le bas de ce panneau (les 2 montent alors ensemble).
+ */
+.infoSticky {
+  position: sticky;
+  top: calc(4.5rem + 0.5rem);
+  flex: 0 0 auto;
+  padding-bottom: 1.5rem;
+}
+
+@media (min-width: 1201px) {
+  .infoSticky {
+    top: calc(6.3rem + 0.35rem);
+  }
+}
+
+.hero {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #ece8e2;
+}
+
+.stackShot {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #ece8e2;
+}
+
+.thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+}
+
+.thumb {
+  position: relative;
+  flex: 0 0 auto;
+  width: 3.75rem;
+  aspect-ratio: 3 / 4;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 3px;
+  overflow: hidden;
+  background: #ece8e2;
+  cursor: pointer;
+}
+
+.thumbActive {
+  border-color: #14110f;
+}
+
+.thumb:focus-visible {
+  outline: 2px solid #14110f;
+  outline-offset: 2px;
+}
+
+.brand {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b6560;
+}
+
+.title {
+  margin: 0 0 0.4rem;
+  font-size: clamp(1.25rem, 2.4vw, 1.65rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: #14110f;
+}
+
+.price {
+  margin: 0 0 1.15rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #14110f;
+}
+
+.attrsBox {
+  margin-bottom: 1.15rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.attrRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 0.35rem;
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.attrRow + .attrRow {
+  border-top: 1px solid #ececec;
+}
+
+.attrKey {
+  color: #6b6560;
+  font-weight: 500;
+}
+
+.attrVal {
+  color: #14110f;
+  font-weight: 600;
+  text-align: right;
+}
+
+.trustBlock {
+  display: grid;
+  gap: 0.45rem;
+  margin-bottom: 1.25rem;
+}
+
+.trustLine {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: #18181b;
+}
+
+.trustIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.ctaBlock {
+  display: grid;
+  gap: 0.55rem;
+  margin-bottom: 1.25rem;
+}
+
+.ctaRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.ctaPrimary,
+.ctaSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 3.1rem;
+  padding: 0.7rem 0.75rem;
+  border-radius: 0.65rem;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.ctaInline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.ctaStripe {
+  display: block;
+  height: 22px;
+  width: auto;
+  max-width: 6.5rem;
+  object-fit: contain;
+  object-position: center;
+}
+
+.ctaSegna {
+  display: block;
+  height: 26px;
+  width: auto;
+}
+
+.ctaPrimary {
+  background: #14110f;
+  color: #fff;
+}
+
+.ctaPrimary:hover {
+  background: #2a2826;
+}
+
+.ctaSecondary {
+  background: #fff;
+  color: #14110f;
+  border-color: #d4d4d8;
+}
+
+.ctaSecondary:hover {
+  background: #f4f4f5;
+}
+
+.promoNote {
+  display: block;
+  margin: 0.1rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #52525b;
+  text-align: center;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.promoNote:hover {
+  color: #14110f;
+}
+
+.promoNote:focus-visible {
+  outline: 2px solid #14110f;
+  outline-offset: 3px;
+}
+
+.soldNote {
+  margin: 0 0 1.25rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 8px;
+  background: #f4f4f5;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #3f3f46;
+}
+
+/* Carte taille / état (app ItemSizeConditionCard) */
+.sizeCard {
+  margin-bottom: 1.15rem;
+  padding: 1rem;
+  border: 1px solid #e4e4e7;
+  border-radius: 1rem;
+  background: #fff;
+}
+
+.sizeCardGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.sizeCardLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #71717a;
+}
+
+.sizeCardHint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.95rem;
+  height: 0.95rem;
+  border-radius: 999px;
+  border: 1px solid #d4d4d8;
+  font-size: 0.65rem;
+  font-style: italic;
+  font-weight: 600;
+  color: #a1a1aa;
+  cursor: help;
+}
+
+.sizeCardValue {
+  margin: 0.4rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: #18181b;
+}
+
+/* Accordéons app (ItemDetailAccordions) */
+.appAccordionList {
+  margin-top: 0.35rem;
+  border-top: 1px solid #e4e4e7;
+}
+
+.appAccordion {
+  border-bottom: 1px solid #e4e4e7;
+}
+
+.appAccordionBtn {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.appAccordionTitle {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #18181b;
+}
+
+.appAccordionChevron {
+  flex: 0 0 auto;
+  color: #18181b;
+}
+
+.appAccordionPanel {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0 0 1rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: #3f3f46;
+}
+
+.detailLine {
+  margin: 0;
+}
+
+.detailLineLabel {
+  font-weight: 650;
+  color: #18181b;
+}
+
+.descBlock {
+  padding-top: 0.35rem;
+  border-top: 1px solid #ececec;
+}
+
+.descHeading {
+  margin: 0 0 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6b6560;
+}
+
+.description {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: #3f3f46;
+  white-space: pre-wrap;
+}
+
+.description strong {
+  font-weight: 650;
+  color: #18181b;
+}
+
+.bulletList {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #3f3f46;
+}
+
+.bulletList li + li {
+  margin-top: 0.25rem;
+}
+
+.inlineLink {
+  color: #18181b;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.inlineLink:hover {
+  color: #3f3f46;
+}
+
+@media (max-width: 420px) {
+  .ctaRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 767px) {
+  .body {
+    grid-template-columns: minmax(0, 1fr);
+    overflow-y: auto;
+  }
+
+  .bodyPage {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 1.25rem;
+  }
+
+  .bodyPage .galleryCol {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .galleryCol,
+  .infoCol {
+    overflow: visible;
+  }
+
+  .galleryCol {
+    padding-bottom: 0.5rem;
+  }
+
+  .bodyPage .infoCol {
+    display: block;
+  }
+
+  .infoSticky {
+    position: static;
+    top: auto;
+    padding-bottom: 0;
+  }
+}

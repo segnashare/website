@@ -280,7 +280,39 @@
 }
 
 .browseMain {
+  position: relative;
   min-width: 0;
+}
+
+.browseGridSoft {
+  transition: opacity 0.18s ease;
+}
+
+.browseGridPending {
+  opacity: 0.42;
+  pointer-events: none;
+}
+
+.browseLoadingOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  pointer-events: none;
+  padding-top: min(28vh, 12rem);
+}
+
+.browseLoadingSpinner {
+  width: 28px;
+  height: 28px;
+}
+
+.filterCountPending {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
 }
 
 @media (max-width: 640px) {

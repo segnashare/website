@@ -1,4 +1,7 @@
-import {itemMatchesAvailabilityFilter} from '@/lib/catalog/catalog-availability'
+import {
+  itemMatchesAvailabilityFilter,
+  itemStatusesForAvailability,
+} from '@/lib/catalog/catalog-availability'
 import type {CatalogBrowseQuery} from '@/lib/catalog/catalog-search-params'
 import type {CatalogPathResolved} from '@/lib/catalog/catalog-path-resolve'
 import {catalogListingPath, resolveCatalogFromQuery} from '@/lib/catalog/catalog-path-resolve'
@@ -6,6 +9,7 @@ import {idsForCatalogRpc} from '@/lib/catalog/catalog-facet-scope-ids'
 import {catalogPerfEnabled, catalogPerfLog, catalogPerfNow} from '@/lib/catalog/catalog-perf'
 import {
   fetchMarketingCatalogBrowseFacetsNav,
+  fetchMarketingCatalogItemsByIds,
   fetchMarketingCatalogItemsPage,
   fetchMarketingCatalogPathResolveNav,
   gridItemsFromRows,
@@ -14,6 +18,7 @@ import {
   type MarketingCatalogItemRow,
 } from '@/lib/catalog/marketing-catalog-items'
 import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
+import type {SupabaseClient} from '@supabase/supabase-js'
 
 export type CatalogBrowsePayload = {
   facets: MarketingCatalogFacetsNav
@@ -24,35 +29,119 @@ export type CatalogBrowsePayload = {
   query: CatalogBrowseQuery
 }
 
-async function fetchAllMarketingCatalogItemsForScope(params: {
-  sort: CatalogBrowseQuery['sort']
+type ScopeIds = {
   categoryIds: string[]
   brandIds: string[]
   colorIds: string[]
   sizeIds: string[]
-}): Promise<MarketingCatalogItemRow[]> {
-  const pageSize = 100
-  const all: MarketingCatalogItemRow[] = []
-  let offset = 0
-  let total = Infinity
+}
 
-  while (offset < total && all.length < 500) {
-    const batch = await fetchMarketingCatalogItemsPage({
-      limit: pageSize,
-      offset,
+/**
+ * Page filtrée par disponibilité via `items.status` (1 requête count + 1 page d’ids),
+ * puis hydratation marketing — évite de parcourir tout le catalogue.
+ */
+async function fetchMarketingCatalogPageByAvailability(
+  supabase: SupabaseClient,
+  params: {
+    sort: CatalogBrowseQuery['sort']
+    limit: number
+    offset: number
+    availabilitySlugs: string[]
+  } & ScopeIds,
+): Promise<{items: MarketingCatalogItemRow[]; total: number}> {
+  const statuses = itemStatusesForAvailability(params.availabilitySlugs)
+  if (statuses.length === 0) {
+    return fetchMarketingCatalogItemsPage({
+      limit: params.limit,
+      offset: params.offset,
       sort: params.sort,
       categoryIds: params.categoryIds,
       brandIds: params.brandIds,
       colorIds: params.colorIds,
       sizeIds: params.sizeIds,
     })
-    total = batch.total
-    all.push(...batch.items)
-    if (batch.items.length === 0) break
-    offset += pageSize
   }
 
-  return all
+  const {data: corpUsers} = await supabase.from('users').select('id').eq('status', 'corporate_inventory')
+  const corpIds = (corpUsers ?? []).map((u) => u.id).filter((id): id is string => typeof id === 'string')
+
+  let countQuery = supabase
+    .from('items')
+    .select('id', {count: 'exact', head: true})
+    .is('deleted_at', null)
+    .in('status', statuses)
+
+  let listQuery = supabase.from('items').select('id').is('deleted_at', null).in('status', statuses)
+
+  if (corpIds.length > 0) {
+    const corpFilter = `(${corpIds.join(',')})`
+    countQuery = countQuery.not('owner_user_id', 'in', corpFilter)
+    listQuery = listQuery.not('owner_user_id', 'in', corpFilter)
+  }
+  if (params.categoryIds.length === 1) {
+    countQuery = countQuery.eq('item_category_id', params.categoryIds[0]!)
+    listQuery = listQuery.eq('item_category_id', params.categoryIds[0]!)
+  } else if (params.categoryIds.length > 1) {
+    countQuery = countQuery.in('item_category_id', params.categoryIds)
+    listQuery = listQuery.in('item_category_id', params.categoryIds)
+  }
+  if (params.brandIds.length > 0) {
+    countQuery = countQuery.in('item_brand_id', params.brandIds)
+    listQuery = listQuery.in('item_brand_id', params.brandIds)
+  }
+  if (params.colorIds.length > 0) {
+    countQuery = countQuery.in('item_couleur_id', params.colorIds)
+    listQuery = listQuery.in('item_couleur_id', params.colorIds)
+  }
+  if (params.sizeIds.length > 0) {
+    countQuery = countQuery.in('item_size_id', params.sizeIds)
+    listQuery = listQuery.in('item_size_id', params.sizeIds)
+  }
+
+  if (params.sort === 'price_asc') {
+    listQuery = listQuery.order('price_points', {ascending: true, nullsFirst: false})
+  } else if (params.sort === 'price_desc') {
+    listQuery = listQuery.order('price_points', {ascending: false, nullsFirst: false})
+  } else {
+    listQuery = listQuery.order('created_at', {ascending: false})
+  }
+
+  const [{count, error: countErr}, {data: idRows, error: listErr}] = await Promise.all([
+    countQuery,
+    listQuery.range(params.offset, params.offset + params.limit - 1),
+  ])
+
+  if (countErr || listErr) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[marketing-catalog] availability page', countErr?.message ?? listErr?.message)
+    }
+    // Fallback : scan limité (évite panne totale).
+    const page = await fetchMarketingCatalogItemsPage({
+      limit: Math.min(100, params.limit * 3),
+      offset: 0,
+      sort: params.sort,
+      categoryIds: params.categoryIds,
+      brandIds: params.brandIds,
+      colorIds: params.colorIds,
+      sizeIds: params.sizeIds,
+    })
+    const filtered = page.items.filter((r) =>
+      itemMatchesAvailabilityFilter(r, params.availabilitySlugs),
+    )
+    return {
+      items: filtered.slice(params.offset, params.offset + params.limit),
+      total: filtered.length,
+    }
+  }
+
+  const total = typeof count === 'number' ? count : 0
+  const ids = (idRows ?? []).map((r) => r.id).filter((id): id is string => typeof id === 'string')
+  if (ids.length === 0) return {items: [], total}
+
+  const byIdRows = await fetchMarketingCatalogItemsByIds(ids)
+  const byId = new Map(byIdRows.map((r) => [r.id, r]))
+  const items = ids.map((id) => byId.get(id)).filter((r): r is MarketingCatalogItemRow => Boolean(r))
+  return {items, total}
 }
 
 /** Charge le catalogue depuis `/catalogue` + query (`segment`, `categorie`, filtres). */
@@ -64,7 +153,6 @@ export async function loadCatalogBrowse(query: CatalogBrowseQuery): Promise<Cata
   const pathNav = await fetchMarketingCatalogPathResolveNav()
   if (!pathNav) return null
 
-  // Segment inconnu → catalogue complet plutôt qu’une 503 (casse les filtres client).
   const resolved = resolveCatalogFromQuery(pathNav, query) ?? {kind: 'all' as const}
 
   const facets = await fetchMarketingCatalogBrowseFacetsNav(pathNav, resolved, query)
@@ -81,16 +169,18 @@ export async function loadCatalogBrowse(query: CatalogBrowseQuery): Promise<Cata
   let total: number
 
   if (hasAvailabilityFilter) {
-    const allRows = await fetchAllMarketingCatalogItemsForScope({
+    const page = await fetchMarketingCatalogPageByAvailability(supabase, {
       sort: query.sort,
+      limit: pageSize,
+      offset,
+      availabilitySlugs: query.availabilitySlugs,
       categoryIds,
       brandIds,
       colorIds,
       sizeIds,
     })
-    const filtered = allRows.filter((r) => itemMatchesAvailabilityFilter(r, query.availabilitySlugs))
-    total = filtered.length
-    rows = filtered.slice(offset, offset + pageSize)
+    rows = page.items
+    total = page.total
   } else {
     const page = await fetchMarketingCatalogItemsPage({
       limit: pageSize,
