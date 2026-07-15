@@ -1,7 +1,8 @@
 'use client'
 
 import {CatalogItemPhotoCover} from '@/components/catalog/CatalogItemPhotoCover'
-import {formatCatalogBorrowPriceLabel} from '@/lib/catalog/catalog-borrow-price-label'
+import {formatCatalogPurchasePriceLabel} from '@/lib/catalog/catalog-borrow-price-label'
+import {isMarketingCatalogItemSold} from '@/lib/catalog/catalog-card-badges'
 import type {CatalogItemDetailPayload} from '@/lib/catalog/catalog-item-detail'
 import {fetchCatalogItemDetailClient} from '@/lib/catalog/catalog-item-detail-client-fetch'
 import {useCallback, useEffect, useState} from 'react'
@@ -63,7 +64,9 @@ function DetailContent({detail}: {detail: CatalogItemDetailPayload}) {
         <h2 className={styles.title} id="catalog-item-modal-title">
           {detail.title}
         </h2>
-        <p className={styles.price}>{formatCatalogBorrowPriceLabel(detail.price_points)}</p>
+        {isMarketingCatalogItemSold(detail.status) ? null : (
+          <p className={styles.price}>{formatCatalogPurchasePriceLabel(detail.price_points)}</p>
+        )}
 
         {sizeLine ? (
           <div className={styles.sizeBlock}>

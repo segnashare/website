@@ -10,6 +10,7 @@ export type CatalogItemDetailPayload = {
   title: string
   description: string | null
   price_points: number | null
+  status: string | null
   brand_label: string | null
   category_label: string | null
   size_label: string | null
@@ -35,6 +36,7 @@ export async function loadCatalogItemDetail(itemId: string): Promise<CatalogItem
     title: row.title,
     description: row.description,
     price_points: row.price_points,
+    status: row.status ?? null,
     brand_label: row.brand_label,
     category_label: row.category_label,
     size_label: row.size_label,

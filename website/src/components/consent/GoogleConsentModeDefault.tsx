@@ -2,6 +2,8 @@
 export function GoogleConsentModeDefault() {
   return (
     <script
+      // Cookiebot peut muter / retirer data-cookieconsent avant l’hydratation React.
+      suppressHydrationWarning
       data-cookieconsent="ignore"
       dangerouslySetInnerHTML={{
         __html: `

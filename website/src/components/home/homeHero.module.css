@@ -10,7 +10,7 @@
   z-index: 30;
 }
 
-/* Marge sous le hero (= 1 écart) ; le shell ajoute le 2e via padding-top (comme entre 2 sections). */
+/* Marge sous le hero (= 1 écart, comme entre 2 sections du shell). */
 .heroWithSectionSpacing {
   margin-bottom: var(--page-section-stack-gap);
 }

@@ -18,8 +18,9 @@
   overflow-x: visible;
 }
 
+/* Hero plein écran : l’écart est déjà porté par `margin-bottom` du hero — ne pas doubler. */
 .shellAfterFullBleed {
-  padding-top: var(--page-section-stack-gap);
+  padding-top: 0;
 }
 
 .shellOnDark {
@@ -112,12 +113,12 @@
   margin-left: -50vw;
   margin-right: -50vw;
   box-sizing: border-box;
-  padding: clamp(0.85rem, 1.75vw, 1.35rem) clamp(1rem, 3vw, 1.75rem);
+  padding: clamp(0.85rem, 1.75vw, 1.35rem) clamp(1rem, 4vw, 2.75rem);
   color: #14110f;
 }
 
 .quoteSectionInner {
-  width: 65vw;
+  width: 80%;
   max-width: 100%;
   margin-inline: auto;
   box-sizing: border-box;

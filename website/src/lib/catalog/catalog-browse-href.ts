@@ -26,21 +26,45 @@ export function catalogBrowseWithSegments(
 export function catalogBrowsePath(brandSlug: string | null, categorySlug: string | null): string {
   if (brandSlug && categorySlug) {
     return catalogBrowseWithSegments(
-      {page: 1, sort: 'recent', colorSlugs: [], sizeSlugs: [], segmentSlug: null, subSlug: null},
+      {
+        page: 1,
+        sort: 'recent',
+        colorSlugs: [],
+        sizeSlugs: [],
+        availabilitySlugs: [],
+        segmentSlug: null,
+        subSlug: null,
+      },
       brandSlug,
       categorySlug,
     )
   }
   if (brandSlug) {
     return catalogBrowseWithSegments(
-      {page: 1, sort: 'recent', colorSlugs: [], sizeSlugs: [], segmentSlug: null, subSlug: null},
+      {
+        page: 1,
+        sort: 'recent',
+        colorSlugs: [],
+        sizeSlugs: [],
+        availabilitySlugs: [],
+        segmentSlug: null,
+        subSlug: null,
+      },
       brandSlug,
       null,
     )
   }
   if (categorySlug) {
     return catalogBrowseWithSegments(
-      {page: 1, sort: 'recent', colorSlugs: [], sizeSlugs: [], segmentSlug: null, subSlug: null},
+      {
+        page: 1,
+        sort: 'recent',
+        colorSlugs: [],
+        sizeSlugs: [],
+        availabilitySlugs: [],
+        segmentSlug: null,
+        subSlug: null,
+      },
       categorySlug,
       null,
     )
@@ -71,6 +95,17 @@ export function toggleSizeHref(base: CatalogBrowseQuery, sizeSlug: string): stri
     ...base,
     page: 1,
     sizeSlugs: [...set].sort(),
+  })
+}
+
+export function toggleAvailabilityHref(base: CatalogBrowseQuery, availabilitySlug: string): string {
+  const set = new Set(base.availabilitySlugs)
+  if (set.has(availabilitySlug)) set.delete(availabilitySlug)
+  else set.add(availabilitySlug)
+  return mergePathAndQuery(CATALOG_PATH, {
+    ...base,
+    page: 1,
+    availabilitySlugs: [...set].sort(),
   })
 }
 

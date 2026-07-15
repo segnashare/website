@@ -13,6 +13,11 @@
   margin-bottom: var(--page-section-stack-gap);
 }
 
+/* Catalogue : filtre juste sous le hero (réf. type Dolce Vita). */
+.rootTightBelow {
+  margin-bottom: 0;
+}
+
 /**
  * Bande hero pleine largeur : ~50 % de la hauteur d’écran (contenu + visuel).
  */

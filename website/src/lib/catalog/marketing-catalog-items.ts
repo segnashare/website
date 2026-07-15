@@ -1,4 +1,5 @@
 import {idsForCatalogRpc} from '@/lib/catalog/catalog-facet-scope-ids'
+import {resolveCatalogCardBadges, getMarketingCatalogNewestIdSet} from '@/lib/catalog/catalog-card-badges'
 import {mergeCategoriesNavWithScopedPresence} from '@/lib/catalog/catalog-scoped-facets'
 import {catalogPerfDetail, catalogPerfLog, catalogPerfNow} from '@/lib/catalog/catalog-perf'
 import type {CatalogPathResolved} from '@/lib/catalog/catalog-path-types'
@@ -59,6 +60,12 @@ export type MarketingCatalogGridItem = {
   item_size_id: string | null
   /** Aligné sur le payload RPC marketing (`size_code`). */
   size_code?: string | null
+  /** Statut pièce (ex. `available`, `reserved`). */
+  status?: string | null
+  /** Top ~20 % des ajouts récents (catalogue marketing). */
+  isNew?: boolean
+  /** Pièce indisponible / vendue (`reserved`). */
+  isSold?: boolean
   coverUrl: string | null
   /** Cadrage BO / app (`items.photos` → `position`). */
   coverPosition?: ItemPhotoCoverPosition | null
@@ -454,23 +461,32 @@ export async function gridItemsFromRows(
   supabase: StorageSignClient,
   rows: MarketingCatalogItemRow[],
 ): Promise<MarketingCatalogGridItem[]> {
-  const covers = await resolveCoverUrlsForItems(supabase, rows)
-  return rows.map((r) => ({
-    id: r.id,
-    title: r.title,
-    brand_label: r.brand_label,
-    category_label: r.category_label,
-    color_label: r.color_label,
-    size_label: r.size_label,
-    price_points: r.price_points,
-    item_category_id: r.item_category_id,
-    item_brand_id: r.item_brand_id,
-    item_couleur_id: r.item_couleur_id,
-    item_size_id: r.item_size_id,
-    size_code: r.size_code ?? null,
-    coverUrl: covers.get(r.id) ?? null,
-    coverPosition: getFirstPhotoCoverMeta(r.photos)?.position ?? null,
-  }))
+  const [covers, newestIds] = await Promise.all([
+    resolveCoverUrlsForItems(supabase, rows),
+    getMarketingCatalogNewestIdSet(),
+  ])
+  return rows.map((r) => {
+    const badges = resolveCatalogCardBadges(r, newestIds)
+    return {
+      id: r.id,
+      title: r.title,
+      brand_label: r.brand_label,
+      category_label: r.category_label,
+      color_label: r.color_label,
+      size_label: r.size_label,
+      price_points: r.price_points,
+      item_category_id: r.item_category_id,
+      item_brand_id: r.item_brand_id,
+      item_couleur_id: r.item_couleur_id,
+      item_size_id: r.item_size_id,
+      size_code: r.size_code ?? null,
+      status: r.status,
+      isNew: badges.isNew,
+      isSold: badges.isSold,
+      coverUrl: covers.get(r.id) ?? null,
+      coverPosition: getFirstPhotoCoverMeta(r.photos)?.position ?? null,
+    }
+  })
 }
 
 export type MarketingCatalogGallerySlot = {
@@ -528,6 +544,158 @@ export async function fetchMarketingCatalogItemsByIds(
     return []
   }
   return parseMarketingCatalogRpcPayload(data)
+}
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
+function sanitizeMarketingSearchQuery(raw: string): string {
+  return raw.trim().replace(/[%_,().]/g, ' ').replace(/\s+/g, ' ').slice(0, 80)
+}
+
+export type MarketingCatalogSearchHit = {
+  id: string
+  title: string
+  brand_label: string | null
+  coverUrl: string | null
+  status?: string | null
+  /** false = pièce en base mais filtrée hors catalogue marketing (statut / owner). */
+  marketingEligible?: boolean
+}
+
+export type MarketingCatalogSearchResult = {
+  items: MarketingCatalogSearchHit[]
+  /** Présent pour une requête UUID sans résultat marketing. */
+  uuidDiagnostic?: 'not_in_db' | 'not_marketing_eligible' | null
+}
+
+/**
+ * Recherche pièces pour le picker Studio.
+ * — UUID / titre comme le BO (table `items`)
+ * — flagué `marketingEligible` si la pièce passe le filtre catalogue site
+ */
+export async function searchMarketingCatalogItems(
+  query: string,
+  options?: {limit?: number},
+): Promise<MarketingCatalogSearchResult> {
+  const supabase = getSupabaseServiceRoleClient()
+  if (!supabase) return {items: []}
+
+  const q = sanitizeMarketingSearchQuery(query)
+  const limit = Math.min(Math.max(options?.limit ?? 12, 1), 20)
+  if (q.length < 2 && !UUID_RE.test(q)) return {items: []}
+
+  type ItemLite = {
+    id: string
+    title: string | null
+    status: string | null
+    photos: unknown
+    item_brand_id: string | null
+    item_custom_brand_label: string | null
+  }
+
+  let itemRows: ItemLite[] = []
+
+  if (UUID_RE.test(q)) {
+    const {data, error} = await supabase
+      .from('items')
+      .select('id, title, status, photos, item_brand_id, item_custom_brand_label')
+      .eq('id', q)
+      .is('deleted_at', null)
+      .maybeSingle()
+    if (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[marketing-catalog] search uuid', error.message)
+      }
+      return {items: [], uuidDiagnostic: 'not_in_db'}
+    }
+    if (!data?.id) return {items: [], uuidDiagnostic: 'not_in_db'}
+    itemRows = [data as ItemLite]
+  } else {
+    const pattern = `%${q.replace(/\s+/g, '%')}%`
+    const {data, error} = await supabase
+      .from('items')
+      .select('id, title, status, photos, item_brand_id, item_custom_brand_label')
+      .is('deleted_at', null)
+      .or(`title.ilike.${pattern},description.ilike.${pattern}`)
+      .order('title', {ascending: true})
+      .limit(limit)
+    if (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[marketing-catalog] search', error.message)
+      }
+      return {items: []}
+    }
+    itemRows = (data ?? []) as ItemLite[]
+  }
+
+  if (itemRows.length === 0) {
+    return {items: [], uuidDiagnostic: UUID_RE.test(q) ? 'not_in_db' : null}
+  }
+
+  const marketingRows = await fetchMarketingCatalogItemsByIds(itemRows.map((r) => r.id))
+  const marketingById = new Map(marketingRows.map((r) => [r.id, r]))
+
+  const brandIds = [
+    ...new Set(itemRows.map((r) => r.item_brand_id).filter((id): id is string => Boolean(id))),
+  ]
+  const brandById = new Map<string, string>()
+  if (brandIds.length > 0) {
+    const {data: brands} = await supabase.from('item_brands').select('id, label').in('id', brandIds)
+    for (const b of brands ?? []) {
+      const row = b as {id?: string; label?: string | null}
+      if (typeof row.id === 'string' && row.label?.trim()) brandById.set(row.id, row.label.trim())
+    }
+  }
+
+  const covers = await resolveCoverUrlsForItems(
+    supabase,
+    itemRows.map(
+      (r): MarketingCatalogItemRow => ({
+        id: r.id,
+        title: r.title ?? '',
+        description: null,
+        price_points: null,
+        status: r.status ?? 'unknown',
+        photos: r.photos,
+        item_category_id: null,
+        item_size_id: null,
+        item_brand_id: r.item_brand_id,
+        item_couleur_id: null,
+        item_materiaux_id: null,
+        category_label: null,
+        size_label: null,
+        materials_label: null,
+        color_label: null,
+        brand_label: null,
+        condition_label: null,
+        condition_score: null,
+      }),
+    ),
+  )
+
+  const items: MarketingCatalogSearchHit[] = itemRows.map((r) => {
+    const marketing = marketingById.get(r.id)
+    const customBrand = r.item_custom_brand_label?.trim() || null
+    const brand =
+      marketing?.brand_label ||
+      customBrand ||
+      (r.item_brand_id ? brandById.get(r.item_brand_id) ?? null : null)
+    return {
+      id: r.id,
+      title: marketing?.title || r.title?.trim() || r.id,
+      brand_label: brand,
+      coverUrl: covers.get(r.id) ?? null,
+      status: r.status,
+      marketingEligible: Boolean(marketing),
+    }
+  })
+
+  if (UUID_RE.test(q) && items.length === 1 && !items[0]!.marketingEligible) {
+    return {items, uuidDiagnostic: 'not_marketing_eligible'}
+  }
+
+  return {items}
 }
 
 /** Liste catalogue public (site marketing), jusqu’à 500 pièces côté SQL. */

@@ -32,11 +32,11 @@ export function idsForCatalogRpc(
     categoryIds = resolved.categoryFilterIds
   }
 
-  const colorIds = query.colorSlugs
+  const colorIds = (query.colorSlugs ?? [])
     .map((slug) => slugSrc.colors.find((c) => c.slug === slug)?.id)
     .filter((x): x is string => Boolean(x))
 
-  const sizeIds = query.sizeSlugs
+  const sizeIds = (query.sizeSlugs ?? [])
     .map((slug) => slugSrc.sizes.find((s) => s.slug === slug)?.id)
     .filter((x): x is string => Boolean(x))
 

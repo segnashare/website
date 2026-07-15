@@ -6,6 +6,8 @@ export type CatalogBrowseQuery = {
   sort: CatalogSortMode
   colorSlugs: string[]
   sizeSlugs: string[]
+  /** `disponible` | `reserve` | `vendu` */
+  availabilitySlugs: string[]
   /** Équivalent ancien 1er segment d’URL (`/catalogue/nike` → `?segment=nike`). */
   segmentSlug: string | null
   /** Équivalent 2e segment (`/catalogue/nike/robes` → `?segment=nike&categorie=robes`). */
@@ -77,27 +79,44 @@ export function parseCatalogBrowseQuery(sp: URLSearchParams): CatalogBrowseQuery
 
   const colorsRaw = firstParam(sp, ['colors', 'couleurs', 'color'])
   const sizesRaw = firstParam(sp, ['sizes', 'tailles', 'size'])
+  const availabilityRaw = firstParam(sp, ['disponibilite', 'availability', 'dispo'])
 
   const colorSlugs = splitList(colorsRaw)
   const sizeSlugs = splitList(sizesRaw)
+  const availabilitySlugs = splitList(availabilityRaw)
 
   const segmentRaw = firstParam(sp, ['segment', 'marque'])
   const subRaw = firstParam(sp, ['categorie', 'sous-categorie'])
   const segmentSlug = segmentRaw ? slugifyFr(segmentRaw) : null
   const subSlug = subRaw ? slugifyFr(subRaw) : null
 
-  return {page, sort, colorSlugs, sizeSlugs, segmentSlug, subSlug}
+  return {page, sort, colorSlugs, sizeSlugs, availabilitySlugs, segmentSlug, subSlug}
+}
+
+/** Normalise une query (champs manquants / ISR ancien payload). */
+export function normalizeCatalogBrowseQuery(q: Partial<CatalogBrowseQuery> | CatalogBrowseQuery): CatalogBrowseQuery {
+  return {
+    page: Math.max(1, Number(q.page) || 1),
+    sort: q.sort === 'price_asc' || q.sort === 'price_desc' || q.sort === 'recent' ? q.sort : 'recent',
+    colorSlugs: Array.isArray(q.colorSlugs) ? q.colorSlugs : [],
+    sizeSlugs: Array.isArray(q.sizeSlugs) ? q.sizeSlugs : [],
+    availabilitySlugs: Array.isArray(q.availabilitySlugs) ? q.availabilitySlugs : [],
+    segmentSlug: typeof q.segmentSlug === 'string' && q.segmentSlug.trim() ? q.segmentSlug.trim() : null,
+    subSlug: typeof q.subSlug === 'string' && q.subSlug.trim() ? q.subSlug.trim() : null,
+  }
 }
 
 export function serializeCatalogBrowseQuery(q: CatalogBrowseQuery): URLSearchParams {
+  const n = normalizeCatalogBrowseQuery(q)
   const out = new URLSearchParams()
-  if (q.page > 1) out.set('page', String(q.page))
-  const sortQ = SORT_TO_QUERY[q.sort]
+  if (n.page > 1) out.set('page', String(n.page))
+  const sortQ = SORT_TO_QUERY[n.sort]
   if (sortQ !== 'nouveautes') out.set('sort', sortQ)
-  if (q.colorSlugs.length > 0) out.set('colors', q.colorSlugs.join(','))
-  if (q.sizeSlugs.length > 0) out.set('sizes', q.sizeSlugs.join(','))
-  if (q.segmentSlug) out.set('segment', q.segmentSlug)
-  if (q.subSlug) out.set('categorie', q.subSlug)
+  if (n.colorSlugs.length > 0) out.set('colors', n.colorSlugs.join(','))
+  if (n.sizeSlugs.length > 0) out.set('sizes', n.sizeSlugs.join(','))
+  if (n.availabilitySlugs.length > 0) out.set('disponibilite', n.availabilitySlugs.join(','))
+  if (n.segmentSlug) out.set('segment', n.segmentSlug)
+  if (n.subSlug) out.set('categorie', n.subSlug)
   return out
 }
 

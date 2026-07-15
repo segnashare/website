@@ -4,7 +4,8 @@ import {CatalogGridCardMedia} from '@/components/catalog/CatalogGridCardMedia'
 import {CatalogItemDetailModal} from '@/components/catalog/CatalogItemDetailModal'
 import {CatalogPuzzleIntroFit} from '@/components/page-sections/CatalogPuzzleIntroFit'
 import scrollStyles from '@/components/page-sections/horizontalScrollCards.module.css'
-import {formatCatalogBorrowPriceLabel} from '@/lib/catalog/catalog-borrow-price-label'
+import {formatCatalogPurchasePriceShort} from '@/lib/catalog/catalog-borrow-price-label'
+import {formatCatalogCardSizeLabel} from '@/lib/catalog/format-catalog-card-size'
 import {prefetchCatalogItemDetailClient} from '@/lib/catalog/catalog-item-detail-client-fetch'
 import type {ScrollCardSize} from '@/lib/catalog/scroll-card-size'
 import {normalizeScrollCardSize} from '@/lib/catalog/scroll-card-size'
@@ -24,10 +25,10 @@ type Props = {
 
 function CatalogScrollCard({item, onOpen}: {item: MarketingCatalogGridItem; onOpen: (itemId: string) => void}) {
   const titleLine = item.displayTitle ?? item.title
-  const metaLine = item.displaySubtitle?.trim() || item.brand_label || item.category_label || null
+  const sizeLine = formatCatalogCardSizeLabel(item.size_label, item.size_code)
 
   return (
-    <article className={`${scrollStyles.slide} ${scrollStyles.slideSquare}`}>
+    <article className={`${scrollStyles.slide} ${scrollStyles.slidePortrait}`}>
       <button
         type="button"
         className={`${styles.catalogCard} ${styles.catalogCardButton}`}
@@ -41,8 +42,14 @@ function CatalogScrollCard({item, onOpen}: {item: MarketingCatalogGridItem; onOp
         </div>
         <div className={styles.catalogCardBody}>
           <span className={styles.catalogCardTitle}>{titleLine}</span>
-          {metaLine ? <span className={styles.catalogCardMeta}>{metaLine}</span> : null}
-          <span className={styles.catalogCardPrice}>{formatCatalogBorrowPriceLabel(item.price_points)}</span>
+          <div className={styles.catalogCardMetaRow}>
+            <span className={styles.catalogCardSize}>{sizeLine}</span>
+            {item.isSold ? null : (
+              <span className={styles.catalogCardPrice}>
+                {formatCatalogPurchasePriceShort(item.price_points)}
+              </span>
+            )}
+          </div>
         </div>
       </button>
     </article>

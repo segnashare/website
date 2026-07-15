@@ -33,7 +33,6 @@ function CatalogPuzzleCard({
   sizes: string
 }) {
   const title = tile?.title?.trim()
-  const subtitle = tile?.subtitle?.trim()
   const href = tile?.href?.trim() ?? ''
   const asset = tile?.image?.asset
   const imageUrl =
@@ -60,12 +59,11 @@ function CatalogPuzzleCard({
         ) : null}
       </div>
       <div className={styles.cardGradient} aria-hidden />
-      {(title || subtitle) && (
+      {title ? (
         <div className={styles.cardText}>
-          {title ? <span className={styles.cardTitle}>{title}</span> : null}
-          {subtitle ? <span className={styles.cardSubtitle}>{subtitle}</span> : null}
+          <span className={styles.cardTitle}>{title}</span>
         </div>
-      )}
+      ) : null}
     </>
   )
 

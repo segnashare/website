@@ -3,6 +3,7 @@ import {urlForCatalogPuzzleImage} from '@/lib/sanity'
 import type {WebsiteDbCatalogSection} from '@/lib/sanity'
 import type {MarketingCatalogGridItem, MarketingCatalogItemRow} from '@/lib/catalog/marketing-catalog-items'
 import {getFirstPhotoCoverMeta} from '@/lib/catalog/item-photos'
+import {resolveCatalogCardBadges, getMarketingCatalogNewestIdSet} from '@/lib/catalog/catalog-card-badges'
 import {fetchMarketingCatalogItemsByIds, gridItemsFromRows, resolveCoverUrlsForItems} from '@/lib/catalog/marketing-catalog-items'
 import {loadCatalogBrowse} from '@/lib/catalog/catalog-page-loader'
 import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
@@ -30,7 +31,10 @@ function rowToBrowseItem(
   r: MarketingCatalogItemRow,
   coverUrl: string | null,
   extras?: Partial<
-    Pick<MarketingCatalogGridItem, 'displayTitle' | 'displaySubtitle' | 'objectPosition' | 'coverPosition'>
+    Pick<
+      MarketingCatalogGridItem,
+      'displayTitle' | 'displaySubtitle' | 'objectPosition' | 'coverPosition' | 'isNew' | 'isSold' | 'status'
+    >
   >,
 ): MarketingCatalogGridItem {
   const coverPosition =
@@ -52,6 +56,7 @@ function rowToBrowseItem(
     item_brand_id: r.item_brand_id,
     item_couleur_id: r.item_couleur_id,
     item_size_id: r.item_size_id,
+    status: r.status,
     coverUrl,
     coverPosition,
     ...restExtras,
@@ -162,7 +167,10 @@ export async function SectionWebsiteDbCatalog({section}: Props) {
   }
 
   const ids = entries.map((e) => e.itemId!.trim())
-  const rows = await fetchMarketingCatalogItemsByIds(ids)
+  const [rows, newestIds] = await Promise.all([
+    fetchMarketingCatalogItemsByIds(ids),
+    getMarketingCatalogNewestIdSet(),
+  ])
   const byId = new Map(rows.map((r) => [r.id, r]))
   const covers = await resolveCoverUrlsForItems(supabase, rows)
 
@@ -179,6 +187,7 @@ export async function SectionWebsiteDbCatalog({section}: Props) {
     const displayTitle = entry.cardTitle?.trim() || undefined
     const displaySubtitle = entry.cardSubtitle?.trim() || undefined
     const photoMeta = getFirstPhotoCoverMeta(row.photos)
+    const badges = resolveCatalogCardBadges(row, newestIds)
 
     browseItems.push(
       rowToBrowseItem(row, coverUrl, {
@@ -186,6 +195,8 @@ export async function SectionWebsiteDbCatalog({section}: Props) {
         coverPosition: editorialCover ? null : (photoMeta?.position ?? null),
         displayTitle,
         displaySubtitle,
+        isNew: badges.isNew,
+        isSold: badges.isSold,
       }),
     )
   }

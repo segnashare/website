@@ -22,9 +22,11 @@ type Props = {
   headerNav: WebsiteHeaderNavData | null
   cta: Cta | null
   children?: ReactNode
+  /** Réduit l’écart sous le hero (ex. page catalogue : barre de filtres collée). */
+  tightBelowHero?: boolean
 }
 
-export function MarketingFullBleedHero({marketing, headerNav, cta, children}: Props) {
+export function MarketingFullBleedHero({marketing, headerNav, cta, children, tightBelowHero}: Props) {
   const shouldReduceMotion = useHydrationSafeReducedMotion()
   const contentAnimationState = 'visible' as const
 
@@ -53,7 +55,7 @@ export function MarketingFullBleedHero({marketing, headerNav, cta, children}: Pr
 
   return (
     <main className={m.pageMain}>
-      <div className={m.root}>
+      <div className={`${m.root}${tightBelowHero ? ` ${m.rootTightBelow}` : ''}`}>
         {marketing ? (
           <section className={m.visualBand} style={visualBg} aria-labelledby={titleId}>
             {useMulti ? <StagedHeroCycle states={states} transitionMs={transitionMs} layout="hero" /> : null}

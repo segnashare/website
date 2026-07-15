@@ -131,12 +131,11 @@
   }
 
   .lead {
-    font-size: clamp(0.92rem, 3.6vw, 1.05rem);
-    white-space: normal;
+    display: none;
   }
 
-  .introOnDark .lead {
-    color: rgb(250 248 245 / 0.7);
+  .sectionIntro {
+    margin-bottom: clamp(0.75rem, 2vw, 1rem);
   }
 
   /* Téléphone : libellé du CTA masqué, flèche alignée avec le titre (une ligne). */
@@ -178,24 +177,41 @@
   }
 }
 
-/* Desktop : grille puzzle. Téléphone : même disposition, miniature (voir @media). */
+/* Desktop : plus large que le titre (80 %), sans coller aux bords. Téléphone : voir @media. */
 .scrollStrip {
   min-width: 0;
+  width: 90vw;
+  max-width: 100vw;
+  position: relative;
+  left: 50%;
+  margin-left: -46vw;
+  overflow-x: clip;
+  overflow-y: visible;
+  box-sizing: border-box;
 }
 
-/* Grille 4 rangées × 2 colonnes : gauche 1+1+(2), droite (3)+1 */
+/*
+ * Desktop — puzzle asymétrique 4×3 (format paysage) :
+ *   [LT ][LM ][ RT (2 rangées) ]
+ *   [LBL    LBR    ][ RT         ]
+ *   [LBL    LBR    ][ RB         ]
+ */
 .grid {
+  --puzzle-intro-offset: calc(clamp(9rem, 20vh, 13rem) + clamp(1.25rem, 2.8vw, 2rem));
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: repeat(4, minmax(288px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: minmax(0, 0.92fr) minmax(0, 1.08fr) minmax(0, 0.72fr);
   gap: clamp(0.28rem, 0.75vw, 0.5rem);
-  /* Hauteur des cadres ×2 (plancher rangées + enveloppe globale), largeur colonnes inchangée */
-  min-height: min(216vh, 3520px);
+  width: 100%;
+  height: calc(100svh - var(--puzzle-intro-offset));
+  max-height: calc(100svh - var(--puzzle-intro-offset));
+  min-height: 0;
+  box-sizing: border-box;
 }
 
 .leftSplit {
-  grid-column: 1;
-  grid-row: 3 / 5;
+  grid-column: 1 / 3;
+  grid-row: 2 / 4;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: inherit;
@@ -209,8 +225,8 @@
 }
 
 .posLeftMiddle {
-  grid-column: 1;
-  grid-row: 2;
+  grid-column: 2;
+  grid-row: 1;
   min-height: 0;
 }
 
@@ -223,14 +239,14 @@
 }
 
 .posRightTall {
-  grid-column: 2;
-  grid-row: 1 / 4;
+  grid-column: 3 / 5;
+  grid-row: 1 / 3;
   min-height: 0;
 }
 
 .posRightBottom {
-  grid-column: 2;
-  grid-row: 4;
+  grid-column: 3 / 5;
+  grid-row: 3;
   min-height: 0;
 }
 
@@ -291,23 +307,13 @@
 
 .cardTitle {
   display: block;
-  margin: 0 0 0.2rem;
+  margin: 0;
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-  font-size: clamp(0.95rem, 1.35vw, 1.08rem);
+  font-size: clamp(1.15rem, 1.85vw, 1.45rem);
   font-weight: 700;
   line-height: 1.2;
   color: #fff;
   letter-spacing: -0.01em;
-}
-
-.cardSubtitle {
-  display: block;
-  margin: 0;
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-  font-size: clamp(0.78rem, 1.05vw, 0.88rem);
-  font-weight: 400;
-  line-height: 1.35;
-  color: #c5c0bc;
 }
 
 @media (max-width: 767px) {
@@ -318,30 +324,53 @@
   .scrollStrip {
     width: 100%;
     margin: 0;
+    left: auto;
+    right: auto;
+    position: static;
     overflow: visible;
   }
 
-  /* Même grille 2×4 que desktop, réduite pour tenir dans l’écran. */
+  /*
+   * Téléphone — grille 2×4 verticale, remplit la hauteur dispo sous l’intro
+   * sans dépasser le viewport.
+   */
   .grid {
-    display: grid;
-    /* Colonne gauche plus large, bande droite (tall + bas) plus étroite. */
+    --puzzle-intro-offset: calc(clamp(6.5rem, 14vh, 9rem) + clamp(1.25rem, 2.8vw, 2rem));
     grid-template-columns: 1.15fr 0.85fr;
     grid-template-rows: repeat(4, minmax(0, 1fr));
-    gap: clamp(0.14rem, 0.45vw, 0.28rem);
+    gap: clamp(0.2rem, 0.55vw, 0.35rem);
     width: 100%;
-    min-height: 0;
-    /* 4 rangées / 2 colonnes — cadres plus bas (10/19.2 était trop haut). */
-    aspect-ratio: 10 / 12.5;
+    height: calc(100svh - var(--puzzle-intro-offset));
+    max-height: calc(100svh - var(--puzzle-intro-offset));
+    min-height: calc(100svh - var(--puzzle-intro-offset));
     overflow: visible;
   }
 
   .leftSplit {
-    display: grid;
     grid-column: 1;
     grid-row: 3 / 5;
     grid-template-columns: 1fr 1fr;
-    gap: inherit;
     min-height: 0;
+  }
+
+  .posLeftTop {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .posLeftMiddle {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .posRightTall {
+    grid-column: 2;
+    grid-row: 1 / 4;
+  }
+
+  .posRightBottom {
+    grid-column: 2;
+    grid-row: 4;
   }
 
   .card {
@@ -349,16 +378,11 @@
   }
 
   .cardText {
-    padding: clamp(0.4rem, 1.8vw, 0.65rem) clamp(0.4rem, 1.6vw, 0.6rem);
+    padding: clamp(0.55rem, 2.2vw, 0.85rem) clamp(0.5rem, 2vw, 0.75rem);
   }
 
   .cardTitle {
-    margin-bottom: 0.08rem;
-    font-size: clamp(0.58rem, 2.65vw, 0.74rem);
-    line-height: 1.15;
-  }
-
-  .cardSubtitle {
-    display: none;
+    font-size: clamp(1rem, 4.2vw, 1.28rem);
+    line-height: 1.18;
   }
 }

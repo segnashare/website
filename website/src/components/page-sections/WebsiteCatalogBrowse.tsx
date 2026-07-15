@@ -14,7 +14,7 @@ import {
 } from 'react'
 import {buildPaginationRange} from '@/lib/catalog/catalog-pagination-range'
 import {splitMarketingCatalogSizeFacets} from '@/lib/catalog/catalog-size-facet-section'
-import {formatCatalogBorrowPriceLabel} from '@/lib/catalog/catalog-borrow-price-label'
+import {formatCatalogPurchasePriceLabel} from '@/lib/catalog/catalog-borrow-price-label'
 import type {CatalogSortMode, MarketingCatalogFacets, MarketingCatalogGridItem} from '@/lib/catalog/marketing-catalog-items'
 import styles from './websiteCatalogBrowse.module.css'
 
@@ -146,7 +146,9 @@ function renderProductCard(it: MarketingCatalogGridItem) {
         {brandLine ? <span className={styles.cardBrand}>{brandLine}</span> : null}
         {extraLine ? <span className={styles.cardMetaLine}>{extraLine}</span> : null}
         <span className={styles.cardTitle}>{titleLine}</span>
-        <span className={styles.cardPrice}>{formatCatalogBorrowPriceLabel(it.price_points)}</span>
+        {it.isSold ? null : (
+          <span className={styles.cardPrice}>{formatCatalogPurchasePriceLabel(it.price_points)}</span>
+        )}
       </div>
     </article>
   )

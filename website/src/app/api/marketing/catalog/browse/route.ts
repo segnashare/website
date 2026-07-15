@@ -19,6 +19,7 @@ export async function GET(req: Request) {
       total: payload.total,
       query: payload.query,
       facets: payload.facets,
+      resolved: payload.resolved,
     },
     {headers: catalogApiCacheHeaders},
   )
