@@ -84,8 +84,13 @@ const getCachedMarketingCatalogNewestIds = withDataCache(
   {revalidate: catalogDataRevalidateSec()},
 )
 
+/** IDs « New » ordonnés par `created_at` desc (même pool que le badge carte). */
+export async function getMarketingCatalogNewestIds(): Promise<string[]> {
+  return getCachedMarketingCatalogNewestIds()
+}
+
 export async function getMarketingCatalogNewestIdSet(): Promise<Set<string>> {
-  const ids = await getCachedMarketingCatalogNewestIds()
+  const ids = await getMarketingCatalogNewestIds()
   return new Set(ids)
 }
 

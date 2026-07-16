@@ -8,6 +8,10 @@ import {catalogListingPath, resolveCatalogFromQuery} from '@/lib/catalog/catalog
 import {idsForCatalogRpc} from '@/lib/catalog/catalog-facet-scope-ids'
 import {catalogPerfEnabled, catalogPerfLog, catalogPerfNow} from '@/lib/catalog/catalog-perf'
 import {
+  getMarketingCatalogItemIdsByTagSlug,
+  getMarketingCatalogNewItemIds,
+} from '@/lib/catalog/catalog-selection-ids'
+import {
   fetchMarketingCatalogBrowseFacetsNav,
   fetchMarketingCatalogItemsByIds,
   fetchMarketingCatalogItemsPage,
@@ -18,6 +22,7 @@ import {
   type MarketingCatalogItemRow,
 } from '@/lib/catalog/marketing-catalog-items'
 import {sortMarketingCatalogSoldLast} from '@/lib/catalog/catalog-sold-sort'
+import {MARKETING_CATALOG_ITEM_STATUSES} from '@/lib/catalog/catalog-card-badges'
 import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
 import type {SupabaseClient} from '@supabase/supabase-js'
 
@@ -35,6 +40,110 @@ type ScopeIds = {
   brandIds: string[]
   colorIds: string[]
   sizeIds: string[]
+}
+
+/**
+ * Page filtrée sur un pool d’IDs (sélection New / tag), avec filtres facettes optionnels.
+ * Conserve l’ordre du pool (sauf tri prix).
+ */
+async function fetchMarketingCatalogPageFromIdPool(
+  supabase: SupabaseClient,
+  poolIds: string[],
+  params: {
+    sort: CatalogBrowseQuery['sort']
+    limit: number
+    offset: number
+    availabilitySlugs: string[]
+  } & ScopeIds,
+): Promise<{items: MarketingCatalogItemRow[]; total: number}> {
+  if (poolIds.length === 0) return {items: [], total: 0}
+
+  const statuses =
+    params.availabilitySlugs.length > 0
+      ? itemStatusesForAvailability(params.availabilitySlugs)
+      : [...MARKETING_CATALOG_ITEM_STATUSES]
+  if (statuses.length === 0) return {items: [], total: 0}
+
+  const {data: corpUsers} = await supabase.from('users').select('id').eq('status', 'corporate_inventory')
+  const corpIds = (corpUsers ?? []).map((u) => u.id).filter((id): id is string => typeof id === 'string')
+
+  let countQuery = supabase
+    .from('items')
+    .select('id', {count: 'exact', head: true})
+    .in('id', poolIds)
+    .is('deleted_at', null)
+    .in('status', statuses)
+
+  let listQuery = supabase
+    .from('items')
+    .select('id')
+    .in('id', poolIds)
+    .is('deleted_at', null)
+    .in('status', statuses)
+
+  if (corpIds.length > 0) {
+    const corpFilter = `(${corpIds.join(',')})`
+    countQuery = countQuery.not('owner_user_id', 'in', corpFilter)
+    listQuery = listQuery.not('owner_user_id', 'in', corpFilter)
+  }
+  if (params.categoryIds.length === 1) {
+    countQuery = countQuery.eq('item_category_id', params.categoryIds[0]!)
+    listQuery = listQuery.eq('item_category_id', params.categoryIds[0]!)
+  } else if (params.categoryIds.length > 1) {
+    countQuery = countQuery.in('item_category_id', params.categoryIds)
+    listQuery = listQuery.in('item_category_id', params.categoryIds)
+  }
+  if (params.brandIds.length > 0) {
+    countQuery = countQuery.in('item_brand_id', params.brandIds)
+    listQuery = listQuery.in('item_brand_id', params.brandIds)
+  }
+  if (params.colorIds.length > 0) {
+    countQuery = countQuery.in('item_couleur_id', params.colorIds)
+    listQuery = listQuery.in('item_couleur_id', params.colorIds)
+  }
+  if (params.sizeIds.length > 0) {
+    countQuery = countQuery.in('item_size_id', params.sizeIds)
+    listQuery = listQuery.in('item_size_id', params.sizeIds)
+  }
+
+  const usePriceSort = params.sort === 'price_asc' || params.sort === 'price_desc'
+  if (params.sort === 'price_asc') {
+    listQuery = listQuery.order('price_points', {ascending: true, nullsFirst: false})
+  } else if (params.sort === 'price_desc') {
+    listQuery = listQuery.order('price_points', {ascending: false, nullsFirst: false})
+  }
+
+  const [{count, error: countErr}, {data: idRows, error: listErr}] = await Promise.all([
+    countQuery,
+    usePriceSort ? listQuery.range(params.offset, params.offset + params.limit - 1) : listQuery,
+  ])
+
+  if (countErr || listErr) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[marketing-catalog] selection page', countErr?.message ?? listErr?.message)
+    }
+    return {items: [], total: 0}
+  }
+
+  const total = typeof count === 'number' ? count : 0
+  let pageIds: string[]
+
+  if (usePriceSort) {
+    pageIds = (idRows ?? []).map((r) => r.id).filter((id): id is string => typeof id === 'string')
+  } else {
+    const matched = new Set(
+      (idRows ?? []).map((r) => r.id).filter((id): id is string => typeof id === 'string'),
+    )
+    const ordered = poolIds.filter((id) => matched.has(id))
+    pageIds = ordered.slice(params.offset, params.offset + params.limit)
+  }
+
+  if (pageIds.length === 0) return {items: [], total}
+
+  const byIdRows = await fetchMarketingCatalogItemsByIds(pageIds)
+  const byId = new Map(byIdRows.map((r) => [r.id, r]))
+  const items = pageIds.map((id) => byId.get(id)).filter((r): r is MarketingCatalogItemRow => Boolean(r))
+  return {items: sortMarketingCatalogSoldLast(items), total}
 }
 
 /**
@@ -166,11 +275,31 @@ export async function loadCatalogBrowse(query: CatalogBrowseQuery): Promise<Cata
   const offset = (query.page - 1) * pageSize
   const hasAvailabilityFilter = query.availabilitySlugs.length > 0
 
+  let selectionPool: string[] | null = null
+  if (query.newOnly) {
+    selectionPool = await getMarketingCatalogNewItemIds()
+  } else if (query.tagSlug) {
+    selectionPool = await getMarketingCatalogItemIdsByTagSlug(query.tagSlug)
+  }
+
   const tItems0 = catalogPerfNow()
   let rows: MarketingCatalogItemRow[]
   let total: number
 
-  if (hasAvailabilityFilter) {
+  if (selectionPool) {
+    const page = await fetchMarketingCatalogPageFromIdPool(supabase, selectionPool, {
+      sort: query.sort,
+      limit: pageSize,
+      offset,
+      availabilitySlugs: query.availabilitySlugs,
+      categoryIds,
+      brandIds,
+      colorIds,
+      sizeIds,
+    })
+    rows = page.items
+    total = page.total
+  } else if (hasAvailabilityFilter) {
     const page = await fetchMarketingCatalogPageByAvailability(supabase, {
       sort: query.sort,
       limit: pageSize,
@@ -209,6 +338,7 @@ export async function loadCatalogBrowse(query: CatalogBrowseQuery): Promise<Cata
       gridCoversMs: Math.round(tEnd - tAfterRows),
       rowCount: rows.length,
       availabilityFilter: hasAvailabilityFilter,
+      selection: query.newOnly ? 'new' : query.tagSlug ? `tag:${query.tagSlug}` : null,
     })
   }
 

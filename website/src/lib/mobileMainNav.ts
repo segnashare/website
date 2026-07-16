@@ -1,4 +1,4 @@
-import {catalogBrowsePath} from '@/lib/catalog/catalog-browse-href'
+import {catalogBrowseNewHref, catalogBrowsePath} from '@/lib/catalog/catalog-browse-href'
 
 /**
  * Liens du menu mobile plein écran : ordre fixe, toutes les pages principales
@@ -16,7 +16,7 @@ export const MOBILE_MAIN_NAV_ITEMS: MobileMainNavItem[] = [
   {_key: 'accessoires', label: 'Accessoires', href: catalogBrowsePath(null, 'accessoires')},
   {_key: 'chaussures', label: 'Chaussures', href: catalogBrowsePath(null, 'chaussures')},
   {_key: 'sacs', label: 'Sacs', href: catalogBrowsePath(null, 'sacs')},
-  {_key: 'nouveautes', label: 'Nouveautés', href: '/catalogue'},
+  {_key: 'nouveautes', label: 'Nouveautés', href: catalogBrowseNewHref()},
   {_key: 'newsroom', label: 'Newsroom', href: '/newsroom'},
 ]
 

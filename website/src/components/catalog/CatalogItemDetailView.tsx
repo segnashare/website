@@ -147,7 +147,7 @@ function CtaBlock({sold, appHref}: {sold: boolean; appHref: string}) {
         </a>
       </div>
       <a href={catalogAppSignupHref()} className={styles.promoNote}>
-        Prix réduit pour les membres&nbsp;: -10&nbsp;% via l&apos;app, -30&nbsp;% avec l&apos;abonnement
+        Réductions exclusives sur l&apos;app Segna&nbsp;: jusqu&apos;à 30&nbsp;% avec l&apos;abonnement.
       </a>
     </div>
   )

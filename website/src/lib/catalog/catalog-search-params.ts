@@ -12,6 +12,10 @@ export type CatalogBrowseQuery = {
   segmentSlug: string | null
   /** Équivalent 2e segment (`/catalogue/nike/robes` → `?segment=nike&categorie=robes`). */
   subSlug: string | null
+  /** Filtre sélection « New » (badge nouveautés, ~20 % plus récents). */
+  newOnly: boolean
+  /** Filtre tag catalogue (`tags.slug`, ex. `summer2026`). */
+  tagSlug: string | null
 }
 
 const SORT_TO_QUERY: Record<CatalogSortMode, string> = {
@@ -90,7 +94,18 @@ export function parseCatalogBrowseQuery(sp: URLSearchParams): CatalogBrowseQuery
   const segmentSlug = segmentRaw ? slugifyFr(segmentRaw) : null
   const subSlug = subRaw ? slugifyFr(subRaw) : null
 
-  return {page, sort, colorSlugs, sizeSlugs, availabilitySlugs, segmentSlug, subSlug}
+  const newRaw = firstParam(sp, ['new', 'nouveautes', 'selection'])
+  const newOnly =
+    newRaw === '1' ||
+    newRaw === 'true' ||
+    newRaw === 'yes' ||
+    newRaw === 'nouveautes' ||
+    newRaw === 'new'
+
+  const tagRaw = firstParam(sp, ['tag', 'tags'])
+  const tagSlug = tagRaw ? slugifyFr(tagRaw.replace(/\+/g, ' ')) : null
+
+  return {page, sort, colorSlugs, sizeSlugs, availabilitySlugs, segmentSlug, subSlug, newOnly, tagSlug}
 }
 
 /** Normalise une query (champs manquants / ISR ancien payload). */
@@ -103,6 +118,8 @@ export function normalizeCatalogBrowseQuery(q: Partial<CatalogBrowseQuery> | Cat
     availabilitySlugs: Array.isArray(q.availabilitySlugs) ? q.availabilitySlugs : [],
     segmentSlug: typeof q.segmentSlug === 'string' && q.segmentSlug.trim() ? q.segmentSlug.trim() : null,
     subSlug: typeof q.subSlug === 'string' && q.subSlug.trim() ? q.subSlug.trim() : null,
+    newOnly: Boolean(q.newOnly),
+    tagSlug: typeof q.tagSlug === 'string' && q.tagSlug.trim() ? q.tagSlug.trim() : null,
   }
 }
 
@@ -117,6 +134,8 @@ export function serializeCatalogBrowseQuery(q: CatalogBrowseQuery): URLSearchPar
   if (n.availabilitySlugs.length > 0) out.set('disponibilite', n.availabilitySlugs.join(','))
   if (n.segmentSlug) out.set('segment', n.segmentSlug)
   if (n.subSlug) out.set('categorie', n.subSlug)
+  if (n.newOnly) out.set('new', '1')
+  if (n.tagSlug) out.set('tag', n.tagSlug)
   return out
 }
 

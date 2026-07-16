@@ -6,8 +6,13 @@ import {
   catalogBrandCategorySecondSegment,
   type CatalogPathResolved,
 } from '@/lib/catalog/catalog-path-resolve'
+import {DEFAULT_CATALOG_BROWSE_QUERY} from '@/lib/catalog/catalog-browse-defaults'
 
 const CATALOG_PATH = '/catalogue'
+
+function emptyBrowseQuery(): CatalogBrowseQuery {
+  return {...DEFAULT_CATALOG_BROWSE_QUERY}
+}
 
 export function catalogBrowseWithSegments(
   base: CatalogBrowseQuery,
@@ -25,51 +30,27 @@ export function catalogBrowseWithSegments(
 /** Filtre marque / catégorie sur `/catalogue` uniquement (query `segment` + `categorie`). */
 export function catalogBrowsePath(brandSlug: string | null, categorySlug: string | null): string {
   if (brandSlug && categorySlug) {
-    return catalogBrowseWithSegments(
-      {
-        page: 1,
-        sort: 'recent',
-        colorSlugs: [],
-        sizeSlugs: [],
-        availabilitySlugs: [],
-        segmentSlug: null,
-        subSlug: null,
-      },
-      brandSlug,
-      categorySlug,
-    )
+    return catalogBrowseWithSegments(emptyBrowseQuery(), brandSlug, categorySlug)
   }
   if (brandSlug) {
-    return catalogBrowseWithSegments(
-      {
-        page: 1,
-        sort: 'recent',
-        colorSlugs: [],
-        sizeSlugs: [],
-        availabilitySlugs: [],
-        segmentSlug: null,
-        subSlug: null,
-      },
-      brandSlug,
-      null,
-    )
+    return catalogBrowseWithSegments(emptyBrowseQuery(), brandSlug, null)
   }
   if (categorySlug) {
-    return catalogBrowseWithSegments(
-      {
-        page: 1,
-        sort: 'recent',
-        colorSlugs: [],
-        sizeSlugs: [],
-        availabilitySlugs: [],
-        segmentSlug: null,
-        subSlug: null,
-      },
-      categorySlug,
-      null,
-    )
+    return catalogBrowseWithSegments(emptyBrowseQuery(), categorySlug, null)
   }
   return CATALOG_PATH
+}
+
+/** Sélection « New » (badge nouveautés). */
+export function catalogBrowseNewHref(): string {
+  return mergePathAndQuery(CATALOG_PATH, {...emptyBrowseQuery(), newOnly: true})
+}
+
+/** Sélection par tag catalogue (`?tag=summer2026`). */
+export function catalogBrowseTagHref(tagSlug: string): string {
+  const slug = tagSlug.trim()
+  if (!slug) return CATALOG_PATH
+  return mergePathAndQuery(CATALOG_PATH, {...emptyBrowseQuery(), tagSlug: slug})
 }
 
 export function withSort(base: CatalogBrowseQuery, sort: CatalogSortMode): string {

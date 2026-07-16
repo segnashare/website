@@ -9,6 +9,8 @@ export const DEFAULT_CATALOG_BROWSE_QUERY: CatalogBrowseQuery = {
   availabilitySlugs: [],
   segmentSlug: null,
   subSlug: null,
+  newOnly: false,
+  tagSlug: null,
 }
 
 export function catalogBrowseQueriesEqual(a: CatalogBrowseQuery, b: CatalogBrowseQuery): boolean {
@@ -29,6 +31,8 @@ export function catalogBrowseQueriesEqual(a: CatalogBrowseQuery, b: CatalogBrows
     aa.sizeSlugs.join(',') === bb.sizeSlugs.join(',') &&
     aa.availabilitySlugs.join(',') === bb.availabilitySlugs.join(',') &&
     a.segmentSlug === b.segmentSlug &&
-    a.subSlug === b.subSlug
+    a.subSlug === b.subSlug &&
+    Boolean(a.newOnly) === Boolean(b.newOnly) &&
+    (a.tagSlug ?? null) === (b.tagSlug ?? null)
   )
 }
