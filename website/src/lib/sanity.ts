@@ -422,6 +422,10 @@ export type CatalogPuzzleTile = {
   subtitle?: string
   href?: string
   image?: SanityImage
+  /** Point focal mobile (0–100 %), même asset que `image`. Prioritaire sur `imageMobile`. */
+  mobileFocus?: {x?: number; y?: number} | null
+  /** Même asset recommandé ; hotspot dédié au cadrage téléphone (legacy / avancé). */
+  imageMobile?: SanityImage
 }
 
 export type CatalogPuzzleSection = {
@@ -823,7 +827,22 @@ const catalogPuzzleTileGroq = `
   title,
   subtitle,
   href,
+  mobileFocus{ x, y },
   image{
+    ...,
+    alt,
+    asset->{
+      _id,
+      _ref,
+      url,
+      metadata {
+        dimensions { width, height, aspectRatio }
+      }
+    },
+    hotspot,
+    crop
+  },
+  imageMobile{
     ...,
     alt,
     asset->{

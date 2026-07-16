@@ -34,27 +34,51 @@ function CatalogPuzzleCard({
 }) {
   const title = tile?.title?.trim()
   const href = tile?.href?.trim() ?? ''
-  const asset = tile?.image?.asset
-  const imageUrl =
-    asset && (asset._ref || asset.url) ? urlForCatalogPuzzleImage(tile!.image!).url() : null
-  const alt = tile?.image?.alt?.trim() || title || 'Catalogue Segna'
-  const objectPosition = objectPositionFromHotspot(tile?.image?.hotspot)
+  const desktopAsset = tile?.image?.asset
+  const mobileAsset = tile?.imageMobile?.asset
+  const desktopUrl =
+    desktopAsset && (desktopAsset._ref || desktopAsset.url)
+      ? urlForCatalogPuzzleImage(tile!.image!).url()
+      : null
+  const mobileUrl =
+    mobileAsset && (mobileAsset._ref || mobileAsset.url)
+      ? urlForCatalogPuzzleImage(tile!.imageMobile!).url()
+      : desktopUrl
+  const alt = tile?.image?.alt?.trim() || tile?.imageMobile?.alt?.trim() || title || 'Catalogue Segna'
+
+  const desktopPosition = objectPositionFromHotspot(tile?.image?.hotspot) ?? 'center'
+  const mobileFromPercents =
+    typeof tile?.mobileFocus?.x === 'number' && typeof tile?.mobileFocus?.y === 'number'
+      ? `${Math.min(100, Math.max(0, tile.mobileFocus.x))}% ${Math.min(100, Math.max(0, tile.mobileFocus.y))}%`
+      : undefined
+  const mobilePosition =
+    mobileFromPercents ??
+    objectPositionFromHotspot(tile?.imageMobile?.hotspot) ??
+    desktopPosition
 
   const body = (
     <>
-      <div className={styles.cardMedia} aria-hidden={!imageUrl}>
-        {imageUrl ? (
+      <div className={styles.cardMedia} aria-hidden={!desktopUrl && !mobileUrl}>
+        {desktopUrl ? (
           <Image
-            src={imageUrl}
+            src={desktopUrl}
             alt={alt}
             fill
             sizes={sizes}
             quality={85}
-            className={styles.cardImage}
-            style={{
-              objectFit: 'cover',
-              ...(objectPosition ? {objectPosition} : {}),
-            }}
+            className={`${styles.cardImage} ${styles.cardImageDesktop}`}
+            style={{objectFit: 'cover', objectPosition: desktopPosition}}
+          />
+        ) : null}
+        {mobileUrl ? (
+          <Image
+            src={mobileUrl}
+            alt={alt}
+            fill
+            sizes={sizes}
+            quality={85}
+            className={`${styles.cardImage} ${styles.cardImageMobile}`}
+            style={{objectFit: 'cover', objectPosition: mobilePosition}}
           />
         ) : null}
       </div>

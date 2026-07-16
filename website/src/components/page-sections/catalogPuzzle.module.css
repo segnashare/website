@@ -279,6 +279,14 @@
   transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+.cardImageDesktop {
+  display: block;
+}
+
+.cardImageMobile {
+  display: none;
+}
+
 .card:hover .cardImage {
   transform: scale(1.04);
 }
@@ -288,9 +296,9 @@
   inset: 0;
   background: linear-gradient(
     to top,
-    rgba(12, 10, 9, 0.78) 0%,
-    rgba(12, 10, 9, 0.28) 38%,
-    transparent 68%
+    rgba(12, 10, 9, 0.22) 0%,
+    rgba(12, 10, 9, 0.06) 28%,
+    transparent 52%
   );
   pointer-events: none;
 }
@@ -317,6 +325,14 @@
 }
 
 @media (max-width: 767px) {
+  .cardImageDesktop {
+    display: none;
+  }
+
+  .cardImageMobile {
+    display: block;
+  }
+
   .section {
     width: 100%;
   }
