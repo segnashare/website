@@ -1,0 +1,207 @@
+.page {
+  width: 66.666%;
+  max-width: none;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: clamp(4.75rem, 10vw, 5.75rem) 0 clamp(3rem, 8vw, 5.5rem);
+}
+
+.hero {
+  position: relative;
+  width: 50%;
+  max-width: none;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: #ece8e2;
+  margin: 0 0 clamp(1.35rem, 3vw, 1.85rem);
+}
+
+.heroImage {
+  object-fit: cover;
+}
+
+.heroPlaceholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9a948e;
+}
+
+.copy {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  text-align: left;
+}
+
+.byline {
+  margin: 0 0 0.85rem;
+  text-align: left;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #14110f;
+}
+
+.title {
+  margin: 0 0 clamp(1.25rem, 2.8vw, 1.75rem);
+  text-align: left;
+  font-family: var(--font-playfair-display), Georgia, serif;
+  font-weight: var(--segna-type-h1-weight);
+  font-size: clamp(2rem, 4vw, 3.1rem);
+  line-height: var(--segna-type-h1-leading);
+  letter-spacing: var(--segna-type-h1-tracking);
+  color: #14110f;
+}
+
+.body {
+  text-align: left;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-size: clamp(0.98rem, 1.3vw, 1.08rem);
+  line-height: 1.65;
+  color: #2a2826;
+}
+
+.body :global(p),
+.body :global(h2),
+.body :global(h3),
+.body :global(h4),
+.body :global(ul),
+.body :global(ol),
+.body :global(blockquote) {
+  text-align: left;
+}
+
+.body :global(h2) {
+  margin: 1.85rem 0 0.7rem;
+  font-family: var(--font-playfair-display), Georgia, serif;
+  font-weight: var(--segna-type-h2-weight);
+  font-size: var(--segna-type-h2-size);
+  line-height: var(--segna-type-h2-leading);
+  letter-spacing: var(--segna-type-h2-tracking);
+  color: #14110f;
+}
+
+.body :global(h3) {
+  margin: 1.4rem 0 0.5rem;
+  font-family: var(--font-playfair-display), Georgia, serif;
+  font-weight: 700;
+  font-size: clamp(1.2rem, 2.1vw, 1.5rem);
+  line-height: 1.22;
+  letter-spacing: -0.02em;
+  color: #14110f;
+}
+
+.body :global(h4) {
+  margin: 1.15rem 0 0.4rem;
+  font-family: var(--font-playfair-display), Georgia, serif;
+  font-weight: 700;
+  font-size: 1.12rem;
+  line-height: 1.3;
+  color: #14110f;
+}
+
+.body :global(p) {
+  margin: 0 0 0.9rem;
+}
+
+.body :global(blockquote) {
+  margin: 1rem 0;
+  padding-left: 1rem;
+  border-left: 3px solid #ebe6df;
+  font-style: italic;
+  color: #6b6560;
+}
+
+.body :global(ul),
+.body :global(ol) {
+  margin: 0 0 0.9rem;
+  padding-left: 1.25rem;
+  list-style-position: outside;
+}
+
+.ctas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 0.9rem;
+  margin-top: clamp(2.25rem, 5vw, 3.25rem);
+  padding-top: clamp(1.5rem, 3vw, 2rem);
+  border-top: 1px solid #ebe6df;
+}
+
+.ctaPrimary,
+.ctaSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.65rem;
+  padding: 0.62rem 1.35rem;
+  border-radius: 999px;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.ctaPrimary {
+  color: #fff;
+  background: #14110f;
+  border: 1px solid #14110f;
+}
+
+.ctaPrimary:hover {
+  background: #2a2826;
+  border-color: #2a2826;
+}
+
+.ctaSecondary {
+  color: #14110f;
+  background: transparent;
+  border: 1px solid #14110f;
+}
+
+.ctaSecondary:hover {
+  background: rgb(20 17 15 / 0.05);
+}
+
+.ctaPrimary:focus-visible,
+.ctaSecondary:focus-visible {
+  outline: 2px solid #14110f;
+  outline-offset: 3px;
+}
+
+@media (max-width: 47.99rem) {
+  .page {
+    width: 100%;
+    padding-inline: 1.15rem;
+  }
+
+  .hero {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+  }
+
+  .body :global(h2) {
+    font-size: var(--segna-type-h2-size-sm);
+  }
+
+  .ctas {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ctaPrimary,
+  .ctaSecondary {
+    width: 100%;
+  }
+}

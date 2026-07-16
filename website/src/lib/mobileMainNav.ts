@@ -1,3 +1,5 @@
+import {catalogBrowsePath} from '@/lib/catalog/catalog-browse-href'
+
 /**
  * Liens du menu mobile plein écran : ordre fixe, toutes les pages principales
  * (le header desktop continue d’utiliser les entrées Sanity).
@@ -9,26 +11,31 @@ export type MobileMainNavItem = {
 }
 
 export const MOBILE_MAIN_NAV_ITEMS: MobileMainNavItem[] = [
-  {_key: 'accueil', label: 'Accueil', href: '/'},
-  {_key: 'comment', label: 'Comment ça marche ?', href: '/comment-ca-marche'},
-  {_key: 'combien', label: 'Combien ça coûte ?', href: '/combien-ca-coute'},
-  {_key: 'catalogue', label: 'Catalogue', href: '/catalogue'},
-  {_key: 'communaute', label: 'Communauté', href: '/communaute'},
+  {_key: 'location', label: 'Location', href: '/catalogue'},
+  {_key: 'vetements', label: 'Vêtements', href: catalogBrowsePath(null, 'vetements')},
+  {_key: 'accessoires', label: 'Accessoires', href: catalogBrowsePath(null, 'accessoires')},
+  {_key: 'chaussures', label: 'Chaussures', href: catalogBrowsePath(null, 'chaussures')},
+  {_key: 'sacs', label: 'Sacs', href: catalogBrowsePath(null, 'sacs')},
+  {_key: 'nouveautes', label: 'Nouveautés', href: '/catalogue'},
   {_key: 'newsroom', label: 'Newsroom', href: '/newsroom'},
 ]
 
-function normalizePath(path: string): string {
+function hrefPathname(href: string): string {
+  const path = href.split('?')[0] ?? href
   if (!path || path === '/') return '/'
   return path.replace(/\/+$/, '')
 }
 
 /**
  * Indique si `pathname` correspond à la section du lien (page exacte ou sous-route).
- * La page courante est exclue du menu mobile.
+ * Les liens catalogue avec query (`?segment=…`) restent visibles sur `/catalogue`.
+ * La page courante est exclue du menu mobile pour les entrées « section » sans query.
  */
 export function isMobileNavSectionActive(pathname: string, href: string): boolean {
-  const p = normalizePath(pathname)
-  const h = normalizePath(href)
+  const p = hrefPathname(pathname)
+  const h = hrefPathname(href)
+  const hasQuery = href.includes('?')
+  if (hasQuery) return false
   if (h === '/') return p === '/'
   return p === h || p.startsWith(`${h}/`)
 }

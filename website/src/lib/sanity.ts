@@ -623,6 +623,13 @@ export type HomePageDocumentData = {
 /** Données passées au hero : document d’accueil + header global (singleton). */
 export type HomePageData = HomePageDocumentData & WebsiteHeaderNavData
 
+export type PostAuthor = {
+  _id?: string
+  name?: string
+  slug?: {current?: string}
+  role?: string | null
+}
+
 export type PostData = {
   _id: string
   title: string
@@ -630,14 +637,33 @@ export type PostData = {
     current?: string
   }
   publishedAt?: string
+  /** Référence auteur Sanity (dereferenced). */
+  author?: PostAuthor | null
+  /** Type d’article pour filtres Newsroom. */
+  articleType?: string | null
+  /** @deprecated remplacé par `articleType` */
+  category?: string | null
+  /** Chapô CMS, ou extrait dérivé du corps. */
+  excerpt?: string | null
   image?: SanityImage
 }
 
+export type PostDetailData = PostData & {
+  body?: PortableTextBlock[] | null
+  seo?: SeoMetadata | null
+}
+
 export type NewsroomPageData = {
+  _id?: string
   heroTitle: string
   heroSubtitle: string
+  heroPresentation?: 'single_photo' | 'multi_state'
+  heroStageTransitionMs?: number
+  heroStates?: HomeHeroStagedState[]
   heroImage?: SanityImage
-  introText: string
+  heroCtaLabel?: string
+  heroCtaHref?: string
+  introText?: string
   highlightedPost?: PostData
   sections?: PageSection[]
   seo?: SeoMetadata | null
@@ -1282,12 +1308,28 @@ async function getWebsiteFooterUncached(): Promise<WebsiteFooterData | null> {
 async function getNewsroomPageDataUncached(): Promise<NewsroomPageData | null> {
   const page = await sanityClient.fetch<NewsroomPageData | null>(
     `*[_type == "newsroomPage"]|order(_updatedAt desc)[0]{
+      _id,
       seo,
       heroTitle,
       heroSubtitle,
+      heroCtaLabel,
+      heroCtaHref,
+      heroPresentation,
+      heroStageTransitionMs,
+      ${homeHeroStatesGroq},
       heroImage{
         ...,
-        alt
+        alt,
+        asset->{
+          _id,
+          _ref,
+          url,
+          metadata {
+            dimensions { width, height, aspectRatio }
+          }
+        },
+        hotspot,
+        crop
       },
       introText,
       highlightedPost->{
@@ -1331,7 +1373,7 @@ export const getWebsiteFooter = cache(
 )
 
 export const getNewsroomPageData = cache(
-  withDataCache(getNewsroomPageDataUncached, ['sanity_newsroom_page_v2'], sanityCacheOptions),
+  withDataCache(getNewsroomPageDataUncached, ['sanity_newsroom_page_v3'], sanityCacheOptions),
 )
 
 export const getMarketingPageSlugs = cache(
@@ -1391,18 +1433,92 @@ async function getMarketingPageBySlugUncached(slug: string): Promise<MarketingPa
 }
 
 async function getPostsUncached(): Promise<PostData[]> {
-  return sanityClient.fetch(
+  const rows = await sanityClient.fetch<
+    Array<PostData & {bodyPlain?: string | null}>
+  >(
     `*[_type == "post"]|order(publishedAt desc){
       _id,
       title,
       slug,
       publishedAt,
+      author->{
+        _id,
+        name,
+        slug,
+        role
+      },
+      articleType,
+      category,
+      excerpt,
+      "bodyPlain": pt::text(body),
       image{
         ...,
-        alt
+        alt,
+        hotspot,
+        crop
       }
     }`,
   )
+  return rows.map(({bodyPlain, excerpt, ...post}) => {
+    const fromCms = excerpt?.trim()
+    const fromBody = bodyPlain?.replace(/\s+/g, ' ').trim()
+    const resolved =
+      fromCms ||
+      (fromBody && fromBody.length > 180 ? `${fromBody.slice(0, 177).trimEnd()}…` : fromBody) ||
+      null
+    return {...post, excerpt: resolved}
+  })
+}
+
+async function getPostBySlugUncached(slug: string): Promise<PostDetailData | null> {
+  const normalized = slug.trim()
+  if (!normalized) return null
+  const post = await sanityClient.fetch<PostDetailData | null>(
+    `*[_type == "post" && slug.current == $slug][0]{
+      _id,
+      title,
+      slug,
+      publishedAt,
+      author->{
+        _id,
+        name,
+        slug,
+        role
+      },
+      articleType,
+      category,
+      excerpt,
+      seo,
+      image{
+        ...,
+        alt,
+        hotspot,
+        crop
+      },
+      body[]{
+        ...,
+        markDefs[]{
+          ...,
+          _type == "link" => {
+            href
+          }
+        },
+        _type == "image" => {
+          ...,
+          asset->
+        }
+      }
+    }`,
+    {slug: normalized},
+  )
+  return post
+}
+
+async function getPostSlugsUncached(): Promise<string[]> {
+  const slugs = await sanityClient.fetch<string[] | null>(
+    `*[_type == "post" && defined(slug.current)].slug.current`,
+  )
+  return (slugs ?? []).filter((s): s is string => Boolean(s && String(s).trim()))
 }
 
 const getCatalogBrandEditorialBySlugCrossRequest = withDataCache(
@@ -1417,10 +1533,22 @@ const getMarketingPageBySlugCrossRequest = withDataCache(
   sanityCacheOptions,
 )
 
-const getPostsCrossRequest = withDataCache(getPostsUncached, ['sanity_posts_v1'], sanityCacheOptions)
+const getPostsCrossRequest = withDataCache(getPostsUncached, ['sanity_posts_v4'], sanityCacheOptions)
+
+const getPostBySlugCrossRequest = withDataCache(
+  getPostBySlugUncached,
+  ['sanity_post_by_slug_v3'],
+  sanityCacheOptions,
+)
+
+const getPostSlugsCrossRequest = withDataCache(getPostSlugsUncached, ['sanity_post_slugs_v1'], sanityCacheOptions)
 
 export const getCatalogBrandEditorialBySlug = cache(getCatalogBrandEditorialBySlugCrossRequest)
 
 export const getMarketingPageBySlug = cache(getMarketingPageBySlugCrossRequest)
 
 export const getPosts = cache(getPostsCrossRequest)
+
+export const getPostBySlug = cache(getPostBySlugCrossRequest)
+
+export const getPostSlugs = cache(getPostSlugsCrossRequest)

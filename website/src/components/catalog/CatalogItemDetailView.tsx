@@ -319,10 +319,12 @@ export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks 
       document.body.style.overflow = prev
       window.removeEventListener('keydown', onKey)
       window.cancelAnimationFrame(frame)
-      const idx = photoIndexRef.current
+      // Sync carousel modal uniquement (page = grille, pas de track).
       const hero = heroTrackRef.current
-      const heroSlide = hero?.children[idx] as HTMLElement | undefined
-      if (hero && heroSlide) hero.scrollTo({left: heroSlide.offsetLeft, behavior: 'auto'})
+      if (!hero) return
+      const idx = photoIndexRef.current
+      const heroSlide = hero.children[idx] as HTMLElement | undefined
+      if (heroSlide) hero.scrollTo({left: heroSlide.offsetLeft, behavior: 'auto'})
     }
   }, [lightboxOpen])
 
@@ -410,36 +412,25 @@ export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks 
   if (isPage) {
     return (
       <div className={`${styles.body} ${styles.bodyPage}`}>
-        <div className={styles.pageGallery}>
-          <div className={styles.swipeGallery}>
-            <div
-              ref={heroTrackRef}
-              className={styles.heroTrack}
-              onScroll={onHeroScroll}
-              aria-label="Photos de la pièce"
-              onPointerDown={(e) => onHeroPointerDown(e.clientX)}
-              onPointerMove={(e) => onHeroPointerMove(e.clientX)}
-              onPointerUp={openLightboxIfTap}
-              onPointerCancel={() => {
-                pointerStartX.current = null
-              }}
-            >
-              {slots.length > 0 ? (
-                slots.map((slot, i) => (
-                  <div key={`${slot.url}-${i}`} className={styles.heroSlide}>
-                    <CatalogItemPhotoCover imageUrl={slot.url} position={slot.position} />
-                  </div>
-                ))
-              ) : (
-                <div className={styles.heroSlide} />
-              )}
-            </div>
-            {slots.length > 1 ? (
-              <p className={styles.photoCounter} aria-live="polite">
-                {photoIndex + 1}&nbsp;/&nbsp;{slots.length}
-              </p>
-            ) : null}
-          </div>
+        <div className={styles.galleryCol} aria-label="Photos de la pièce">
+          {slots.length > 0 ? (
+            slots.map((slot, i) => (
+              <button
+                key={`${slot.url}-${i}`}
+                type="button"
+                className={styles.pagePhoto}
+                aria-label={`Agrandir la photo ${i + 1}`}
+                onClick={() => {
+                  setPhotoIndex(i)
+                  setLightboxOpen(true)
+                }}
+              >
+                <CatalogItemPhotoCover imageUrl={slot.url} position={slot.position} />
+              </button>
+            ))
+          ) : (
+            <div className={styles.pagePhoto} aria-hidden />
+          )}
         </div>
 
         <div className={styles.infoCol}>

@@ -1,5 +1,5 @@
 import type {MetadataRoute} from 'next'
-import {getMarketingPageSlugs} from '@/lib/sanity'
+import {getMarketingPageSlugs, getPostSlugs} from '@/lib/sanity'
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.segnashare.com').replace(/\/+$/, '')
 
@@ -22,14 +22,18 @@ function compactSlug(value: string | null | undefined): string | null {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()
 
-  const marketingSlugs = await getMarketingPageSlugs()
+  const [marketingSlugs, postSlugs] = await Promise.all([getMarketingPageSlugs(), getPostSlugs()])
   const staticPaths = ['/', '/catalogue', '/newsroom', '/declaration-cookies']
   const marketingPaths = marketingSlugs
     .map((slug) => compactSlug(slug))
     .filter((slug): slug is string => Boolean(slug))
     .map((slug) => `/${slug}`)
+  const postPaths = postSlugs
+    .map((slug) => compactSlug(slug))
+    .filter((slug): slug is string => Boolean(slug))
+    .map((slug) => `/newsroom/${slug}`)
 
-  const allPaths = new Set<string>([...staticPaths, ...marketingPaths])
+  const allPaths = new Set<string>([...staticPaths, ...marketingPaths, ...postPaths])
 
   return [...allPaths].map((path) => ({
     url: toAbsoluteUrl(path),

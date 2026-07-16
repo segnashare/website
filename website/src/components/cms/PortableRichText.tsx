@@ -9,17 +9,21 @@ type PortableRichTextProps = {
   value: PortableTextBlock[]
   className?: string
   /** Marges de paragraphe plus serrées (ex. cartes marketing). */
-  variant?: 'default' | 'compact'
+  variant?: 'default' | 'compact' | 'article'
 }
 
-function portableComponents(variant: 'default' | 'compact'): PortableTextComponents {
+function portableComponents(variant: 'default' | 'compact' | 'article'): PortableTextComponents {
   const paragraphMarginBottom = variant === 'compact' ? '0.45rem' : '0.75rem'
+  const articleHeadings = variant === 'article'
   return {
   block: {
     normal: ({children}) => <p style={{margin: `0 0 ${paragraphMarginBottom}`}}>{children}</p>,
-    h1: ({children}) => <h2 style={{margin: '1.5rem 0 0.5rem'}}>{children}</h2>,
-    h2: ({children}) => <h3 style={{margin: '1.25rem 0 0.5rem'}}>{children}</h3>,
-    h3: ({children}) => <h4 style={{margin: '1rem 0 0.35rem'}}>{children}</h4>,
+    h1: ({children}) =>
+      articleHeadings ? <h2>{children}</h2> : <h2 style={{margin: '1.5rem 0 0.5rem'}}>{children}</h2>,
+    h2: ({children}) =>
+      articleHeadings ? <h2>{children}</h2> : <h3 style={{margin: '1.25rem 0 0.5rem'}}>{children}</h3>,
+    h3: ({children}) =>
+      articleHeadings ? <h3>{children}</h3> : <h4 style={{margin: '1rem 0 0.35rem'}}>{children}</h4>,
     blockquote: ({children}) => (
       <blockquote
         style={{

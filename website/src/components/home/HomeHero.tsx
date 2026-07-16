@@ -12,6 +12,7 @@ import {HomeHeroActionBlock} from './HomeHeroActionBlock'
 import {homeHeroActionFromPage} from '@/lib/home-hero-action'
 import {visibleMobileMainNavItems} from '@/lib/mobileMainNav'
 import {CtaHrefLink} from './heroShared'
+import {MobileMainMenu} from './MobileMainMenu'
 import {useNavScrollElevated} from './useNavScrollElevated'
 import styles from './homeHero.module.css'
 import {useHydrationSafeReducedMotion} from './useHydrationSafeReducedMotion'
@@ -364,32 +365,15 @@ export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeH
           </div>
         </section>
 
-        <nav id={mobileNavId} className={`${styles.mobileMenuOverlay} ${isMenuOpen ? styles.mobileMenuOverlayOpen : ''}`}>
-          <div className={styles.mobileMenuNav}>
-            {mobileMenuItems.map((item) => (
-              <Link
-                key={item._key}
-                href={item.href?.trim() ? item.href : '#'}
-                className={styles.mobileMenuLink}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
-
-          {showSecondaryCta ? (
-            <div className={styles.mobileMenuCtas}>
-              <CtaHrefLink
-                href={secondaryHref}
-                className={styles.mobileMenuSecondaryCta}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                {secondaryLabel}
-              </CtaHrefLink>
-            </div>
-          ) : null}
-        </nav>
+        <MobileMainMenu
+          id={mobileNavId}
+          open={isMenuOpen}
+          items={mobileMenuItems}
+          onClose={() => setIsMenuOpen(false)}
+          brand={brandMark}
+          primaryCta={{label: primaryLabel, href: primaryHref}}
+          secondaryCta={showSecondaryCta ? {label: secondaryLabel!, href: secondaryHref} : null}
+        />
       </div>
     </div>
   )
