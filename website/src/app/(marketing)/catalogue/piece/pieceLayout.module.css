@@ -1,0 +1,6 @@
+/* Contient nav + page : empêche tout débordement horizontal (carrousel photos, etc.). */
+.root {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}

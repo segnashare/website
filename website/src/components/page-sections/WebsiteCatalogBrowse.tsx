@@ -15,6 +15,10 @@ import {
 import {buildPaginationRange} from '@/lib/catalog/catalog-pagination-range'
 import {splitMarketingCatalogSizeFacets} from '@/lib/catalog/catalog-size-facet-section'
 import {formatCatalogPurchasePriceLabel} from '@/lib/catalog/catalog-borrow-price-label'
+import {
+  isMarketingCatalogItemAvailable,
+  sortMarketingCatalogSoldLast,
+} from '@/lib/catalog/catalog-sold-sort'
 import type {CatalogSortMode, MarketingCatalogFacets, MarketingCatalogGridItem} from '@/lib/catalog/marketing-catalog-items'
 import styles from './websiteCatalogBrowse.module.css'
 
@@ -105,15 +109,15 @@ function applyLocalFilters(
 }
 
 function applyLocalSort(list: MarketingCatalogGridItem[], mode: SortMode): MarketingCatalogGridItem[] {
-  if (mode === 'recent') return list
-  const copy = [...list]
   const rank = (p: number | null) => (typeof p === 'number' && !Number.isNaN(p) ? p : Number.POSITIVE_INFINITY)
-  copy.sort((a, b) => {
+  if (mode === 'recent') {
+    return sortMarketingCatalogSoldLast(list)
+  }
+  return sortMarketingCatalogSoldLast(list, (a, b) => {
     const pa = rank(a.price_points)
     const pb = rank(b.price_points)
     return mode === 'price_asc' ? pa - pb : pb - pa
   })
-  return copy
 }
 
 function toggleIdInSet(setter: Dispatch<SetStateAction<Set<string>>>, id: string) {
@@ -137,6 +141,7 @@ function renderProductCard(it: MarketingCatalogGridItem) {
   const titleLine = it.displayTitle ?? it.title
   const brandLine = it.brand_label
   const extraLine = it.displaySubtitle?.trim()
+  const available = isMarketingCatalogItemAvailable(it.status)
   return (
     <article key={it.id} className={styles.card}>
       <div className={styles.cardMedia}>
@@ -145,7 +150,15 @@ function renderProductCard(it: MarketingCatalogGridItem) {
       <div className={styles.cardBody}>
         {brandLine ? <span className={styles.cardBrand}>{brandLine}</span> : null}
         {extraLine ? <span className={styles.cardMetaLine}>{extraLine}</span> : null}
-        <span className={styles.cardTitle}>{titleLine}</span>
+        <div className={styles.cardTitleRow}>
+          <span className={styles.cardTitle}>{titleLine}</span>
+          <span
+            className={`${styles.cardAvailDot} ${available ? styles.cardAvailDotAvailable : styles.cardAvailDotUnavailable}`}
+            title={available ? 'Disponible' : 'Indisponible'}
+            aria-label={available ? 'Disponible' : 'Indisponible'}
+            role="img"
+          />
+        </div>
         {it.isSold ? null : (
           <span className={styles.cardPrice}>{formatCatalogPurchasePriceLabel(it.price_points)}</span>
         )}
@@ -988,9 +1001,10 @@ function CatalogPagination({
         type="button"
         className={styles.paginationNav}
         disabled={currentPage <= 1 || busy}
+        aria-label="Précédente"
         onClick={() => onPageChange(currentPage - 1)}
       >
-        ‹&nbsp;PRÉCÉDENTE
+        ‹<span className={styles.paginationNavLabel}>&nbsp;PRÉCÉDENTE</span>
       </button>
       <div className={styles.paginationPages}>
         {range.map((cell, idx) =>
@@ -1015,9 +1029,10 @@ function CatalogPagination({
         type="button"
         className={styles.paginationNav}
         disabled={currentPage >= totalPages || busy}
+        aria-label="Suivante"
         onClick={() => onPageChange(currentPage + 1)}
       >
-        SUIVANTE&nbsp;›
+        <span className={styles.paginationNavLabel}>SUIVANTE&nbsp;</span>›
       </button>
     </nav>
   )

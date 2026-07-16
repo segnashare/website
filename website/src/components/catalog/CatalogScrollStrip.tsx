@@ -7,6 +7,7 @@ import scrollStyles from '@/components/page-sections/horizontalScrollCards.modul
 import {formatCatalogPurchasePriceShort} from '@/lib/catalog/catalog-borrow-price-label'
 import {formatCatalogCardSizeLabel} from '@/lib/catalog/format-catalog-card-size'
 import {prefetchCatalogItemDetailClient} from '@/lib/catalog/catalog-item-detail-client-fetch'
+import {isMarketingCatalogItemAvailable} from '@/lib/catalog/catalog-sold-sort'
 import type {ScrollCardSize} from '@/lib/catalog/scroll-card-size'
 import {normalizeScrollCardSize} from '@/lib/catalog/scroll-card-size'
 import type {MarketingCatalogGridItem} from '@/lib/catalog/marketing-catalog-items'
@@ -26,6 +27,7 @@ type Props = {
 function CatalogScrollCard({item, onOpen}: {item: MarketingCatalogGridItem; onOpen: (itemId: string) => void}) {
   const titleLine = item.displayTitle ?? item.title
   const sizeLine = formatCatalogCardSizeLabel(item.size_label, item.size_code)
+  const available = isMarketingCatalogItemAvailable(item.status)
 
   return (
     <article className={`${scrollStyles.slide} ${scrollStyles.slidePortrait}`}>
@@ -41,7 +43,15 @@ function CatalogScrollCard({item, onOpen}: {item: MarketingCatalogGridItem; onOp
           <CatalogGridCardMedia item={item} />
         </div>
         <div className={styles.catalogCardBody}>
-          <span className={styles.catalogCardTitle}>{titleLine}</span>
+          <div className={styles.catalogCardTitleRow}>
+            <span className={styles.catalogCardTitle}>{titleLine}</span>
+            <span
+              className={`${styles.catalogCardAvailDot} ${available ? styles.catalogCardAvailDotAvailable : styles.catalogCardAvailDotUnavailable}`}
+              title={available ? 'Disponible' : 'Indisponible'}
+              aria-label={available ? 'Disponible' : 'Indisponible'}
+              role="img"
+            />
+          </div>
           <div className={styles.catalogCardMetaRow}>
             <span className={styles.catalogCardSize}>{sizeLine}</span>
             {item.isSold ? null : (

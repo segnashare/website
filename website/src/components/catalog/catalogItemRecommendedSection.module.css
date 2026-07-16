@@ -1,8 +1,10 @@
 .section {
   width: 100%;
+  max-width: 100%;
   margin-top: clamp(3.5rem, 8vw, 6.5rem);
-  padding-block: 0 clamp(2rem, 5vw, 3.5rem);
+  padding-block: 0 clamp(3rem, 7vw, 5rem);
   box-sizing: border-box;
+  overflow-x: clip;
 }
 
 /* Titre inset ~10 % comme en home ; la grille reste pleine largeur. */
@@ -25,7 +27,7 @@
 
 .grid {
   list-style: none;
-  margin: clamp(1.35rem, 3vw, 2.15rem) clamp(0.65rem, 2vw, 1.25rem) 0;
+  margin: clamp(1.35rem, 3vw, 2.15rem) clamp(1rem, 3vw, 2rem) 0;
   padding: 0;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -44,13 +46,8 @@
   }
 }
 
-@media (min-width: 1200px) {
-  .grid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 1400px) {
+/* 2 rangées × 6 dès desktop large. */
+@media (min-width: 1100px) {
   .grid {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
@@ -128,8 +125,8 @@
   align-items: center;
   justify-content: center;
   gap: 0.75rem 0.9rem;
-  margin-top: clamp(1.75rem, 4vw, 2.75rem);
-  padding-inline: clamp(0.65rem, 2vw, 1.25rem);
+  margin-top: clamp(3rem, 6.5vw, 4.75rem);
+  padding-inline: clamp(1rem, 3vw, 2rem);
 }
 
 .ctaPrimary,

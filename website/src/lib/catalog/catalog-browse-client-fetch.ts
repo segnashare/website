@@ -26,6 +26,9 @@ export async function fetchCatalogBrowseClient(query: CatalogBrowseQuery): Promi
 }
 
 export function syncCatalogBrowseUrl(query: CatalogBrowseQuery): void {
+  if (typeof window === 'undefined') return
+  // Ne pas écraser une navigation vers la page détail pièce.
+  if (window.location.pathname.startsWith('/catalogue/piece/')) return
   const href = mergePathAndQuery('/catalogue', query)
   window.history.replaceState(window.history.state, '', href)
 }

@@ -1,7 +1,7 @@
 /** Libellé affiché quand la pièce n’a pas de taille numérique / lettre (bijoux, etc.). */
 export const CATALOG_UNIQUE_SIZE_LABEL = 'Taille Unique'
 
-function isUniqueSizeToken(raw: string): boolean {
+export function isUniqueSizeToken(raw: string): boolean {
   const t = raw.trim().toLowerCase()
   if (!t) return true
   if (t === 'tu' || t === 'os' || t === 'onesize' || t === 'one_size' || t === 'one-size') return true

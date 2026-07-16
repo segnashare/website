@@ -8,6 +8,7 @@
 .bodyPage {
   overflow: visible;
   width: 100%;
+  min-width: 0;
   /* stretch : la col. droite a la hauteur des photos → sticky a de la place pour tenir. */
   align-items: stretch;
   /* Séparation au milieu de la page. */
@@ -22,6 +23,14 @@
   padding: clamp(1rem, 2.5vw, 1.5rem);
 }
 
+.bodyModal .galleryCol {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  background: #fff;
+  overflow: visible;
+}
+
 .bodyPage .galleryCol {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -29,6 +38,48 @@
   overflow: visible;
   background: transparent;
   padding: 0;
+}
+
+/* Page pièce : uniquement le carrousel (plus de grille). */
+.pageGallery {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.pageGallery .heroSlide {
+  border-radius: 12px;
+  min-height: 0;
+}
+
+.pageGallery .heroTrack {
+  border-radius: 12px;
+}
+
+.swipeGallery {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.photoCounter {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  z-index: 2;
+  margin: 0;
+  padding: 0.28rem 0.55rem;
+  border-radius: 999px;
+  background: rgb(20 17 15 / 0.55);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  pointer-events: none;
 }
 
 .infoCol {
@@ -71,6 +122,139 @@
   background: #ece8e2;
 }
 
+/* Modal / page : photo principale, swipe horizontal (contenu dans overflow, pas le document). */
+.heroTrack {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  background: #ece8e2;
+  scrollbar-width: none;
+}
+
+.heroTrack::-webkit-scrollbar {
+  display: none;
+}
+
+.heroSlide {
+  position: relative;
+  flex: 0 0 100%;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  aspect-ratio: 3 / 4;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  overflow: hidden;
+  background: #ece8e2;
+  cursor: zoom-in;
+}
+
+/* Modal : cadre carré comme les miniatures — évite de ne montrer que le haut. */
+.bodyModal .heroSlide {
+  aspect-ratio: 1 / 1;
+  min-height: 0;
+  cursor: zoom-in;
+}
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 320;
+  background: #0c0b0a;
+  color: #fff;
+}
+
+.lightboxClose {
+  position: absolute;
+  top: max(0.75rem, env(safe-area-inset-top));
+  right: max(0.75rem, env(safe-area-inset-right));
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  /* Même pastille grisée que le compteur x/Y. */
+  background: rgb(0 0 0 / 0.45);
+  color: rgb(255 255 255 / 0.92);
+  cursor: pointer;
+}
+
+.lightboxClose:hover {
+  background: rgb(0 0 0 / 0.58);
+}
+
+.lightboxClose:focus-visible {
+  outline: 2px solid rgb(255 255 255 / 0.92);
+  outline-offset: 2px;
+}
+
+.lightboxTrack {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.lightboxTrack::-webkit-scrollbar {
+  display: none;
+}
+
+.lightboxSlide {
+  position: relative;
+  flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  overflow: hidden;
+  background: #0c0b0a;
+}
+
+/* Compteur en overlay — pas de barre dédiée en bas. */
+.lightboxCounter {
+  position: absolute;
+  left: 50%;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  z-index: 2;
+  margin: 0;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.45);
+  transform: translateX(-50%);
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: rgb(255 255 255 / 0.92);
+  pointer-events: none;
+}
+
+.thumbsSection {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0.85rem clamp(0.85rem, 2.5vw, 1.25rem) 0.35rem;
+  border-top: 1px solid #ebe6df;
+  background: #fff;
+}
+
 .stackShot {
   position: relative;
   width: 100%;
@@ -84,7 +268,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
-  margin-top: 0.75rem;
+  margin-top: 0;
 }
 
 .thumb {
@@ -318,28 +502,10 @@
 }
 
 .sizeCardLabel {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
   margin: 0;
   font-size: 0.75rem;
   font-weight: 500;
   color: #71717a;
-}
-
-.sizeCardHint {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 0.95rem;
-  height: 0.95rem;
-  border-radius: 999px;
-  border: 1px solid #d4d4d8;
-  font-size: 0.65rem;
-  font-style: italic;
-  font-weight: 600;
-  color: #a1a1aa;
-  cursor: help;
 }
 
 .sizeCardValue {
@@ -464,31 +630,69 @@
     overflow-y: auto;
   }
 
+  .bodyModal {
+    overflow-y: auto;
+  }
+
+  .bodyModal .infoCol {
+    padding-top: 1rem;
+  }
+
   .bodyPage {
     grid-template-columns: minmax(0, 1fr);
     row-gap: 1.25rem;
+    overflow-x: clip;
+    max-width: 100%;
   }
 
-  .bodyPage .galleryCol {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .pageGallery {
+    width: 100%;
+    max-width: 100%;
+    margin-inline: 0;
+    padding-inline: 0;
   }
 
-  .galleryCol,
-  .infoCol {
-    overflow: visible;
+  .pageGallery .heroSlide {
+    border-radius: 12px;
+    min-height: min(78vw, 58vh);
+  }
+
+  .pageGallery .heroTrack {
+    border-radius: 12px;
+  }
+
+  .bodyPage .infoCol {
+    display: block;
+    padding-inline: 0;
+    max-width: 100%;
+    overflow-x: clip;
   }
 
   .galleryCol {
     padding-bottom: 0.5rem;
   }
 
-  .bodyPage .infoCol {
-    display: block;
+  .bodyModal .galleryCol {
+    padding-bottom: 0;
   }
 
   .infoSticky {
     position: static;
     top: auto;
     padding-bottom: 0;
+    max-width: 100%;
+  }
+
+  .ctaRow {
+    max-width: 100%;
+  }
+
+  .ctaPrimary,
+  .ctaSecondary {
+    min-width: 0;
+  }
+
+  .ctaInline {
+    max-width: 100%;
   }
 }

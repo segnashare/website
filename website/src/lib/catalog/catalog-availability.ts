@@ -21,8 +21,8 @@ export function parseAvailabilitySlugs(raw: string[]): CatalogAvailabilityId[] {
 
 /**
  * — Disponible : `available` / `listed`
- * — Réservé : `in_cart` (panier)
- * — Vendu : `reserved` (badge Sold)
+ * — Réservé : `in_cart` (panier) / `reserved` (emprunt)
+ * — Vendu : `sold` (achat définitif — badge Sold)
  */
 export function itemStatusesForAvailability(availabilitySlugs: readonly string[]): string[] {
   const wanted = parseAvailabilitySlugs([...availabilitySlugs])
@@ -33,8 +33,9 @@ export function itemStatusesForAvailability(availabilitySlugs: readonly string[]
       statuses.add('listed')
     } else if (id === 'reserve') {
       statuses.add('in_cart')
-    } else if (id === 'vendu') {
       statuses.add('reserved')
+    } else if (id === 'vendu') {
+      statuses.add('sold')
     }
   }
   return [...statuses]

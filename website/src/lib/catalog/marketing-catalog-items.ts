@@ -60,11 +60,11 @@ export type MarketingCatalogGridItem = {
   item_size_id: string | null
   /** Aligné sur le payload RPC marketing (`size_code`). */
   size_code?: string | null
-  /** Statut pièce (ex. `available`, `reserved`). */
+  /** Statut pièce (ex. `available`, `reserved`, `sold`). */
   status?: string | null
   /** Top ~20 % des ajouts récents (catalogue marketing). */
   isNew?: boolean
-  /** Pièce indisponible / vendue (`reserved`). */
+  /** Pièce vendue (`sold`) — badge Sold, reste en catalogue en fin de liste. */
   isSold?: boolean
   coverUrl: string | null
   /** Cadrage BO / app (`items.photos` → `position`). */

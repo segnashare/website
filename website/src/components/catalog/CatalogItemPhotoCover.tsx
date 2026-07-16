@@ -15,6 +15,11 @@ type CatalogItemPhotoCoverProps = {
   className?: string
   /** Recadrage simple si pas de cadrage BO (ex. hotspot Sanity). */
   objectPosition?: string
+  /**
+   * Ignore le cadrage BO et centre l’image (`background-size: cover`).
+   * Utile pour les grands cadres (modal) où le crop catalogue affiche surtout le haut.
+   */
+  centerCover?: boolean
 }
 
 /**
@@ -25,6 +30,7 @@ export function CatalogItemPhotoCover({
   position,
   className = '',
   objectPosition,
+  centerCover = false,
 }: CatalogItemPhotoCoverProps) {
   const frameRef = useRef<HTMLDivElement>(null)
   const [naturalSize, setNaturalSize] = useState<{w: number; h: number} | null>(null)
@@ -32,7 +38,7 @@ export function CatalogItemPhotoCover({
   const [box, setBox] = useState({w: 0, h: 0})
 
   const pos = position ?? null
-  const useBoCrop = Boolean(pos && !isDefaultItemPhotoPosition(pos))
+  const useBoCrop = !centerCover && Boolean(pos && !isDefaultItemPhotoPosition(pos))
 
   useEffect(() => {
     let cancelled = false
@@ -88,10 +94,25 @@ export function CatalogItemPhotoCover({
     backgroundImage: `url(${imageUrl})`,
     backgroundRepeat: 'no-repeat',
     backgroundSize: 'cover',
-    backgroundPosition: objectPosition ?? 'center',
+    backgroundPosition: objectPosition ?? 'center center',
   }
 
   const frameClass = [styles.frame, className].filter(Boolean).join(' ')
+
+  /* Chemin dédié modal / lightbox : <img> cover centré, sans moteur BO. */
+  if (centerCover) {
+    return (
+      <div ref={frameRef} className={frameClass}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={imageUrl}
+          alt=""
+          className={styles.fallbackImg}
+          style={{objectFit: 'cover', objectPosition: objectPosition ?? 'center center'}}
+        />
+      </div>
+    )
+  }
 
   return (
     <div ref={frameRef} className={frameClass}>
@@ -101,7 +122,7 @@ export function CatalogItemPhotoCover({
           src={imageUrl}
           alt=""
           className={styles.fallbackImg}
-          style={objectPosition ? {objectPosition} : undefined}
+          style={{objectPosition: objectPosition ?? 'center center'}}
         />
       ) : fillStyle ? (
         <div className={styles.fill} style={fillStyle} aria-hidden />

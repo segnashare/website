@@ -1,5 +1,6 @@
 import {SiteNavChrome} from '@/components/home/SiteNavChrome'
 import {getHomePageData, getWebsiteHeaderNav} from '@/lib/sanity'
+import styles from './pieceLayout.module.css'
 
 export const revalidate = 86400
 
@@ -9,13 +10,13 @@ export default async function CataloguePieceLayout({children}: {children: React.
   const headerNav = homePage ?? siteNavFallback
 
   return (
-    <>
+    <div className={styles.root}>
       <SiteNavChrome
         header={headerNav}
         mobileNavId="mobile-nav-catalogue-piece"
         surface="light"
       />
       {children}
-    </>
+    </div>
   )
 }

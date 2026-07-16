@@ -34,8 +34,9 @@ export default async function CataloguePiecePage({params}: Props) {
     loadCatalogItemStyleLooks(id),
     loadCatalogItemRecommended({
       excludeItemId: id,
-      categoryId: detail.item_category_id,
       sizeId: detail.item_size_id,
+      sizeLabel: detail.size_label,
+      sizeCode: detail.size_code,
     }),
   ])
 

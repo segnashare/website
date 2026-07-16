@@ -18,6 +18,7 @@ import {
   withSort,
 } from '@/lib/catalog/catalog-browse-href'
 import {CATALOG_AVAILABILITY_OPTIONS} from '@/lib/catalog/catalog-availability'
+import {isMarketingCatalogItemAvailable} from '@/lib/catalog/catalog-sold-sort'
 import {buildPaginationRange} from '@/lib/catalog/catalog-pagination-range'
 import {categoryRoots, childrenOf} from '@/lib/catalog/catalog-category-tree'
 import type {CatalogBrowsePayload} from '@/lib/catalog/catalog-page-loader'
@@ -109,6 +110,7 @@ function normalizeForSearch(s: string): string {
 function GridCard({it, onOpen}: {it: MarketingCatalogGridItem; onOpen: (itemId: string) => void}) {
   const titleLine = it.displayTitle ?? it.title
   const sizeLine = formatCatalogCardSizeLabel(it.size_label, it.size_code)
+  const available = isMarketingCatalogItemAvailable(it.status)
   return (
     <button
       type="button"
@@ -122,7 +124,15 @@ function GridCard({it, onOpen}: {it: MarketingCatalogGridItem; onOpen: (itemId: 
         <CatalogGridCardMedia item={it} />
       </div>
       <div className={styles.cardBody}>
-        <span className={styles.cardTitle}>{titleLine}</span>
+        <div className={styles.cardTitleRow}>
+          <span className={styles.cardTitle}>{titleLine}</span>
+          <span
+            className={`${styles.cardAvailDot} ${available ? styles.cardAvailDotAvailable : styles.cardAvailDotUnavailable}`}
+            title={available ? 'Disponible' : 'Indisponible'}
+            aria-label={available ? 'Disponible' : 'Indisponible'}
+            role="img"
+          />
+        </div>
         <div className={styles.cardMetaRow}>
           <span className={styles.cardSize}>{sizeLine}</span>
           {it.isSold ? null : (
@@ -139,14 +149,22 @@ function QueryRailButton({
   children,
   disabled,
   onSelect,
+  'aria-label': ariaLabel,
 }: {
   className: string
   children: ReactNode
   disabled?: boolean
   onSelect: () => void
+  'aria-label'?: string
 }) {
   return (
-    <button type="button" className={className} disabled={disabled} onClick={() => void onSelect()}>
+    <button
+      type="button"
+      className={className}
+      disabled={disabled}
+      aria-label={ariaLabel}
+      onClick={() => void onSelect()}
+    >
       {children}
     </button>
   )
@@ -263,16 +281,17 @@ function PaginationControls({
   return (
     <nav className={styles.pagination} aria-label="Pagination catalogue">
       {currentPage <= 1 ? (
-        <span className={styles.paginationNav} style={{opacity: 0.35}} aria-disabled>
-          ‹&nbsp;PRÉCÉDENTE
+        <span className={styles.paginationNav} style={{opacity: 0.35}} aria-disabled aria-label="Précédente">
+          ‹<span className={styles.paginationNavLabel}>&nbsp;PRÉCÉDENTE</span>
         </span>
       ) : (
         <QueryRailButton
           className={styles.paginationNav}
           disabled={busy}
+          aria-label="Précédente"
           onSelect={() => onPage(Math.max(1, currentPage - 1))}
         >
-          ‹&nbsp;PRÉCÉDENTE
+          ‹<span className={styles.paginationNavLabel}>&nbsp;PRÉCÉDENTE</span>
         </QueryRailButton>
       )}
       <div className={styles.paginationPages}>
@@ -294,16 +313,17 @@ function PaginationControls({
         )}
       </div>
       {currentPage >= totalPages ? (
-        <span className={styles.paginationNav} style={{opacity: 0.35}} aria-disabled>
-          SUIVANTE&nbsp;›
+        <span className={styles.paginationNav} style={{opacity: 0.35}} aria-disabled aria-label="Suivante">
+          <span className={styles.paginationNavLabel}>SUIVANTE&nbsp;</span>›
         </span>
       ) : (
         <QueryRailButton
           className={styles.paginationNav}
           disabled={busy}
+          aria-label="Suivante"
           onSelect={() => onPage(Math.min(totalPages, currentPage + 1))}
         >
-          SUIVANTE&nbsp;›
+          <span className={styles.paginationNavLabel}>SUIVANTE&nbsp;</span>›
         </QueryRailButton>
       )}
     </nav>

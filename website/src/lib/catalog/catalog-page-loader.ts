@@ -17,6 +17,7 @@ import {
   type MarketingCatalogGridItem,
   type MarketingCatalogItemRow,
 } from '@/lib/catalog/marketing-catalog-items'
+import {sortMarketingCatalogSoldLast} from '@/lib/catalog/catalog-sold-sort'
 import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
 import type {SupabaseClient} from '@supabase/supabase-js'
 
@@ -141,7 +142,8 @@ async function fetchMarketingCatalogPageByAvailability(
   const byIdRows = await fetchMarketingCatalogItemsByIds(ids)
   const byId = new Map(byIdRows.map((r) => [r.id, r]))
   const items = ids.map((id) => byId.get(id)).filter((r): r is MarketingCatalogItemRow => Boolean(r))
-  return {items, total}
+  // Sold en dernier même si PostgREST ne peut pas exprimer le CASE du RPC.
+  return {items: sortMarketingCatalogSoldLast(items), total}
 }
 
 /** Charge le catalogue depuis `/catalogue` + query (`segment`, `categorie`, filtres). */
