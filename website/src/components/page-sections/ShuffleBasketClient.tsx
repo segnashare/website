@@ -24,13 +24,9 @@ type Props = {
 
 const MOBILE_MQ = '(max-width: 719px)'
 
+/** Toujours démarrer à 5 (SSR + 1er paint client) pour éviter un mismatch d’hydratation. */
 function useShuffleMaxItems(): number {
-  const [maxItems, setMaxItems] = useState(() => {
-    if (typeof window === 'undefined') return SHUFFLE_BASKET_MAX_ITEMS
-    return window.matchMedia(MOBILE_MQ).matches
-      ? SHUFFLE_BASKET_MAX_ITEMS_MOBILE
-      : SHUFFLE_BASKET_MAX_ITEMS
-  })
+  const [maxItems, setMaxItems] = useState(SHUFFLE_BASKET_MAX_ITEMS)
 
   useEffect(() => {
     const mq = window.matchMedia(MOBILE_MQ)

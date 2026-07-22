@@ -13,8 +13,10 @@ import {catalogAppSignupHref, catalogItemAppHref, catalogItemPagePath} from '@/l
 import type {CatalogItemDetailPayload} from '@/lib/catalog/catalog-item-detail'
 import type {CatalogItemLookMedia} from '@/lib/catalog/catalog-item-style-looks'
 import {formatCatalogCardSizeLabel} from '@/lib/catalog/format-catalog-card-size'
+import {itemDescriptionToSafeHtml} from '@/lib/catalog/item-description-format'
+import {formatItemDimensionDisplayValue, formatItemEraLabel} from '@/lib/catalog/item-era-fitting-dimensions'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
-import {useCallback, useEffect, useId, useRef, useState, type ReactNode, type UIEvent} from 'react'
+import {useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type UIEvent} from 'react'
 import {createPortal} from 'react-dom'
 import styles from './catalogItemDetailView.module.css'
 
@@ -104,18 +106,100 @@ function SizeConditionCard({
   itemTitle,
   sizeLine,
   condition,
+  fitting,
+  dimensions,
 }: {
   itemId: string
   itemTitle: string
   sizeLine: string
   condition: string | null
+  fitting: string | null
+  dimensions: Array<{label: string; value: string}>
 }) {
+  const panelId = useId()
+  const [sizeInfoOpen, setSizeInfoOpen] = useState(false)
+  const [coords, setCoords] = useState<{top: number; left: number; width: number; arrowLeft: number} | null>(
+    null,
+  )
+  const infoBtnRef = useRef<HTMLButtonElement>(null)
+  const bubbleRef = useRef<HTMLDivElement>(null)
   const conditionLine = condition?.trim() || '—'
+  const fittingText = fitting?.trim() || ''
+  const dims = dimensions.filter((d) => d.value.trim())
+  const hasSizeDetails = Boolean(fittingText) || dims.length > 0
+
+  useLayoutEffect(() => {
+    if (!sizeInfoOpen || !infoBtnRef.current) {
+      setCoords(null)
+      return
+    }
+    const place = () => {
+      const rect = infoBtnRef.current!.getBoundingClientRect()
+      const width = Math.min(280, window.innerWidth - 24)
+      const margin = 12
+      const anchorX = rect.left + rect.width / 2
+      let left = anchorX - width / 2
+      if (left < margin) left = margin
+      if (left + width > window.innerWidth - margin) left = window.innerWidth - margin - width
+      const arrowPad = 14
+      const arrowLeft = Math.min(Math.max(anchorX - left, arrowPad), width - arrowPad)
+      setCoords({top: rect.top - 10, left, width, arrowLeft})
+    }
+    place()
+    requestAnimationFrame(place)
+    window.addEventListener('scroll', place, true)
+    window.addEventListener('resize', place)
+    return () => {
+      window.removeEventListener('scroll', place, true)
+      window.removeEventListener('resize', place)
+    }
+  }, [sizeInfoOpen, fittingText, dims.length])
+
+  useEffect(() => {
+    if (!sizeInfoOpen) return
+    const onPointer = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node
+      if (bubbleRef.current?.contains(target)) return
+      if (infoBtnRef.current?.contains(target)) return
+      setSizeInfoOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSizeInfoOpen(false)
+    }
+    document.addEventListener('mousedown', onPointer)
+    document.addEventListener('touchstart', onPointer)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onPointer)
+      document.removeEventListener('touchstart', onPointer)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [sizeInfoOpen])
+
   return (
     <div className={styles.sizeCard}>
       <div className={styles.sizeCardGrid}>
         <div>
-          <p className={styles.sizeCardLabel}>Taille étiquette</p>
+          <p className={styles.sizeCardLabel}>
+            Taille étiquette
+            {hasSizeDetails ? (
+              <button
+                ref={infoBtnRef}
+                type="button"
+                className={styles.sizeCardInfoBtn}
+                aria-label="Détails taille : fitting et dimensions"
+                aria-expanded={sizeInfoOpen}
+                aria-controls={panelId}
+                onClick={() => setSizeInfoOpen((v) => !v)}
+              >
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 10v6" strokeLinecap="round" />
+                  <circle cx="12" cy="7" r="0.75" fill="currentColor" stroke="none" />
+                </svg>
+              </button>
+            ) : null}
+          </p>
           <p className={styles.sizeCardValue}>{sizeLine}</p>
         </div>
         <div>
@@ -123,6 +207,49 @@ function SizeConditionCard({
           <p className={styles.sizeCardValue}>{conditionLine}</p>
         </div>
       </div>
+
+      {sizeInfoOpen && coords && hasSizeDetails
+        ? createPortal(
+            <div
+              ref={bubbleRef}
+              id={panelId}
+              role="dialog"
+              aria-label="Fitting et dimensions"
+              className={styles.sizeCardBubble}
+              style={{
+                top: coords.top,
+                left: coords.left,
+                width: coords.width,
+                ['--size-bubble-arrow-left' as string]: `${coords.arrowLeft}px`,
+              }}
+            >
+              <span className={styles.sizeCardBubbleArrow} aria-hidden />
+              {fittingText ? (
+                <div className={styles.sizeCardDetailsBlock}>
+                  <p className={styles.sizeCardDetailsTitle}>Fitting</p>
+                  <p className={styles.sizeCardDetailsText}>{fittingText}</p>
+                </div>
+              ) : null}
+              {dims.length ? (
+                <div className={styles.sizeCardDetailsBlock}>
+                  <p className={styles.sizeCardDetailsTitle}>Dimensions</p>
+                  <ul className={styles.sizeCardDimsList}>
+                    {dims.map((d) => (
+                      <li key={d.label}>
+                        <span>{d.label}</span>
+                        <span className={styles.sizeCardDimsValue}>
+                          {formatItemDimensionDisplayValue(d.value)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </div>,
+            document.body,
+          )
+        : null}
+
       <div className={styles.sizeCardAsk}>
         <button
           type="button"
@@ -237,9 +364,11 @@ function InfoPanel({
   onBuyClick: () => void
 }) {
   const description = detail.description?.trim() || ''
+  const descriptionHtml = useMemo(() => itemDescriptionToSafeHtml(description), [description])
   const materials = detail.materials_label?.trim() || ''
   const color = detail.color_label?.trim() || ''
-  const showDescriptionSection = Boolean(description || materials || color)
+  const eraLabel = formatItemEraLabel(detail.item_era) ?? ''
+  const showDescriptionSection = Boolean(descriptionHtml || materials || color || eraLabel)
 
   return (
     <>
@@ -256,6 +385,8 @@ function InfoPanel({
         itemTitle={detail.title}
         sizeLine={sizeLine}
         condition={detail.condition_label}
+        fitting={detail.item_fitting}
+        dimensions={detail.item_dimensions}
       />
 
       <div className={styles.trustBlock}>
@@ -268,9 +399,15 @@ function InfoPanel({
       <div className={styles.appAccordionList}>
         {showDescriptionSection ? (
           <AppAccordion title="Description & mesures" defaultOpen>
+            <DetailLine label="Collection" value={eraLabel} />
             <DetailLine label="Couleur" value={color} />
             <DetailLine label="Matériaux" value={materials} />
-            <DetailLine label="Description" value={description} />
+            {descriptionHtml ? (
+              <div
+                className={styles.richDescription}
+                dangerouslySetInnerHTML={{__html: descriptionHtml}}
+              />
+            ) : null}
             {detail.category_label?.trim() ? (
               <DetailLine label="Catégorie" value={detail.category_label.trim()} />
             ) : null}
