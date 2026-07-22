@@ -61,12 +61,21 @@ export function ShuffleBasketClient({heading, intro, ctaLabel}: Props) {
     let cancelled = false
     ;(async () => {
       try {
-        const res = await fetch('/api/marketing/catalog?limit=60&sort=recent', {
-          credentials: 'same-origin',
-        })
-        if (!res.ok) return
-        const data = (await res.json()) as {items?: MarketingCatalogGridItem[]}
-        const items = (data.items ?? []).filter((item) => !item.isSold)
+        // 2 pages pour élargir le pool (sacs / chaussures / accessoires souvent hors top 60 récents).
+        const pages = await Promise.all([
+          fetch('/api/marketing/catalog?limit=60&sort=recent&page=1', {credentials: 'same-origin'}),
+          fetch('/api/marketing/catalog?limit=60&sort=recent&page=2', {credentials: 'same-origin'}),
+        ])
+        const merged = new Map<string, MarketingCatalogGridItem>()
+        for (const res of pages) {
+          if (!res.ok) continue
+          const data = (await res.json()) as {items?: MarketingCatalogGridItem[]}
+          for (const item of data.items ?? []) {
+            if (item.isSold) continue
+            merged.set(item.id, item)
+          }
+        }
+        const items = [...merged.values()]
         if (cancelled) return
         setPool(items)
         setReady(true)

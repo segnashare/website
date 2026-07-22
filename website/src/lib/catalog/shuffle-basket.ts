@@ -27,6 +27,19 @@ function categoryKey(item: MarketingCatalogGridItem): string {
   return `item:${item.id}`
 }
 
+/** Sacs / chaussures / bijoux / ceintures / accessoires — à inclure plus souvent. */
+function isAccentCategoryLabel(label: string | null | undefined): boolean {
+  const t = (label ?? '').trim().toLowerCase()
+  if (!t) return false
+  return /sac|chauss|bijou|ceinture|accessoire|bandouli|talon|mocassin|pantoufle|besace|cartable|fourre-tout/.test(
+    t,
+  )
+}
+
+function isAccentItem(item: MarketingCatalogGridItem): boolean {
+  return isAccentCategoryLabel(item.category_label)
+}
+
 function shuffleInPlace<T>(arr: T[]): T[] {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
@@ -110,15 +123,19 @@ export function drawShuffleBasket(
   const candidates: Candidate[] = []
 
   for (const targetCount of sizes) {
-    const attempts = targetCount === previous ? 10 : 22
+    const attempts = targetCount === previous ? 12 : 28
     for (let attempt = 0; attempt < attempts; attempt++) {
-      const basket = tryDrawCount(byCategory, categoryKeys, targetCount)
+      const basket = tryDrawCount(byCategory, categoryKeys, targetCount, {
+        // ~1 tirage sur 2 : forcer au moins 1 sac / chaussure / accessoire si possible
+        preferAccent: Math.random() < 0.55,
+      })
       if (!basket?.length) continue
       const total = shuffleBasketTotalEuro(basket)
+      const hasAccent = basket.some(isAccentItem)
       candidates.push({
         basket,
         total,
-        score: scoreBasketTotal(total),
+        score: scoreBasketTotal(total) + (hasAccent ? 28 : 0),
         count: basket.length,
       })
     }
@@ -142,8 +159,23 @@ function tryDrawCount(
   byCategory: Map<string, ShuffleBasketItem[]>,
   categoryKeys: string[],
   targetCount: number,
+  opts?: {preferAccent?: boolean},
 ): ShuffleBasketItem[] | null {
-  const cats = shuffleInPlace([...categoryKeys]).slice(0, targetCount)
+  const accentKeys = categoryKeys.filter((key) => {
+    const sample = byCategory.get(key)?.[0]
+    return sample ? isAccentItem(sample) : false
+  })
+  const otherKeys = categoryKeys.filter((key) => !accentKeys.includes(key))
+
+  let cats: string[]
+  if (opts?.preferAccent && accentKeys.length > 0 && targetCount >= 1) {
+    const forced = accentKeys[Math.floor(Math.random() * accentKeys.length)]!
+    const restPool = shuffleInPlace([...otherKeys, ...accentKeys.filter((k) => k !== forced)])
+    cats = [forced, ...restPool.slice(0, targetCount - 1)]
+    shuffleInPlace(cats)
+  } else {
+    cats = shuffleInPlace([...categoryKeys]).slice(0, targetCount)
+  }
   if (cats.length < targetCount) return null
 
   const picked: ShuffleBasketItem[] = []
@@ -158,7 +190,7 @@ function tryDrawCount(
 
   if (picked.length !== targetCount) return null
 
-  // Passe d’upgrade : remplacer par une pièce plus chère de la même catégorie si ça tient.
+  // Upgrade ok, mais ne remplace pas une pièce « accent » par du non-accent.
   upgradeInPlace(picked, byCategory)
 
   const total = shuffleBasketTotalEuro(picked)
