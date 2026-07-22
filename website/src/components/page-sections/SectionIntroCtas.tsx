@@ -18,6 +18,8 @@ type Props = {
   tone?: 'light' | 'dark'
   /** `large` = boutons plus grands (desktop), ex. section Citation. */
   size?: 'default' | 'large'
+  /** Garde les CTAs sur une seule ligne (pas de retour à la ligne). */
+  nowrap?: boolean
 }
 
 export function SectionIntroCtas({
@@ -27,6 +29,7 @@ export function SectionIntroCtas({
   secondaryCtaHref,
   tone = 'light',
   size = 'default',
+  nowrap = false,
 }: Props) {
   const primary = ctaPair(primaryCtaLabel, primaryCtaHref)
   const secondary = ctaPair(secondaryCtaLabel, secondaryCtaHref)
@@ -37,7 +40,14 @@ export function SectionIntroCtas({
 
   return (
     <div
-      className={`${styles.row} ${toneCls} ${size === 'large' ? styles.sizeLarge : ''}`.trim()}
+      className={[
+        styles.row,
+        toneCls,
+        size === 'large' ? styles.sizeLarge : '',
+        nowrap ? styles.nowrap : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
     >
       {primary ? (
         <CtaHrefLink href={primary.href} className={styles.primary}>

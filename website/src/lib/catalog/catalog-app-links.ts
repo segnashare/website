@@ -1,4 +1,4 @@
-/** Liens app Segna (placeholders marketing — pas de checkout site). */
+/** Liens app Segna (location / inscriptions). Achat Stripe : auth + checkout sur le website. */
 export const SEGNA_APP_BASE_URL = (process.env.NEXT_PUBLIC_SEGNA_APP_URL || 'https://app.segnashare.com').replace(
   /\/+$/,
   '',

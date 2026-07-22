@@ -219,6 +219,38 @@ export type TwoColumnTableSection = {
   motionPreset?: MotionPreset
 }
 
+export type ComparisonTableRow = {
+  _key: string
+  label?: string
+  guestCell?: string
+  memberCell?: string
+}
+
+export type ComparisonTableSection = {
+  _key: string
+  _type: 'comparisonTableSection'
+  heading?: string
+  intro?: string
+  guestColumnHeader?: string
+  memberColumnHeader?: string
+  highlightMemberColumn?: boolean | null
+  rows?: ComparisonTableRow[] | null
+  primaryCtaLabel?: string
+  primaryCtaHref?: string
+  secondaryCtaLabel?: string
+  secondaryCtaHref?: string
+  motionPreset?: MotionPreset
+}
+
+export type ShuffleBasketSection = {
+  _key: string
+  _type: 'shuffleBasketSection'
+  heading?: string
+  intro?: string
+  ctaLabel?: string
+  motionPreset?: MotionPreset
+}
+
 export type StatementBandSection = {
   _key: string
   _type: 'statementBand'
@@ -583,6 +615,8 @@ export type PageSection = (
   | HomeSection
   | RichTextSection
   | TwoColumnTableSection
+  | ComparisonTableSection
+  | ShuffleBasketSection
   | StatementBandSection
   | QuoteSection
   | TriptychSection
@@ -1115,8 +1149,15 @@ const documentPageSectionsGroq = `sections[]{
         rows[]{
           _key,
           firstCell,
-          secondCell
+          secondCell,
+          label,
+          guestCell,
+          memberCell
         },
+        guestColumnHeader,
+        memberColumnHeader,
+        highlightMemberColumn,
+        ctaLabel,
         splitRatio,
         contentWidth,
         backgroundColor,

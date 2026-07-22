@@ -450,6 +450,46 @@
   background: #2a2826;
 }
 
+.ctaPrimary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.checkoutReadyNote {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0.35rem 0 1rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.55rem;
+  background: #f4f4f5;
+  color: #3f3f46;
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.checkoutReadyText {
+  margin: 0;
+}
+
+.checkoutSignOut {
+  justify-self: start;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #14110f;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.checkoutSignOut:hover {
+  opacity: 0.7;
+}
+
 .ctaSecondary {
   background: #fff;
   color: #14110f;
@@ -517,6 +557,55 @@
   font-size: 0.95rem;
   font-weight: 650;
   color: #18181b;
+}
+
+.sizeCardAsk {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e4e4e7;
+}
+
+.sizeCardAskLink {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  appearance: none;
+  box-shadow: none;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+  color: #18181b;
+}
+
+.sizeCardAskIcon {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+  color: #18181b;
+}
+
+.sizeCardAskText {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  line-height: 1.4;
+  color: #18181b;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: #a1a1aa;
+}
+
+.sizeCardAskLink:hover .sizeCardAskText,
+.sizeCardAskLink:focus-visible .sizeCardAskText {
+  text-decoration-color: #18181b;
+}
+
+.sizeCardAskLink:focus-visible {
+  outline: none;
 }
 
 /* Accordéons app (ItemDetailAccordions) */

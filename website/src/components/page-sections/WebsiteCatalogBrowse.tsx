@@ -406,7 +406,8 @@ function WebsiteCatalogBrowseRemote({
       if (brands) sp.set('brands', brands)
       if (colors) sp.set('colors', colors)
       if (sizes) sp.set('sizes', sizes)
-      const res = await fetch(`/api/marketing/catalog?${sp.toString()}`, {cache: 'force-cache'})
+      // `default` : respecte Cache-Control API (signed URLs, pas de force stale).
+      const res = await fetch(`/api/marketing/catalog?${sp.toString()}`, {cache: 'default'})
       if (!res.ok) throw new Error(String(res.status))
       const data = (await res.json()) as {items?: MarketingCatalogGridItem[]; total?: number}
       setItems(Array.isArray(data.items) ? data.items : [])

@@ -7,7 +7,7 @@ const UUID_RE =
 
 type RouteContext = {params: Promise<{itemId: string}>}
 
-/** Détail pièce + galerie signée (cache CDN 24 h par item). */
+/** Détail pièce + galerie signée (cache CDN court — voir `catalogApiCacheHeaders`). */
 export async function GET(_req: Request, ctx: RouteContext) {
   const {itemId} = await ctx.params
   if (!UUID_RE.test(itemId)) {

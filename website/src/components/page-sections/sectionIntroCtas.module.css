@@ -6,6 +6,19 @@
   margin-top: clamp(1rem, 2vw, 1.35rem);
 }
 
+.nowrap {
+  flex-wrap: nowrap;
+  justify-content: center;
+}
+
+.nowrap .primary,
+.nowrap .secondary {
+  flex: 0 1 auto;
+  white-space: nowrap;
+  padding-inline: clamp(0.85rem, 3.5vw, 1.35rem);
+  font-size: clamp(0.78rem, 2.8vw, 0.9rem);
+}
+
 .primary,
 .secondary {
   display: inline-flex;

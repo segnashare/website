@@ -1,7 +1,6 @@
+import {SIGNED_URL_TTL_SEC} from '@/lib/catalog/catalog-cache'
 import {createSignedUrlForStoragePath} from '@/lib/catalog/storage-signed-url'
 import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
-
-const SIGNED_TTL_SEC = 60 * 60 * 24
 
 export type CatalogItemLookMedia = {
   lookId: string
@@ -94,14 +93,14 @@ export async function loadCatalogItemStyleLooks(itemId: string): Promise<Catalog
     const firstPath = paths[0]
     if (!firstPath) continue
 
-    const url = await createSignedUrlForStoragePath(supabase, firstPath, SIGNED_TTL_SEC, {
+    const url = await createSignedUrlForStoragePath(supabase, firstPath, SIGNED_URL_TTL_SEC, {
       explicitBucket: bucket,
     })
     if (!url) continue
 
     let posterUrl: string | null = null
     if (typeof row.video_poster_path === 'string' && row.video_poster_path.trim()) {
-      posterUrl = await createSignedUrlForStoragePath(supabase, row.video_poster_path, SIGNED_TTL_SEC, {
+      posterUrl = await createSignedUrlForStoragePath(supabase, row.video_poster_path, SIGNED_URL_TTL_SEC, {
         explicitBucket: bucket,
       })
     }

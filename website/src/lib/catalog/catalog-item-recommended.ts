@@ -3,6 +3,7 @@ import {
   fetchMarketingCatalogItemsPage,
   gridItemsFromRows,
   type MarketingCatalogGridItem,
+  type MarketingCatalogItemRow,
 } from '@/lib/catalog/marketing-catalog-items'
 import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
 import type {SupabaseClient} from '@supabase/supabase-js'
@@ -11,6 +12,8 @@ import type {SupabaseClient} from '@supabase/supabase-js'
 const RECOMMENDED_LIMIT = 12
 /** Pool plus large pour mélanger catégories / pièces. */
 const RECOMMENDED_FETCH = 60
+/** Minimum affiché — complète avec taille unique puis le reste du catalogue. */
+const RECOMMENDED_MIN = 6
 
 function sizeCodeToken(code: string | null | undefined): string {
   const raw = typeof code === 'string' ? code.trim().toLowerCase() : ''
@@ -25,6 +28,16 @@ function normalizeSizeKey(label: string | null | undefined, code: string | null 
   const labelRaw = typeof label === 'string' ? label.trim().toLowerCase() : ''
   if (!labelRaw || isUniqueSizeToken(labelRaw)) return 'tu'
   return labelRaw
+}
+
+function isUniqueSizeRow(row: MarketingCatalogItemRow): boolean {
+  if (!row.item_size_id) return true
+  const label = typeof row.size_label === 'string' ? row.size_label : ''
+  const code = typeof row.size_code === 'string' ? row.size_code : ''
+  if (label && isUniqueSizeToken(label)) return true
+  if (code && isUniqueSizeToken(code)) return true
+  if (!label && !code) return true
+  return false
 }
 
 function hashSeed(input: string): number {
@@ -84,6 +97,51 @@ async function resolveRecommendedSizeIds(
   return [...ids]
 }
 
+async function fetchRecommendedPool(params: {
+  sizeIds: string[]
+  excludeItemId: string
+}): Promise<MarketingCatalogItemRow[]> {
+  const page = await fetchMarketingCatalogItemsPage({
+    limit: Math.min(RECOMMENDED_FETCH, 100),
+    offset: 0,
+    sort: 'recent',
+    categoryIds: [],
+    brandIds: [],
+    colorIds: [],
+    sizeIds: params.sizeIds,
+  })
+  return page.items.filter((row) => row.id !== params.excludeItemId)
+}
+
+/**
+ * Complète le pool si trop peu de pièces même taille / TU :
+ * d’abord tailles uniques (y compris size_id null), puis le reste du catalogue.
+ */
+function fillRecommendedCandidates(
+  primary: MarketingCatalogItemRow[],
+  fallback: MarketingCatalogItemRow[],
+  seed: string,
+): MarketingCatalogItemRow[] {
+  const seen = new Set(primary.map((r) => r.id))
+  const unused = fallback.filter((r) => !seen.has(r.id))
+
+  const uniqueFill = seededShuffle(
+    unused.filter(isUniqueSizeRow),
+    `${seed}:tu`,
+  )
+  const otherFill = seededShuffle(
+    unused.filter((r) => !isUniqueSizeRow(r)),
+    `${seed}:other`,
+  )
+
+  const out = [...primary]
+  for (const row of [...uniqueFill, ...otherFill]) {
+    if (out.length >= RECOMMENDED_LIMIT) break
+    out.push(row)
+  }
+  return out
+}
+
 /** Pièces proches : même taille (+ tailles uniques), toutes catégories, ordre mélangé. */
 export async function loadCatalogItemRecommended(params: {
   excludeItemId: string
@@ -99,19 +157,22 @@ export async function loadCatalogItemRecommended(params: {
   if (!supabase) return []
 
   const sizeIds = await resolveRecommendedSizeIds(supabase, {sizeId, sizeLabel, sizeCode})
-  if (sizeIds.length === 0) return []
 
-  const page = await fetchMarketingCatalogItemsPage({
-    limit: Math.min(RECOMMENDED_FETCH, 100),
-    offset: 0,
-    sort: 'recent',
-    categoryIds: [],
-    brandIds: [],
-    colorIds: [],
-    sizeIds,
-  })
+  const primary =
+    sizeIds.length > 0
+      ? await fetchRecommendedPool({sizeIds, excludeItemId: params.excludeItemId})
+      : []
 
-  const candidates = page.items.filter((row) => row.id !== params.excludeItemId)
+  let candidates = primary
+
+  if (candidates.length < Math.max(RECOMMENDED_MIN, RECOMMENDED_LIMIT)) {
+    const fallback = await fetchRecommendedPool({
+      sizeIds: [],
+      excludeItemId: params.excludeItemId,
+    })
+    candidates = fillRecommendedCandidates(primary, fallback, params.excludeItemId)
+  }
+
   if (candidates.length === 0) return []
 
   const shuffled = seededShuffle(candidates, params.excludeItemId).slice(0, RECOMMENDED_LIMIT)

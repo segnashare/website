@@ -12,6 +12,10 @@ import {
   getFirstPhotoStoragePath,
   type ItemPhotoCoverPosition,
 } from '@/lib/catalog/item-photos'
+import {
+  SIGNED_URL_CACHE_REVALIDATE_SEC,
+  SIGNED_URL_TTL_SEC,
+} from '@/lib/catalog/catalog-cache'
 import {createSignedUrlForStoragePath, type StorageSignClient} from '@/lib/catalog/storage-signed-url'
 import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
 import type {SupabaseClient} from '@supabase/supabase-js'
@@ -97,16 +101,13 @@ export type MarketingCatalogItemRow = {
   condition_score: string | null
 }
 
-const SIGNED_TTL_SEC = 60 * 60 * 24
-const SIGNED_URL_CACHE_REVALIDATE_SEC = 86_400
-
 const getCachedSignedUrlForStoragePath = withDataCache(
   async (rawPath: string): Promise<string | null> => {
     const supabase = getSupabaseServiceRoleClient()
     if (!supabase) return null
-    return createSignedUrlForStoragePath(supabase, rawPath, SIGNED_TTL_SEC)
+    return createSignedUrlForStoragePath(supabase, rawPath, SIGNED_URL_TTL_SEC)
   },
-  ['marketing_catalog_signed_url_v1'],
+  ['marketing_catalog_signed_url_v2'],
   {revalidate: SIGNED_URL_CACHE_REVALIDATE_SEC},
 )
 

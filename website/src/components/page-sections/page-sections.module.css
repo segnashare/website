@@ -177,7 +177,7 @@
   }
 
   .quoteBody {
-    font-size: clamp(2.05rem, 6.2vw, 2.65rem);
+    font-size: clamp(1.92rem, 5.7vw, 2.45rem);
     line-height: 1.4;
     letter-spacing: -0.035em;
   }

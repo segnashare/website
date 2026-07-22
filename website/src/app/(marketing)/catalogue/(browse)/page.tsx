@@ -5,7 +5,8 @@ import {loadCatalogBrowse} from '@/lib/catalog/catalog-page-loader'
 import {heroTitlePlainText} from '@/lib/hero-title'
 import {getMarketingPageBySlug, urlFor} from '@/lib/sanity'
 
-export const revalidate = 86400
+/** Aligné sur `CATALOG_ISR_REVALIDATE_SEC` — coverUrl signées embarquées. */
+export const revalidate = 3600
 
 export async function generateMetadata(): Promise<Metadata> {
   const page = await getMarketingPageBySlug('catalogue')

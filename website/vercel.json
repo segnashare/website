@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/item-chat-discord-sync",
+      "schedule": "* * * * *"
+    }
+  ]
+}

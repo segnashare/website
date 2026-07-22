@@ -1,13 +1,19 @@
 'use client'
 
+import {CheckoutAuthModal} from '@/components/auth/CheckoutAuthModal'
+import {CheckoutSignupOnboardingModal} from '@/components/auth/CheckoutSignupOnboardingModal'
+import {resolveCheckoutOnboardingResume} from '@/lib/auth/checkout-onboarding-resume'
+import type {CheckoutOnboardingStep} from '@/lib/auth/checkout-onboarding-resume'
 import {CatalogItemLooksSection} from '@/components/catalog/CatalogItemLooksSection'
 import {CatalogItemPhotoCover} from '@/components/catalog/CatalogItemPhotoCover'
+import {openItemChat} from '@/lib/item-chat/client-storage'
 import {formatCatalogPurchasePriceLabel} from '@/lib/catalog/catalog-borrow-price-label'
 import {isMarketingCatalogItemSold} from '@/lib/catalog/catalog-card-badges'
-import {catalogAppSignupHref, catalogItemAppHref} from '@/lib/catalog/catalog-app-links'
+import {catalogAppSignupHref, catalogItemAppHref, catalogItemPagePath} from '@/lib/catalog/catalog-app-links'
 import type {CatalogItemDetailPayload} from '@/lib/catalog/catalog-item-detail'
 import type {CatalogItemLookMedia} from '@/lib/catalog/catalog-item-style-looks'
 import {formatCatalogCardSizeLabel} from '@/lib/catalog/format-catalog-card-size'
+import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import {useCallback, useEffect, useId, useRef, useState, type ReactNode, type UIEvent} from 'react'
 import {createPortal} from 'react-dom'
 import styles from './catalogItemDetailView.module.css'
@@ -93,7 +99,18 @@ function AppAccordion({
 }
 
 /** Carte taille / état type app (`ItemSizeConditionCard`). */
-function SizeConditionCard({sizeLine, condition}: {sizeLine: string; condition: string | null}) {
+function SizeConditionCard({
+  itemId,
+  itemTitle,
+  sizeLine,
+  condition,
+}: {
+  itemId: string
+  itemTitle: string
+  sizeLine: string
+  condition: string | null
+}) {
+  const conditionLine = condition?.trim() || '—'
   return (
     <div className={styles.sizeCard}>
       <div className={styles.sizeCardGrid}>
@@ -103,32 +120,79 @@ function SizeConditionCard({sizeLine, condition}: {sizeLine: string; condition: 
         </div>
         <div>
           <p className={styles.sizeCardLabel}>État</p>
-          <p className={styles.sizeCardValue}>{condition?.trim() || '—'}</p>
+          <p className={styles.sizeCardValue}>{conditionLine}</p>
         </div>
+      </div>
+      <div className={styles.sizeCardAsk}>
+        <button
+          type="button"
+          className={styles.sizeCardAskLink}
+          onClick={() =>
+            openItemChat({
+              itemId,
+              itemTitle,
+              itemSizeLabel: sizeLine,
+              itemConditionLabel: conditionLine,
+            })
+          }
+        >
+          <svg
+            className={styles.sizeCardAskIcon}
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden
+          >
+            <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" strokeLinejoin="round" />
+          </svg>
+          <span className={styles.sizeCardAskText}>
+            Une question sur la taille, l&apos;état ou un autre détail&nbsp;? Écris-nous.
+          </span>
+        </button>
       </div>
     </div>
   )
 }
 
-function CtaBlock({sold, appHref}: {sold: boolean; appHref: string}) {
+function CtaBlock({
+  sold,
+  appHref,
+  buyPending,
+  onBuyClick,
+}: {
+  sold: boolean
+  appHref: string
+  buyPending: boolean
+  onBuyClick: () => void
+}) {
   if (sold) {
     return <p className={styles.soldNote}>Cette pièce n&apos;est plus disponible.</p>
   }
   return (
     <div className={styles.ctaBlock}>
       <div className={styles.ctaRow}>
-        <button type="button" className={styles.ctaPrimary}>
+        <button
+          type="button"
+          className={styles.ctaPrimary}
+          disabled={buyPending}
+          onClick={onBuyClick}
+        >
           <span className={styles.ctaInline}>
-            <span>Achète avec</span>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/brand/stripe-wordmark-white.png"
-              alt="Stripe"
-              className={styles.ctaStripe}
-              width={72}
-              height={22}
-              decoding="async"
-            />
+            <span>{buyPending ? 'Chargement…' : 'Achète avec'}</span>
+            {buyPending ? null : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src="/brand/stripe-wordmark-white.png"
+                alt="Stripe"
+                className={styles.ctaStripe}
+                width={72}
+                height={22}
+                decoding="async"
+              />
+            )}
           </span>
         </button>
         <a href={appHref} className={styles.ctaSecondary}>
@@ -160,6 +224,8 @@ function InfoPanel({
   sizeLine,
   appHref,
   looks,
+  buyPending,
+  onBuyClick,
 }: {
   detail: CatalogItemDetailPayload
   titleId?: string
@@ -167,6 +233,8 @@ function InfoPanel({
   sizeLine: string
   appHref: string
   looks: CatalogItemLookMedia[]
+  buyPending: boolean
+  onBuyClick: () => void
 }) {
   const description = detail.description?.trim() || ''
   const materials = detail.materials_label?.trim() || ''
@@ -183,14 +251,19 @@ function InfoPanel({
         <p className={styles.price}>{formatCatalogPurchasePriceLabel(detail.price_points)}</p>
       )}
 
-      <SizeConditionCard sizeLine={sizeLine} condition={detail.condition_label} />
+      <SizeConditionCard
+        itemId={detail.id}
+        itemTitle={detail.title}
+        sizeLine={sizeLine}
+        condition={detail.condition_label}
+      />
 
       <div className={styles.trustBlock}>
         <TrustLine>Authenticité certifiée</TrustLine>
         <TrustLine>Un seul exemplaire en stock</TrustLine>
       </div>
 
-      <CtaBlock sold={sold} appHref={appHref} />
+      <CtaBlock sold={sold} appHref={appHref} buyPending={buyPending} onBuyClick={onBuyClick} />
 
       <div className={styles.appAccordionList}>
         {showDescriptionSection ? (
@@ -277,26 +350,132 @@ export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks 
   const [photoIndex, setPhotoIndex] = useState(0)
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [authOpen, setAuthOpen] = useState(false)
+  const [onboardingEmail, setOnboardingEmail] = useState<string | null>(null)
+  const [onboardingIntent, setOnboardingIntent] = useState<'signup' | 'signin'>('signup')
+  const [onboardingInitialStep, setOnboardingInitialStep] = useState<CheckoutOnboardingStep>(1)
+  const [buyPending, setBuyPending] = useState(false)
+  const [authError, setAuthError] = useState<string | null>(null)
+  const [checkoutReady, setCheckoutReady] = useState(false)
   const heroTrackRef = useRef<HTMLDivElement | null>(null)
   const lightboxTrackRef = useRef<HTMLDivElement | null>(null)
   const photoIndexRef = useRef(0)
   const pointerStartX = useRef<number | null>(null)
   const pointerMoved = useRef(false)
+  const checkoutHandledRef = useRef(false)
   const slots = detail.gallery
   const sizeLine = formatCatalogCardSizeLabel(detail.size_label, detail.size_code)
   const sold = isMarketingCatalogItemSold(detail.status)
   const appHref = catalogItemAppHref(detail.id)
   const isPage = layout === 'page'
+  const authReturnPath = `${catalogItemPagePath(detail.id)}?checkout=1`
 
   photoIndexRef.current = photoIndex
+
+  const openOnboardingResume = useCallback((email: string, step: CheckoutOnboardingStep) => {
+    setAuthOpen(false)
+    setOnboardingIntent('signup')
+    setOnboardingInitialStep(step)
+    setOnboardingEmail(email)
+  }, [])
+
+  const beginAuthenticatedCheckout = useCallback(() => {
+    setAuthOpen(false)
+    setOnboardingEmail(null)
+    setBuyPending(false)
+    setCheckoutReady(true)
+    // Prochaine étape : session Stripe Checkout (livraison + paiement) sur le website.
+  }, [])
+
+  const handleSignOut = useCallback(async () => {
+    try {
+      const supabase = createSupabaseBrowserClient()
+      await supabase.auth.signOut()
+    } catch {
+      // ignore
+    }
+    setCheckoutReady(false)
+    setAuthError(null)
+    setOnboardingEmail(null)
+    setOnboardingInitialStep(1)
+  }, [])
+
+  const handleBuyClick = useCallback(async () => {
+    if (sold || buyPending) return
+    setBuyPending(true)
+    setAuthError(null)
+    try {
+      const supabase = createSupabaseBrowserClient()
+      const resume = await resolveCheckoutOnboardingResume(supabase)
+      if (resume.status === 'ready') {
+        beginAuthenticatedCheckout()
+        return
+      }
+      if (resume.status === 'resume') {
+        openOnboardingResume(resume.email, resume.step)
+        return
+      }
+      setAuthOpen(true)
+    } catch {
+      setAuthOpen(true)
+    } finally {
+      setBuyPending(false)
+    }
+  }, [beginAuthenticatedCheckout, buyPending, openOnboardingResume, sold])
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
+  /** Reprise après OAuth (`?checkout=1`) ou erreur auth. */
+  useEffect(() => {
+    if (sold || typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const wantsCheckout = params.get('checkout') === '1'
+    const oauthError = params.get('auth_error')
+    if (!wantsCheckout && !oauthError) return
+    if (checkoutHandledRef.current) return
+    checkoutHandledRef.current = true
+
+    if (oauthError) {
+      setAuthError(oauthError)
+      setAuthOpen(true)
+    }
+
+    const cleanUrl = () => {
+      params.delete('checkout')
+      params.delete('auth_error')
+      const next = params.toString()
+      const path = `${window.location.pathname}${next ? `?${next}` : ''}${window.location.hash}`
+      window.history.replaceState(null, '', path)
+    }
+
+    void (async () => {
+      try {
+        const supabase = createSupabaseBrowserClient()
+        if (wantsCheckout && !oauthError) {
+          const resume = await resolveCheckoutOnboardingResume(supabase)
+          if (resume.status === 'ready') {
+            beginAuthenticatedCheckout()
+          } else if (resume.status === 'resume') {
+            openOnboardingResume(resume.email, resume.step)
+          } else {
+            setAuthOpen(true)
+          }
+        }
+      } catch {
+        if (wantsCheckout) setAuthOpen(true)
+      } finally {
+        cleanUrl()
+      }
+    })()
+  }, [beginAuthenticatedCheckout, openOnboardingResume, sold])
+
   useEffect(() => {
     setPhotoIndex(0)
     setLightboxOpen(false)
+    setCheckoutReady(false)
+    checkoutHandledRef.current = false
     const track = heroTrackRef.current
     if (track) track.scrollTo({left: 0, behavior: 'auto'})
   }, [detail.id])
@@ -442,10 +621,50 @@ export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks 
               sizeLine={sizeLine}
               appHref={appHref}
               looks={looks}
+              buyPending={buyPending}
+              onBuyClick={() => void handleBuyClick()}
             />
+            {checkoutReady ? (
+              <div className={styles.checkoutReadyNote} role="status">
+                <p className={styles.checkoutReadyText}>
+                  Compte connecté. Paiement Stripe à finaliser — prochaine étape.
+                </p>
+                <button type="button" className={styles.checkoutSignOut} onClick={() => void handleSignOut()}>
+                  Se déconnecter
+                </button>
+              </div>
+            ) : null}
           </div>
         </div>
         {lightbox}
+        <CheckoutAuthModal
+          open={authOpen}
+          onClose={() => setAuthOpen(false)}
+          onAuthenticated={beginAuthenticatedCheckout}
+          onStartEmailOnboarding={(email, intent = 'signup') => {
+            setAuthOpen(false)
+            setOnboardingIntent(intent)
+            setOnboardingInitialStep(1)
+            setOnboardingEmail(email)
+          }}
+          returnPath={authReturnPath}
+          initialAuthError={authError}
+        />
+        <CheckoutSignupOnboardingModal
+          open={Boolean(onboardingEmail)}
+          email={onboardingEmail ?? ''}
+          intent={onboardingIntent}
+          initialStep={onboardingInitialStep}
+          onClose={() => {
+            setOnboardingEmail(null)
+            setOnboardingInitialStep(1)
+          }}
+          onComplete={() => {
+            setOnboardingEmail(null)
+            setOnboardingInitialStep(1)
+            beginAuthenticatedCheckout()
+          }}
+        />
       </div>
     )
   }
@@ -511,9 +730,49 @@ export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks 
           sizeLine={sizeLine}
           appHref={appHref}
           looks={[]}
+          buyPending={buyPending}
+          onBuyClick={() => void handleBuyClick()}
         />
+        {checkoutReady ? (
+          <div className={styles.checkoutReadyNote} role="status">
+            <p className={styles.checkoutReadyText}>
+              Compte connecté. Paiement Stripe à finaliser — prochaine étape.
+            </p>
+            <button type="button" className={styles.checkoutSignOut} onClick={() => void handleSignOut()}>
+              Se déconnecter
+            </button>
+          </div>
+        ) : null}
       </div>
       {lightbox}
+      <CheckoutAuthModal
+        open={authOpen}
+        onClose={() => setAuthOpen(false)}
+        onAuthenticated={beginAuthenticatedCheckout}
+        onStartEmailOnboarding={(email, intent = 'signup') => {
+          setAuthOpen(false)
+          setOnboardingIntent(intent)
+          setOnboardingInitialStep(1)
+          setOnboardingEmail(email)
+        }}
+        returnPath={authReturnPath}
+        initialAuthError={authError}
+      />
+      <CheckoutSignupOnboardingModal
+        open={Boolean(onboardingEmail)}
+        email={onboardingEmail ?? ''}
+        intent={onboardingIntent}
+        initialStep={onboardingInitialStep}
+        onClose={() => {
+          setOnboardingEmail(null)
+          setOnboardingInitialStep(1)
+        }}
+        onComplete={() => {
+          setOnboardingEmail(null)
+          setOnboardingInitialStep(1)
+          beginAuthenticatedCheckout()
+        }}
+      />
     </div>
   )
 }

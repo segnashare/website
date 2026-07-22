@@ -11,6 +11,8 @@ import {SectionSplitMedia} from './SectionSplitMedia'
 import {SectionStatementBand} from './SectionStatementBand'
 import {SectionThreeStepCards} from './SectionThreeStepCards'
 import {SectionTriptych} from './SectionTriptych'
+import {SectionComparisonTable} from './SectionComparisonTable'
+import {SectionShuffleBasket} from './SectionShuffleBasket'
 import {SectionTwoColumnTable} from './SectionTwoColumnTable'
 import {SectionWebsiteDbCatalog} from './SectionWebsiteDbCatalog'
 import {SectionVisibilityGate} from './sectionVisibility'
@@ -31,6 +33,18 @@ function isTwoColumnTableSection(
   section: PageSection,
 ): section is Extract<PageSection, {_type: 'twoColumnTableSection'}> {
   return section._type === 'twoColumnTableSection'
+}
+
+function isComparisonTableSection(
+  section: PageSection,
+): section is Extract<PageSection, {_type: 'comparisonTableSection'}> {
+  return section._type === 'comparisonTableSection'
+}
+
+function isShuffleBasketSection(
+  section: PageSection,
+): section is Extract<PageSection, {_type: 'shuffleBasketSection'}> {
+  return section._type === 'shuffleBasketSection'
 }
 
 function isHelpCenterHubSection(
@@ -174,6 +188,14 @@ export function PageSectionsRenderer({
 
         if (isTwoColumnTableSection(section)) {
           return gate(<SectionTwoColumnTable section={section} />)
+        }
+
+        if (isComparisonTableSection(section)) {
+          return gate(<SectionComparisonTable section={section} />)
+        }
+
+        if (isShuffleBasketSection(section)) {
+          return gate(<SectionShuffleBasket section={section} />)
         }
 
         if (isSectionBlock(section)) {

@@ -3,6 +3,7 @@ import {Montserrat, Playfair_Display} from 'next/font/google'
 import {GoogleAnalyticsHeadScripts} from '@/components/analytics/GoogleAnalytics'
 import {CookiebotScript} from '@/components/consent/Cookiebot'
 import {GoogleConsentModeDefault} from '@/components/consent/GoogleConsentModeDefault'
+import {ItemChatShell} from '@/components/item-chat/ItemChatShell'
 import './globals.css'
 
 const playfairDisplay = Playfair_Display({
@@ -37,7 +38,9 @@ export default function RootLayout({children}: Readonly<{children: React.ReactNo
         <CookiebotScript />
         <GoogleAnalyticsHeadScripts />
       </head>
-      <body>{children}</body>
+      <body>
+        <ItemChatShell>{children}</ItemChatShell>
+      </body>
     </html>
   )
 }

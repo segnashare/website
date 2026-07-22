@@ -3,7 +3,7 @@ import {catalogApiCacheHeaders} from '@/lib/catalog/catalog-cache'
 import {loadCatalogBrowse} from '@/lib/catalog/catalog-page-loader'
 import {parseCatalogBrowseQuery} from '@/lib/catalog/catalog-search-params'
 
-/** Grille + facettes scopées pour filtres client (cache CDN 24 h par combinaison query). */
+/** Grille + facettes scopées pour filtres client (cache CDN court — signed URLs). */
 export async function GET(req: Request) {
   const url = new URL(req.url)
   const query = parseCatalogBrowseQuery(url.searchParams)
