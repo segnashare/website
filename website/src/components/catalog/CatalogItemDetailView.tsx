@@ -416,24 +416,42 @@ function InfoPanel({
 
         <AppAccordion title="Livraison">
           <p className={styles.description}>
-            Les commandes sont préparées sous <strong>24 à 48&nbsp;h</strong> dans nos ateliers parisiens, puis
-            expédiées via transporteur express.
+            <strong>Modes de livraison proposés</strong>
           </p>
-          <p className={styles.description}>Délais indicatifs à compter de l&apos;expédition&nbsp;:</p>
-          <ul className={styles.bulletList}>
-            <li>
-              <strong>France</strong>&nbsp;: environ 1 jour ouvré
-            </li>
-            <li>
-              <strong>Europe</strong>&nbsp;: 1 à 2 jours ouvrés
-            </li>
-            <li>
-              <strong>Hors Europe</strong>&nbsp;: 1 à 2 jours ouvrés (hors délais douaniers)
-            </li>
-          </ul>
+
+          <p className={styles.deliveryModeTitle}>1. Livraison à domicile</p>
+          <p className={styles.deliveryOptionTitle}>Chrono 18 – Domicile</p>
           <p className={styles.description}>
-            Ces délais peuvent varier selon le transporteur, les formalités douanières ou des événements
-            indépendants de Segna. Pour les modalités de retour, consultez notre{' '}
+            Délai&nbsp;: 1 à 2 jours ouvrés après expédition.
+          </p>
+          <p className={styles.description}>Livraison directement chez toi, partout en France.</p>
+          <p className={styles.description}>Idéal pour une tenue dont tu as besoin rapidement.</p>
+
+          <p className={styles.deliveryOptionTitle}>Mondial Relay Standard – Domicile</p>
+          <p className={styles.description}>
+            Délai&nbsp;: 4 à 5 jours ouvrés après expédition.
+          </p>
+          <p className={styles.description}>Option plus économique pour les locations moins urgentes.</p>
+
+          <p className={styles.deliveryModeTitle}>2. Livraison en point relais</p>
+          <p className={styles.deliveryOptionTitle}>Livraison point relais Mondial Relay</p>
+          <p className={styles.description}>
+            Délai&nbsp;: 4 à 5 jours ouvrés après expédition.
+          </p>
+          <p className={styles.description}>
+            Tu choisis le point relais le plus pratique (près de chez toi, du bureau, etc.).
+          </p>
+          <p className={styles.description}>
+            Pratique si tu n&apos;es pas disponible pour la réception à domicile.
+          </p>
+
+          <p className={styles.deliveryModeTitle}>3. Retour des pièces</p>
+          <p className={styles.description}>
+            Le retour se fait via dépôt en point relais Chronopost / Mondial Relay, selon le mode choisi.
+          </p>
+          <p className={styles.description}>
+            Les instructions de retour (étiquette, délai, point relais) sont précisées dans ton mail de
+            confirmation et dans le{' '}
             <a href={HELP_URL} className={styles.inlineLink} target="_blank" rel="noreferrer">
               centre d&apos;aide
             </a>
