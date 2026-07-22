@@ -23,10 +23,124 @@
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.16);
 }
 
+/* Desktop : agrandi = panneau plus grand */
 .panelExpanded {
   width: min(calc(100vw - 1.5rem), 420px);
   height: calc(100dvh * 2 / 3);
   max-height: none;
+}
+
+/* Phone : panneau réduit ~1/3 écran ; agrandi = plein écran */
+@media (max-width: 767px) {
+  .panel {
+    width: calc(100vw - 1.25rem);
+    height: min(42dvh, 380px);
+    min-height: 0;
+    max-height: min(42dvh, 380px);
+  }
+
+  .panelExpanded {
+    width: min(calc(100vw - 1.5rem), 420px);
+    height: auto;
+    max-height: none;
+  }
+
+  .rootExpanded {
+    inset: 0;
+    right: auto;
+    bottom: auto !important;
+    z-index: 100;
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    align-items: stretch;
+    gap: 0;
+    pointer-events: auto;
+  }
+
+  .rootExpanded .panel,
+  .rootExpanded .panelExpanded {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .rootExpanded .fab {
+    display: none;
+  }
+
+  .header {
+    padding: 1rem 1rem;
+  }
+
+  .headerListTitle {
+    font-size: 1.125rem;
+  }
+
+  .headerSub {
+    font-size: 0.8125rem;
+  }
+
+  .expand,
+  .back {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .close {
+    font-size: 1.6rem;
+    padding: 0.35rem 0.55rem;
+  }
+
+  .listRow {
+    gap: 0.9rem;
+    padding: 1rem 1.1rem;
+  }
+
+  .listAvatar {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .listName {
+    font-size: 1rem;
+  }
+
+  .listPreview {
+    font-size: 0.875rem;
+  }
+
+  .listWhen {
+    font-size: 0.75rem;
+  }
+
+  .bubbleStaff,
+  .bubbleStaffSolo,
+  .bubbleVisitor {
+    font-size: 0.9375rem;
+    padding: 0.8rem 1rem;
+  }
+
+  .pillInput {
+    font-size: 17px;
+    padding: 0.7rem 0;
+  }
+
+  .pillSend {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .listComposer,
+  .form {
+    padding: 0.85rem 1rem 1rem;
+  }
 }
 
 .header {
@@ -256,8 +370,89 @@
 }
 
 .staffMeta {
-  margin: 0 0 0.25rem;
+  margin: 0;
   font-size: 0.75rem;
+}
+
+.bubbleStaff .staffMeta {
+  margin: 0 0 0.25rem;
+}
+
+.staffJoined {
+  display: flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 0.45rem;
+  max-width: 95%;
+  padding: 0.15rem 0;
+}
+
+.staffJoinedText {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: #71717a;
+}
+
+.staffJoinedText strong {
+  font-weight: 650;
+  color: #27272a;
+}
+
+.staffMsg {
+  display: flex;
+  flex-direction: column;
+  align-self: flex-start;
+  gap: 0.3rem;
+  max-width: 92%;
+}
+
+.staffMsgHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.staffAvatarSm,
+.staffAvatar {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  object-fit: cover;
+  box-shadow: 0 0 0 1px #e4e4e7;
+}
+
+.staffAvatarFallbackSm,
+.staffAvatarFallback {
+  display: inline-flex;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #e4e4e7;
+  color: #52525b;
+  font-size: 0.625rem;
+  font-weight: 650;
+}
+
+.staffRow {
+  display: flex;
+  align-items: flex-end;
+  align-self: flex-start;
+  gap: 0.5rem;
+  max-width: 92%;
+}
+
+.staffCol {
+  min-width: 0;
+}
+
+.staffMsg .bubbleStaffSolo,
+.staffCol .bubbleStaffSolo {
+  border-top-left-radius: 0.35rem;
 }
 
 .bubbleStaffSolo {

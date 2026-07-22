@@ -2,7 +2,35 @@
 
 import {FormEvent, useEffect, useRef, useState} from 'react'
 import {useItemChat} from '@/components/item-chat/ItemChatProvider'
+import {ITEM_CHAT_STAFF_JOINED_BODY} from '@/lib/item-chat/types'
 import styles from './itemChatBubble.module.css'
+
+function StaffAvatar({
+  name,
+  url,
+}: {
+  name: string
+  url?: string | null
+}) {
+  if (url) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={url}
+        alt=""
+        width={24}
+        height={24}
+        className={styles.staffAvatarSm}
+        referrerPolicy="no-referrer"
+      />
+    )
+  }
+  return (
+    <span aria-hidden className={styles.staffAvatarFallbackSm}>
+      {name.slice(0, 1).toUpperCase()}
+    </span>
+  )
+}
 
 function formatWhen(iso: string): string {
   try {
@@ -56,6 +84,17 @@ export function ItemChatBubble() {
     if (el) el.scrollTop = el.scrollHeight
   }, [panelOpen, view, messages.length])
 
+  useEffect(() => {
+    if (!panelOpen || !expanded) return
+    const mq = window.matchMedia('(max-width: 767px)')
+    if (!mq.matches) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [panelOpen, expanded])
+
   const title =
     conversation?.itemTitle ||
     pendingItem?.itemTitle ||
@@ -80,7 +119,7 @@ export function ItemChatBubble() {
   }
 
   return (
-    <div className={styles.root}>
+    <div className={`${styles.root} ${expanded ? styles.rootExpanded : ''}`}>
       {panelOpen ? (
         <div
           className={`${styles.panel} ${expanded ? styles.panelExpanded : ''}`}
@@ -341,20 +380,52 @@ export function ItemChatBubble() {
                   {welcomeCopy}
                 </div>
 
-                {messages.map((m) => (
-                  <div
-                    key={m.id}
-                    className={
-                      m.role === 'visitor'
-                        ? styles.bubbleVisitor
-                        : m.role === 'staff'
-                          ? styles.bubbleStaffSolo
-                          : styles.bubbleSystem
+                {messages.map((m) => {
+                  if (m.role === 'visitor') {
+                    return (
+                      <div key={m.id} className={styles.bubbleVisitor}>
+                        {m.body}
+                      </div>
+                    )
+                  }
+                  if (m.role === 'system') {
+                    const joinName = m.staffDisplayName?.trim()
+                    if (joinName && m.body === ITEM_CHAT_STAFF_JOINED_BODY) {
+                      return (
+                        <div key={m.id} className={styles.staffJoined}>
+                          <StaffAvatar name={joinName} url={m.staffAvatarUrl} />
+                          <p className={styles.staffJoinedText}>
+                            <strong>{joinName}</strong> a rejoint la conversation
+                          </p>
+                        </div>
+                      )
                     }
-                  >
-                    {m.body}
-                  </div>
-                ))}
+                    return (
+                      <div key={m.id} className={styles.bubbleSystem}>
+                        {m.body}
+                      </div>
+                    )
+                  }
+                  const name = m.staffDisplayName?.trim()
+                  if (name) {
+                    return (
+                      <div key={m.id} className={styles.staffMsg}>
+                        <div className={styles.staffMsgHeader}>
+                          <StaffAvatar name={name} url={m.staffAvatarUrl} />
+                          <p className={styles.staffMeta}>
+                            <strong>{name}</strong>
+                          </p>
+                        </div>
+                        <div className={styles.bubbleStaffSolo}>{m.body}</div>
+                      </div>
+                    )
+                  }
+                  return (
+                    <div key={m.id} className={styles.bubbleStaffSolo}>
+                      {m.body}
+                    </div>
+                  )
+                })}
                 {awaitingUsefulness ? (
                   <div className={styles.usefulnessRow}>
                     <button
@@ -374,7 +445,13 @@ export function ItemChatBubble() {
                       Non
                     </button>
                   </div>
-                ) : messages.some((m) => m.role === 'visitor') ? (
+                ) : messages.some((m) => m.role === 'visitor') &&
+                  !messages.some(
+                    (m) =>
+                      m.role === 'system' &&
+                      m.body === ITEM_CHAT_STAFF_JOINED_BODY &&
+                      m.staffDisplayName,
+                  ) ? (
                   <p className={styles.awaiting}>En attente de réponse</p>
                 ) : null}
               </div>

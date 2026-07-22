@@ -1,6 +1,12 @@
 import {NextResponse} from 'next/server'
 import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
-import {appendStaffMessage, normalizeMessageBody} from '@/lib/item-chat/service'
+import {
+  appendStaffMessage,
+  bindDiscordThread,
+  normalizeMessageBody,
+  normalizeStaffAvatarUrl,
+  normalizeStaffDisplayName,
+} from '@/lib/item-chat/service'
 import {UUID_RE} from '@/lib/item-chat/types'
 
 function itemChatInternalSecrets(): string[] {
@@ -12,11 +18,15 @@ function itemChatInternalSecrets(): string[] {
 /**
  * Réponse staff depuis n8n (après message Discord).
  * Auth : Bearer = `SEGNA_INTERNAL_ITEM_CHAT_SECRET` (ou `N8N_ITEM_CHAT_WEBHOOK_SECRET`).
- * Body : `{ "conversation_id": "uuid", "body": "...", "external_id"?: "discord-msg-id" }`
+ * Body : `{ "conversation_id", "body", "external_id"?, "discord_thread_id"?, "staff_display_name"?, "staff_avatar_url"? }`
+ * Si `discord_thread_id` est fourni, le fil est lié (utile si le bind dédié a échoué).
  */
 export async function POST(request: Request) {
   const candidates = itemChatInternalSecrets()
   if (candidates.length === 0) {
+    console.error(
+      '[item-chat/reply] missing SEGNA_INTERNAL_ITEM_CHAT_SECRET (and N8N_ITEM_CHAT_WEBHOOK_SECRET)',
+    )
     return NextResponse.json(
       {ok: false as const, error: 'internal_secret_not_configured'},
       {status: 503},
@@ -29,7 +39,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ok: false as const, error: 'unauthorized'}, {status: 401})
   }
 
-  let body: {conversation_id?: unknown; body?: unknown; external_id?: unknown}
+  let body: {
+    conversation_id?: unknown
+    body?: unknown
+    external_id?: unknown
+    discord_thread_id?: unknown
+    staff_display_name?: unknown
+    staff_avatar_url?: unknown
+  }
   try {
     body = (await request.json()) as typeof body
   } catch {
@@ -43,6 +60,12 @@ export async function POST(request: Request) {
     typeof body.external_id === 'string' && body.external_id.trim()
       ? body.external_id.trim()
       : null
+  const discordThreadId =
+    typeof body.discord_thread_id === 'string' && body.discord_thread_id.trim()
+      ? body.discord_thread_id.trim()
+      : null
+  const staffDisplayName = normalizeStaffDisplayName(body.staff_display_name)
+  const staffAvatarUrl = normalizeStaffAvatarUrl(body.staff_avatar_url)
 
   if (!UUID_RE.test(conversationId) || !messageBody) {
     return NextResponse.json({ok: false as const, error: 'invalid_payload'}, {status: 400})
@@ -54,11 +77,20 @@ export async function POST(request: Request) {
   }
 
   try {
+    if (discordThreadId) {
+      await bindDiscordThread({
+        admin,
+        conversationId,
+        discordThreadId,
+      })
+    }
     const result = await appendStaffMessage({
       admin,
       conversationId,
       body: messageBody,
       externalId,
+      staffDisplayName,
+      staffAvatarUrl,
     })
     if (!result) {
       return NextResponse.json(
@@ -70,6 +102,7 @@ export async function POST(request: Request) {
       ok: true as const,
       message: result.message,
       conversation_id: result.conversation.id,
+      discord_thread_id: result.conversation.discord_thread_id,
     })
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
