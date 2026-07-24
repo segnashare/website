@@ -1,0 +1,61 @@
+.link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  flex-shrink: 0;
+  text-decoration: none;
+  border-radius: 999px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.link:hover {
+  background: rgb(127 127 127 / 0.12);
+}
+
+.link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+/* Icône brand (PNG noir) teintée via mask + currentColor */
+.icon {
+  display: block;
+  width: 1.35rem;
+  height: 1.35rem;
+  background-color: currentColor;
+  -webkit-mask: url('/brand/cart-icon.png') center / contain no-repeat;
+  mask: url('/brand/cart-icon.png') center / contain no-repeat;
+}
+
+.badge {
+  position: absolute;
+  top: 0.1rem;
+  right: 0.05rem;
+  min-width: 1.05rem;
+  height: 1.05rem;
+  padding: 0 0.28rem;
+  border-radius: 999px;
+  background: #111;
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1.05rem;
+  text-align: center;
+  box-sizing: border-box;
+  box-shadow: 0 0 0 1.5px #fff;
+}
+
+.toneLight {
+  color: #fff;
+}
+
+.toneDark {
+  color: #111;
+}
+
+.toneDark:hover {
+  background: rgb(0 0 0 / 0.06);
+}

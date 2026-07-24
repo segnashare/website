@@ -1,21 +1,18 @@
 'use client'
 
-import {CheckoutAuthModal} from '@/components/auth/CheckoutAuthModal'
-import {CheckoutSignupOnboardingModal} from '@/components/auth/CheckoutSignupOnboardingModal'
-import {resolveCheckoutOnboardingResume} from '@/lib/auth/checkout-onboarding-resume'
-import type {CheckoutOnboardingStep} from '@/lib/auth/checkout-onboarding-resume'
+import {AddToCartModal} from '@/components/cart/AddToCartModal'
 import {CatalogItemLooksSection} from '@/components/catalog/CatalogItemLooksSection'
 import {CatalogItemPhotoCover} from '@/components/catalog/CatalogItemPhotoCover'
 import {openItemChat} from '@/lib/item-chat/client-storage'
 import {formatCatalogPurchasePriceLabel} from '@/lib/catalog/catalog-borrow-price-label'
 import {isMarketingCatalogItemSold} from '@/lib/catalog/catalog-card-badges'
-import {catalogAppSignupHref, catalogItemAppHref, catalogItemPagePath} from '@/lib/catalog/catalog-app-links'
+import {catalogSubscriptionHref} from '@/lib/catalog/catalog-app-links'
 import type {CatalogItemDetailPayload} from '@/lib/catalog/catalog-item-detail'
 import type {CatalogItemLookMedia} from '@/lib/catalog/catalog-item-style-looks'
 import {formatCatalogCardSizeLabel} from '@/lib/catalog/format-catalog-card-size'
 import {itemDescriptionToSafeHtml} from '@/lib/catalog/item-description-format'
 import {formatItemDimensionDisplayValue, formatItemEraLabel} from '@/lib/catalog/item-era-fitting-dimensions'
-import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
+import {addWebsiteCartItem} from '@/lib/cart/website-cart'
 import {useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type UIEvent} from 'react'
 import {createPortal} from 'react-dom'
 import styles from './catalogItemDetailView.module.css'
@@ -286,14 +283,14 @@ function SizeConditionCard({
 
 function CtaBlock({
   sold,
-  appHref,
-  buyPending,
-  onBuyClick,
+  subscriptionHref,
+  addPending,
+  onAddToCart,
 }: {
   sold: boolean
-  appHref: string
-  buyPending: boolean
-  onBuyClick: () => void
+  subscriptionHref: string
+  addPending: boolean
+  onAddToCart: () => void
 }) {
   if (sold) {
     return <p className={styles.soldNote}>Cette pièce n&apos;est plus disponible.</p>
@@ -304,41 +301,29 @@ function CtaBlock({
         <button
           type="button"
           className={styles.ctaPrimary}
-          disabled={buyPending}
-          onClick={onBuyClick}
+          disabled={addPending}
+          onClick={onAddToCart}
         >
-          <span className={styles.ctaInline}>
-            <span>{buyPending ? 'Chargement…' : 'Achète avec'}</span>
-            {buyPending ? null : (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src="/brand/stripe-wordmark-white.png"
-                alt="Stripe"
-                className={styles.ctaStripe}
-                width={72}
-                height={22}
-                decoding="async"
-              />
-            )}
-          </span>
+          {addPending ? 'Ajout…' : 'Ajouter au panier'}
         </button>
-        <a href={appHref} className={styles.ctaSecondary}>
+        <a href={subscriptionHref} className={styles.ctaSecondary} aria-label="Louer 1 mois avec SegnaX">
           <span className={styles.ctaInline}>
-            <span>Loue sur</span>
+            <span>Louer 1 mois avec</span>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/brand/segna-logo.svg"
-              alt="Segna"
-              className={styles.ctaSegna}
-              width={56}
-              height={23}
+              src="/brand/segnaX_logo_mark.png"
+              alt="segnaX"
+              className={styles.ctaSegnaX}
+              width={96}
+              height={28}
               decoding="async"
             />
           </span>
         </a>
       </div>
-      <a href={catalogAppSignupHref()} className={styles.promoNote}>
-        Réductions exclusives sur l&apos;app Segna&nbsp;: jusqu&apos;à 30&nbsp;% avec l&apos;abonnement.
+      <a href={subscriptionHref} className={styles.promoNote}>
+        *&nbsp;Louez cette pièce pendant 1 mois avec l&apos;abonnement Segna, puis profitez de 30&nbsp;% de
+        réduction si vous souhaitez l&apos;acheter.
       </a>
     </div>
   )
@@ -349,19 +334,19 @@ function InfoPanel({
   titleId,
   sold,
   sizeLine,
-  appHref,
+  subscriptionHref,
   looks,
-  buyPending,
-  onBuyClick,
+  addPending,
+  onAddToCart,
 }: {
   detail: CatalogItemDetailPayload
   titleId?: string
   sold: boolean
   sizeLine: string
-  appHref: string
+  subscriptionHref: string
   looks: CatalogItemLookMedia[]
-  buyPending: boolean
-  onBuyClick: () => void
+  addPending: boolean
+  onAddToCart: () => void
 }) {
   const description = detail.description?.trim() || ''
   const descriptionHtml = useMemo(() => itemDescriptionToSafeHtml(description), [description])
@@ -394,7 +379,12 @@ function InfoPanel({
         <TrustLine>Un seul exemplaire en stock</TrustLine>
       </div>
 
-      <CtaBlock sold={sold} appHref={appHref} buyPending={buyPending} onBuyClick={onBuyClick} />
+      <CtaBlock
+        sold={sold}
+        subscriptionHref={subscriptionHref}
+        addPending={addPending}
+        onAddToCart={onAddToCart}
+      />
 
       <div className={styles.appAccordionList}>
         {showDescriptionSection ? (
@@ -505,132 +495,48 @@ export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks 
   const [photoIndex, setPhotoIndex] = useState(0)
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const [authOpen, setAuthOpen] = useState(false)
-  const [onboardingEmail, setOnboardingEmail] = useState<string | null>(null)
-  const [onboardingIntent, setOnboardingIntent] = useState<'signup' | 'signin'>('signup')
-  const [onboardingInitialStep, setOnboardingInitialStep] = useState<CheckoutOnboardingStep>(1)
-  const [buyPending, setBuyPending] = useState(false)
-  const [authError, setAuthError] = useState<string | null>(null)
-  const [checkoutReady, setCheckoutReady] = useState(false)
+  const [addPending, setAddPending] = useState(false)
+  const [addModalOpen, setAddModalOpen] = useState(false)
   const heroTrackRef = useRef<HTMLDivElement | null>(null)
   const lightboxTrackRef = useRef<HTMLDivElement | null>(null)
   const photoIndexRef = useRef(0)
   const pointerStartX = useRef<number | null>(null)
   const pointerMoved = useRef(false)
-  const checkoutHandledRef = useRef(false)
   const slots = detail.gallery
   const sizeLine = formatCatalogCardSizeLabel(detail.size_label, detail.size_code)
   const sold = isMarketingCatalogItemSold(detail.status)
-  const appHref = catalogItemAppHref(detail.id)
+  const subscriptionHref = catalogSubscriptionHref()
   const isPage = layout === 'page'
-  const authReturnPath = `${catalogItemPagePath(detail.id)}?checkout=1`
 
   photoIndexRef.current = photoIndex
 
-  const openOnboardingResume = useCallback((email: string, step: CheckoutOnboardingStep) => {
-    setAuthOpen(false)
-    setOnboardingIntent('signup')
-    setOnboardingInitialStep(step)
-    setOnboardingEmail(email)
-  }, [])
-
-  const beginAuthenticatedCheckout = useCallback(() => {
-    setAuthOpen(false)
-    setOnboardingEmail(null)
-    setBuyPending(false)
-    setCheckoutReady(true)
-    // Prochaine étape : session Stripe Checkout (livraison + paiement) sur le website.
-  }, [])
-
-  const handleSignOut = useCallback(async () => {
+  const handleAddToCart = useCallback(() => {
+    if (sold || addPending) return
+    setAddPending(true)
     try {
-      const supabase = createSupabaseBrowserClient()
-      await supabase.auth.signOut()
-    } catch {
-      // ignore
-    }
-    setCheckoutReady(false)
-    setAuthError(null)
-    setOnboardingEmail(null)
-    setOnboardingInitialStep(1)
-  }, [])
-
-  const handleBuyClick = useCallback(async () => {
-    if (sold || buyPending) return
-    setBuyPending(true)
-    setAuthError(null)
-    try {
-      const supabase = createSupabaseBrowserClient()
-      const resume = await resolveCheckoutOnboardingResume(supabase)
-      if (resume.status === 'ready') {
-        beginAuthenticatedCheckout()
-        return
-      }
-      if (resume.status === 'resume') {
-        openOnboardingResume(resume.email, resume.step)
-        return
-      }
-      setAuthOpen(true)
-    } catch {
-      setAuthOpen(true)
+      addWebsiteCartItem({
+        id: detail.id,
+        title: detail.title,
+        brand_label: detail.brand_label,
+        price_points: detail.price_points,
+        imageUrl: detail.gallery[0]?.url ?? null,
+        size_label: detail.size_label,
+        size_code: detail.size_code,
+      })
+      setAddModalOpen(true)
     } finally {
-      setBuyPending(false)
+      setAddPending(false)
     }
-  }, [beginAuthenticatedCheckout, buyPending, openOnboardingResume, sold])
+  }, [addPending, detail, sold])
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  /** Reprise après OAuth (`?checkout=1`) ou erreur auth. */
-  useEffect(() => {
-    if (sold || typeof window === 'undefined') return
-    const params = new URLSearchParams(window.location.search)
-    const wantsCheckout = params.get('checkout') === '1'
-    const oauthError = params.get('auth_error')
-    if (!wantsCheckout && !oauthError) return
-    if (checkoutHandledRef.current) return
-    checkoutHandledRef.current = true
-
-    if (oauthError) {
-      setAuthError(oauthError)
-      setAuthOpen(true)
-    }
-
-    const cleanUrl = () => {
-      params.delete('checkout')
-      params.delete('auth_error')
-      const next = params.toString()
-      const path = `${window.location.pathname}${next ? `?${next}` : ''}${window.location.hash}`
-      window.history.replaceState(null, '', path)
-    }
-
-    void (async () => {
-      try {
-        const supabase = createSupabaseBrowserClient()
-        if (wantsCheckout && !oauthError) {
-          const resume = await resolveCheckoutOnboardingResume(supabase)
-          if (resume.status === 'ready') {
-            beginAuthenticatedCheckout()
-          } else if (resume.status === 'resume') {
-            openOnboardingResume(resume.email, resume.step)
-          } else {
-            setAuthOpen(true)
-          }
-        }
-      } catch {
-        if (wantsCheckout) setAuthOpen(true)
-      } finally {
-        cleanUrl()
-      }
-    })()
-  }, [beginAuthenticatedCheckout, openOnboardingResume, sold])
-
   useEffect(() => {
     setPhotoIndex(0)
     setLightboxOpen(false)
-    setCheckoutReady(false)
-    checkoutHandledRef.current = false
+    setAddModalOpen(false)
     const track = heroTrackRef.current
     if (track) track.scrollTo({left: 0, behavior: 'auto'})
   }, [detail.id])
@@ -774,51 +680,19 @@ export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks 
               titleId={titleId}
               sold={sold}
               sizeLine={sizeLine}
-              appHref={appHref}
+              subscriptionHref={subscriptionHref}
               looks={looks}
-              buyPending={buyPending}
-              onBuyClick={() => void handleBuyClick()}
+              addPending={addPending}
+              onAddToCart={handleAddToCart}
             />
-            {checkoutReady ? (
-              <div className={styles.checkoutReadyNote} role="status">
-                <p className={styles.checkoutReadyText}>
-                  Compte connecté. Paiement Stripe à finaliser — prochaine étape.
-                </p>
-                <button type="button" className={styles.checkoutSignOut} onClick={() => void handleSignOut()}>
-                  Se déconnecter
-                </button>
-              </div>
-            ) : null}
           </div>
         </div>
         {lightbox}
-        <CheckoutAuthModal
-          open={authOpen}
-          onClose={() => setAuthOpen(false)}
-          onAuthenticated={beginAuthenticatedCheckout}
-          onStartEmailOnboarding={(email, intent = 'signup') => {
-            setAuthOpen(false)
-            setOnboardingIntent(intent)
-            setOnboardingInitialStep(1)
-            setOnboardingEmail(email)
-          }}
-          returnPath={authReturnPath}
-          initialAuthError={authError}
-        />
-        <CheckoutSignupOnboardingModal
-          open={Boolean(onboardingEmail)}
-          email={onboardingEmail ?? ''}
-          intent={onboardingIntent}
-          initialStep={onboardingInitialStep}
-          onClose={() => {
-            setOnboardingEmail(null)
-            setOnboardingInitialStep(1)
-          }}
-          onComplete={() => {
-            setOnboardingEmail(null)
-            setOnboardingInitialStep(1)
-            beginAuthenticatedCheckout()
-          }}
+        <AddToCartModal
+          open={addModalOpen}
+          itemTitle={detail.title}
+          onClose={() => setAddModalOpen(false)}
+          onContinueShopping={() => setAddModalOpen(false)}
         />
       </div>
     )
@@ -883,50 +757,18 @@ export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks 
           titleId={titleId}
           sold={sold}
           sizeLine={sizeLine}
-          appHref={appHref}
+          subscriptionHref={subscriptionHref}
           looks={[]}
-          buyPending={buyPending}
-          onBuyClick={() => void handleBuyClick()}
+          addPending={addPending}
+          onAddToCart={handleAddToCart}
         />
-        {checkoutReady ? (
-          <div className={styles.checkoutReadyNote} role="status">
-            <p className={styles.checkoutReadyText}>
-              Compte connecté. Paiement Stripe à finaliser — prochaine étape.
-            </p>
-            <button type="button" className={styles.checkoutSignOut} onClick={() => void handleSignOut()}>
-              Se déconnecter
-            </button>
-          </div>
-        ) : null}
       </div>
       {lightbox}
-      <CheckoutAuthModal
-        open={authOpen}
-        onClose={() => setAuthOpen(false)}
-        onAuthenticated={beginAuthenticatedCheckout}
-        onStartEmailOnboarding={(email, intent = 'signup') => {
-          setAuthOpen(false)
-          setOnboardingIntent(intent)
-          setOnboardingInitialStep(1)
-          setOnboardingEmail(email)
-        }}
-        returnPath={authReturnPath}
-        initialAuthError={authError}
-      />
-      <CheckoutSignupOnboardingModal
-        open={Boolean(onboardingEmail)}
-        email={onboardingEmail ?? ''}
-        intent={onboardingIntent}
-        initialStep={onboardingInitialStep}
-        onClose={() => {
-          setOnboardingEmail(null)
-          setOnboardingInitialStep(1)
-        }}
-        onComplete={() => {
-          setOnboardingEmail(null)
-          setOnboardingInitialStep(1)
-          beginAuthenticatedCheckout()
-        }}
+      <AddToCartModal
+        open={addModalOpen}
+        itemTitle={detail.title}
+        onClose={() => setAddModalOpen(false)}
+        onContinueShopping={() => setAddModalOpen(false)}
       />
     </div>
   )

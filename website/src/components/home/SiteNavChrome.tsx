@@ -6,6 +6,7 @@ import {usePathname} from 'next/navigation'
 import {motion} from 'framer-motion'
 import type {WebsiteHeaderNavData} from '@/lib/sanity'
 import {visibleMobileMainNavItems} from '@/lib/mobileMainNav'
+import {CartNavLink} from '@/components/cart/CartNavLink'
 import {CtaHrefLink} from './heroShared'
 import {MobileMainMenu} from './MobileMainMenu'
 import {useNavScrollElevated} from './useNavScrollElevated'
@@ -121,6 +122,7 @@ export function SiteNavChrome({
               {secondaryLabel}
             </CtaHrefLink>
           ) : null}
+          <CartNavLink className={styles.navCartLink} />
           <CtaHrefLink href={primaryHref} className={styles.downloadButton}>
             {primaryLabel}
           </CtaHrefLink>
@@ -159,9 +161,12 @@ export function SiteNavChrome({
           <span className={styles.brandWrap}>{brandMark}</span>
         </Link>
 
-        <CtaHrefLink href={primaryHref} className={styles.mobileHeaderCta}>
-          {primaryLabel}
-        </CtaHrefLink>
+        <div className={styles.mobileHeaderActions}>
+          <CartNavLink className={styles.navCartLink} tone="dark" />
+          <CtaHrefLink href={primaryHref} className={styles.mobileHeaderCta}>
+            {primaryLabel}
+          </CtaHrefLink>
+        </div>
       </motion.header>
 
       <MobileMainMenu

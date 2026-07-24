@@ -178,6 +178,26 @@
   text-underline-offset: 3px;
 }
 
+.navCartLink {
+  margin-inline: -0.15rem;
+  color: #fff;
+}
+
+.navCartLink:hover {
+  background: rgb(255 255 255 / 0.12);
+}
+
+.mobileHeaderActions {
+  display: inline-flex;
+  align-items: center;
+  justify-self: end;
+  gap: 0.15rem;
+}
+
+.mobileHeaderActions .mobileHeaderCta {
+  margin-left: 0.15rem;
+}
+
 .navLink {
   display: inline-flex;
   align-items: center;
@@ -586,6 +606,10 @@
     justify-self: end;
   }
 
+  .mobileHeaderActions {
+    justify-self: end;
+  }
+
   .mobileHeaderOnLight {
     background: #fff;
     box-shadow: none;
@@ -682,6 +706,14 @@
     opacity: 0.88;
   }
 
+  .navChromeRootScrolled .navCartLink {
+    color: #111;
+  }
+
+  .navChromeRootScrolled .navCartLink:hover {
+    background: rgb(0 0 0 / 0.06);
+  }
+
   .navChromeRootScrolled .navDivider {
     background: rgb(0 0 0 / 0.12);
   }
@@ -732,6 +764,14 @@
 .surfaceLight .secondaryCta {
   color: #111;
   opacity: 0.88;
+}
+
+.surfaceLight .navCartLink {
+  color: #111;
+}
+
+.surfaceLight .navCartLink:hover {
+  background: rgb(0 0 0 / 0.06);
 }
 
 .surfaceLight .navDivider {

@@ -307,6 +307,14 @@
   object-fit: cover;
   flex-shrink: 0;
   border-radius: 999px;
+  background: #f4f4f5;
+}
+
+.avatarLogo {
+  /* Icône carrée déjà circulaire — fill le cadre sans crop du wordmark. */
+  object-fit: cover;
+  padding: 0;
+  background: #111;
 }
 
 .listAvatarWrap {
@@ -333,6 +341,7 @@
   border-radius: 999px;
   object-fit: cover;
   flex-shrink: 0;
+  background: #f4f4f5;
 }
 
 .headerThreadTitle {

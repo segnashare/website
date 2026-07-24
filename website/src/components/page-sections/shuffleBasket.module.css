@@ -145,7 +145,7 @@
 @media (min-width: 1024px) {
   .grid {
     --shuffle-cols: 5;
-    --shuffle-gap: 0.2rem;
+    --shuffle-gap: 0.55rem;
   }
 
   .media {

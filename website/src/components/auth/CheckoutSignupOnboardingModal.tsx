@@ -30,6 +30,11 @@ type Props = {
   intent?: 'signup' | 'signin'
   /** Reprise après e-mail déjà validé (skip OTP). */
   initialStep?: CheckoutOnboardingStep
+  /**
+   * Après création mdp (page signup) : forcer l’étape OTP même si une session
+   * est déjà présente (ne pas skipper la vérif e-mail).
+   */
+  forceEmailOtp?: boolean
   onClose: () => void
   onComplete: () => void
 }
@@ -128,6 +133,7 @@ export function CheckoutSignupOnboardingModal({
   email,
   intent = 'signup',
   initialStep = 1,
+  forceEmailOtp = false,
   onClose,
   onComplete,
 }: Props) {
@@ -195,7 +201,8 @@ export function CheckoutSignupOnboardingModal({
     setResendRemaining(startStep === 1 ? RESEND_SECONDS : 0)
 
     // E-mail déjà validé (session) ou reprise : aller à l’étape nom / naissance / tailles.
-    if (startStep >= 2) {
+    // Sauf après signup mdp (`forceEmailOtp`) où on exige le code de vérif.
+    if (startStep >= 2 || forceEmailOtp) {
       return () => {
         cancelled = true
       }
@@ -231,7 +238,7 @@ export function CheckoutSignupOnboardingModal({
     return () => {
       cancelled = true
     }
-  }, [open, email, initialStep, onComplete])
+  }, [open, email, forceEmailOtp, initialStep, onComplete])
 
   useEffect(() => {
     if (!open || resendRemaining <= 0) return
@@ -274,7 +281,8 @@ export function CheckoutSignupOnboardingModal({
       const supabase = createSupabaseBrowserClient()
       const {error: otpError} = await supabase.auth.signInWithOtp({
         email: email.trim().toLowerCase(),
-        options: {shouldCreateUser: intent === 'signup'},
+        // Après signup mdp le user existe déjà → ne pas recréer.
+        options: {shouldCreateUser: intent === 'signup' && !forceEmailOtp},
       })
       if (otpError) {
         const msg = (otpError.message ?? '').toLowerCase()
@@ -314,11 +322,13 @@ export function CheckoutSignupOnboardingModal({
           const normalizedEmail = email.trim().toLowerCase()
           const token = otp.trim()
 
-          // Déjà connecté / e-mail déjà confirmé (OTP consommé) → on continue.
+          // Déjà connecté / e-mail déjà confirmé (OTP consommé) → on continue,
+          // sauf si on force la vérif après création du mot de passe.
           const existingUser = await getAuthUserWithRetry()
           const alreadyVerified = isEmailVerified(existingUser, normalizedEmail)
+          const mustVerifyOtp = forceEmailOtp || !alreadyVerified
 
-          if (!alreadyVerified) {
+          if (mustVerifyOtp) {
             let verifyError: {message?: string} | null = null
             try {
               verifyError =
@@ -342,7 +352,7 @@ export function CheckoutSignupOnboardingModal({
             } catch (verifyEx) {
               console.error('[checkout-onboarding] verify otp threw', verifyEx)
               const afterThrowUser = await getAuthUserWithRetry()
-              if (!isEmailVerified(afterThrowUser, normalizedEmail)) {
+              if (forceEmailOtp || !isEmailVerified(afterThrowUser, normalizedEmail)) {
                 const m = verifyEx instanceof Error ? verifyEx.message : ''
                 setError(
                   m.includes('test')
@@ -360,7 +370,7 @@ export function CheckoutSignupOnboardingModal({
               console.error('[checkout-onboarding] verify otp', verifyError)
 
               const afterFailUser = await getAuthUserWithRetry()
-              const recovered = isEmailVerified(afterFailUser, normalizedEmail)
+              const recovered = !forceEmailOtp && isEmailVerified(afterFailUser, normalizedEmail)
 
               if (!recovered) {
                 if (msg.includes('expired')) {
@@ -466,6 +476,7 @@ export function CheckoutSignupOnboardingModal({
       day,
       email,
       firstName,
+      forceEmailOtp,
       intent,
       lastName,
       month,

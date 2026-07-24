@@ -13,8 +13,9 @@ type PageProps = {
 
 export async function generateStaticParams() {
   const slugs = await getMarketingPageSlugs()
-  /** `/catalogue` est servi par `app/catalogue/page.tsx` (navigation par liens). */
-  return slugs.filter((slug) => slug !== 'catalogue').map((slug) => ({slug}))
+  /** Routes app dédiées (hors CMS dynamique). */
+  const reserved = new Set(['catalogue', 'panier', 'abonnement', 'signup', 'signin'])
+  return slugs.filter((slug) => !reserved.has(slug)).map((slug) => ({slug}))
 }
 
 export async function generateMetadata({params}: PageProps): Promise<Metadata> {
@@ -62,9 +63,9 @@ export default async function MarketingDynamicPage({params}: PageProps) {
 
   return (
     <MarketingFullBleedHero marketing={marketingPage} headerNav={headerNav} cta={cta}>
-      <div className="container" style={{paddingBlock: '0 4rem'}}>
-        <PageSections sections={marketingPage.sections} afterFullBleedHero />
-      </div>
+      {/* Pas de `.container` (1120px) : les sections gèrent déjà leurs gouttières / full-bleed
+          (comme l’accueil). Sinon le shuffle 5 colonnes paraît trop serré sur grand écran. */}
+      <PageSections sections={marketingPage.sections} afterFullBleedHero />
     </MarketingFullBleedHero>
   )
 }

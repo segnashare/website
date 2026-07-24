@@ -1,0 +1,213 @@
+.main {
+  width: min(100%, 52rem);
+  margin: 0 auto;
+  padding: clamp(1.5rem, 4vw, 2.75rem) clamp(1.15rem, 4vw, 1.75rem) 5rem;
+  color: #14110f;
+}
+
+.hero {
+  margin-bottom: 3rem;
+}
+
+.offerSectionTitle {
+  margin: 0 0 0.65rem;
+  font-size: clamp(1.45rem, 3.5vw, 1.85rem);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  margin: 0 0 1.75rem;
+  max-width: 34rem;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: #52525b;
+}
+
+.offerCard {
+  max-width: 26rem;
+  padding: 1.5rem 1.35rem 1.35rem;
+  border: 1px solid #e4e4e7;
+  border-radius: 1.15rem;
+  background: #fafafa;
+}
+
+.offerBadge {
+  margin: 0 0 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #71717a;
+}
+
+.offerPrice {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+.offerAmount {
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.offerPeriod {
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: #52525b;
+}
+
+.offerTrial {
+  margin: 0.55rem 0 1rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #14110f;
+}
+
+.offerList {
+  margin: 0 0 1.25rem;
+  padding: 0 0 0 1.1rem;
+  display: grid;
+  gap: 0.45rem;
+  font-size: 0.92rem;
+  line-height: 1.4;
+  color: #3f3f46;
+}
+
+.primaryCta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 3.15rem;
+  padding: 0.75rem 1.15rem;
+  border: 1px solid #14110f;
+  border-radius: 999px;
+  background: #14110f;
+  color: #fff;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primaryCta:hover {
+  background: #000;
+}
+
+.primaryCta:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.offerFine {
+  margin: 0.75rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: #71717a;
+  text-align: center;
+}
+
+.readyNote {
+  margin-top: 1.25rem;
+  max-width: 26rem;
+  padding: 1rem 1.1rem;
+  border-radius: 0.75rem;
+  background: #f4f4f5;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: #3f3f46;
+}
+
+.readyNote p {
+  margin: 0 0 0.65rem;
+}
+
+.readyLink {
+  color: #14110f;
+  font-weight: 600;
+  text-underline-offset: 2px;
+}
+
+.compare,
+.after {
+  margin-top: 2.75rem;
+  padding-top: 2.25rem;
+  border-top: 1px solid #e4e4e7;
+}
+
+.compareTitle {
+  margin: 0 0 1.15rem;
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  border-radius: 1rem;
+  border: 1px solid #e4e4e7;
+}
+
+.table {
+  width: 100%;
+  min-width: 36rem;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.table th,
+.table td {
+  padding: 0.85rem 0.9rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid #e4e4e7;
+}
+
+.table thead th:nth-child(3) {
+  background: #14110f;
+  color: #fff;
+  text-align: center;
+}
+
+.table tbody th {
+  font-weight: 600;
+  color: #14110f;
+  width: 28%;
+}
+
+.table tbody td {
+  color: #52525b;
+}
+
+.memberCell {
+  background: #18181b;
+  color: #fff !important;
+  font-weight: 500;
+}
+
+.memberLogo {
+  display: block;
+  margin: 0 auto;
+  height: 1.2rem;
+  width: auto;
+}
+
+.steps {
+  margin: 0 0 1.35rem;
+  padding: 0 0 0 1.15rem;
+  display: grid;
+  gap: 0.75rem;
+  max-width: 38rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: #3f3f46;
+}
+
+.after .primaryCta {
+  max-width: 26rem;
+}

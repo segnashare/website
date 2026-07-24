@@ -1,4 +1,4 @@
-/** Liens app Segna (location / inscriptions). Achat Stripe : auth + checkout sur le website. */
+/** Liens app Segna (legacy) + landings website (abo / panier). */
 export const SEGNA_APP_BASE_URL = (process.env.NEXT_PUBLIC_SEGNA_APP_URL || 'https://app.segnashare.com').replace(
   /\/+$/,
   '',
@@ -15,4 +15,9 @@ export function catalogItemAppHref(itemId?: string | null): string {
 
 export function catalogAppSignupHref(): string {
   return `${SEGNA_APP_BASE_URL}/auth/sign-up/email`
+}
+
+/** Landing abonnement SegnaX (1er mois gratuit) — plus de deep link app pour la loc. */
+export function catalogSubscriptionHref(): string {
+  return '/abonnement'
 }

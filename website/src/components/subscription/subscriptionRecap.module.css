@@ -1,0 +1,166 @@
+.page {
+  min-height: 100dvh;
+  background: #fff;
+  color: #14110f;
+}
+
+.main {
+  width: min(100%, 40rem);
+  margin: 0 auto;
+  padding:
+    max(1.75rem, calc(env(safe-area-inset-top, 0px) + 1.25rem))
+    1.25rem
+    max(2.5rem, calc(env(safe-area-inset-bottom, 0px) + 2rem));
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 1.75rem;
+  text-decoration: none;
+}
+
+.brandLogo {
+  display: block;
+  height: 2.35rem;
+  width: auto;
+  filter: brightness(0);
+}
+
+.title {
+  margin: 0 0 0.85rem;
+  font-size: clamp(1.55rem, 4.5vw, 1.95rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: #3f3f46;
+}
+
+.price {
+  margin: 0 0 1.75rem;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: #3f3f46;
+}
+
+.compareTitle {
+  margin: 0 0 0.85rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  border-radius: 1rem;
+  border: 1px solid #e4e4e7;
+  margin-bottom: 1.25rem;
+}
+
+.table {
+  width: 100%;
+  min-width: 32rem;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+}
+
+.table th,
+.table td {
+  padding: 0.8rem 0.85rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid #e4e4e7;
+}
+
+.table thead th:nth-child(3) {
+  background: #14110f;
+  color: #fff;
+  text-align: center;
+}
+
+.table tbody th {
+  font-weight: 600;
+  color: #14110f;
+  width: 28%;
+}
+
+.table tbody td {
+  color: #52525b;
+}
+
+.table tbody tr:last-child th,
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.memberCell {
+  background: #18181b;
+  color: #fff !important;
+  font-weight: 500;
+}
+
+.memberLogo {
+  display: block;
+  margin: 0 auto;
+  height: 1.15rem;
+  width: auto;
+}
+
+.cancelNote {
+  margin: 0 0 1.35rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: #71717a;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 3.1rem;
+  padding: 0.8rem 1.25rem;
+  border: none;
+  border-radius: 0.55rem;
+  background: #14110f;
+  color: #fff;
+  font: inherit;
+  font-size: 0.98rem;
+  font-weight: 700;
+  cursor: pointer;
+  appearance: none;
+}
+
+.cta:hover:not(:disabled) {
+  background: #000;
+}
+
+.cta:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.status {
+  margin: 1rem 0 0;
+  padding: 0.9rem 1rem;
+  border-radius: 0.75rem;
+  background: #f4f4f5;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: #3f3f46;
+}
+
+@media (min-width: 720px) {
+  .main {
+    padding-top: 2.75rem;
+  }
+
+  .title {
+    max-width: 22rem;
+  }
+}

@@ -11,6 +11,7 @@ import type {HomePageData} from '@/lib/sanity'
 import {HomeHeroActionBlock} from './HomeHeroActionBlock'
 import {homeHeroActionFromPage} from '@/lib/home-hero-action'
 import {visibleMobileMainNavItems} from '@/lib/mobileMainNav'
+import {CartNavLink} from '@/components/cart/CartNavLink'
 import {CtaHrefLink} from './heroShared'
 import {MobileMainMenu} from './MobileMainMenu'
 import {useNavScrollElevated} from './useNavScrollElevated'
@@ -183,6 +184,7 @@ export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeH
                   {secondaryLabel}
                 </CtaHrefLink>
               ) : null}
+              <CartNavLink className={styles.navCartLink} />
               <CtaHrefLink href={primaryHref} className={styles.downloadButton}>
                 {primaryLabel}
               </CtaHrefLink>
@@ -225,9 +227,12 @@ export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeH
               <span className={styles.brandWrap}>{brandMark}</span>
             </Link>
 
-            <CtaHrefLink href={primaryHref} className={styles.mobileHeaderCta}>
-              {primaryLabel}
-            </CtaHrefLink>
+            <div className={styles.mobileHeaderActions}>
+              <CartNavLink className={styles.navCartLink} tone="dark" />
+              <CtaHrefLink href={primaryHref} className={styles.mobileHeaderCta}>
+                {primaryLabel}
+              </CtaHrefLink>
+            </div>
           </motion.header>
         </div>
 

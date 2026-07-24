@@ -1,0 +1,104 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgb(20 17 15 / 0.45);
+}
+
+.dialog {
+  position: relative;
+  width: min(100%, 26rem);
+  padding: 1.75rem 1.5rem 1.5rem;
+  border-radius: 1rem;
+  background: #fff;
+  color: #14110f;
+  box-shadow: 0 18px 50px rgb(0 0 0 / 0.18);
+}
+
+.close {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #52525b;
+  cursor: pointer;
+}
+
+.close:hover {
+  background: #f4f4f5;
+  color: #14110f;
+}
+
+.eyebrow {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #71717a;
+}
+
+.title {
+  margin: 0 0 0.65rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.body {
+  margin: 0 0 1.35rem;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: #52525b;
+}
+
+.actions {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.primary,
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.85rem;
+  padding: 0.7rem 1rem;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.primary {
+  background: #14110f;
+  color: #fff;
+  border: 1px solid #14110f;
+}
+
+.primary:hover {
+  background: #000;
+}
+
+.secondary {
+  background: #fff;
+  color: #14110f;
+  border: 1px solid #d4d4d8;
+}
+
+.secondary:hover {
+  background: #f4f4f5;
+}

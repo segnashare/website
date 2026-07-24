@@ -2,9 +2,47 @@
 
 import {FormEvent, useEffect, useRef, useState} from 'react'
 import {useItemChat} from '@/components/item-chat/ItemChatProvider'
-import {resolveStaffAvatarUrl} from '@/lib/item-chat/staff-avatars'
+import {
+  CHATBOT_AVATAR_URL,
+  resolveConversationAvatarUrl,
+  resolveStaffAvatarUrl,
+} from '@/lib/item-chat/staff-avatars'
 import {ITEM_CHAT_STAFF_JOINED_BODY} from '@/lib/item-chat/types'
 import styles from './itemChatBubble.module.css'
+
+function ConversationAvatar({
+  name,
+  url,
+  className,
+  size = 36,
+}: {
+  name?: string | null
+  url?: string | null
+  className: string
+  size?: number
+}) {
+  const [src, setSrc] = useState(() => resolveConversationAvatarUrl(name, url))
+  const isLogo = src === CHATBOT_AVATAR_URL
+
+  useEffect(() => {
+    setSrc(resolveConversationAvatarUrl(name, url))
+  }, [name, url])
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt=""
+      width={size}
+      height={size}
+      className={`${className}${isLogo ? ` ${styles.avatarLogo}` : ''}`}
+      referrerPolicy="no-referrer"
+      onError={() => {
+        if (src !== CHATBOT_AVATAR_URL) setSrc(CHATBOT_AVATAR_URL)
+      }}
+    />
+  )
+}
 
 function StaffAvatar({
   name,
@@ -255,8 +293,6 @@ export function ItemChatBubble() {
                   ) : (
                     conversations.map((c) => {
                       const operatorName = c.operatorDisplayName?.trim() || null
-                      const avatarSrc =
-                        resolveStaffAvatarUrl(operatorName, c.operatorAvatarUrl) || '/brand/segna-logo.svg'
                       const listTitle = operatorName || 'Chatbot'
                       const preview =
                         c.lastMessagePreview?.trim() ||
@@ -272,14 +308,11 @@ export function ItemChatBubble() {
                             {c.unreadStaffCount > 0 ? (
                               <span className={styles.listUnreadDot} aria-label="Nouvelle réponse" />
                             ) : null}
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={avatarSrc}
-                              alt=""
+                            <ConversationAvatar
+                              name={operatorName}
+                              url={c.operatorAvatarUrl}
                               className={styles.listAvatar}
-                              width={36}
-                              height={36}
-                              referrerPolicy="no-referrer"
+                              size={36}
                             />
                           </span>
                           <span className={styles.listBody}>
@@ -336,24 +369,17 @@ export function ItemChatBubble() {
                   >
                     ‹
                   </button>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={
-                      resolveStaffAvatarUrl(
-                        conversation?.operatorDisplayName,
-                        conversation?.operatorAvatarUrl,
-                      ) ||
-                      resolveStaffAvatarUrl(
-                        messages.find((m) => m.role === 'staff' && m.staffDisplayName)?.staffDisplayName,
-                        messages.find((m) => m.role === 'staff' && m.staffAvatarUrl)?.staffAvatarUrl,
-                      ) ||
-                      '/brand/segna-logo.svg'
+                  <ConversationAvatar
+                    name={
+                      conversation?.operatorDisplayName ||
+                      messages.find((m) => m.role === 'staff' && m.staffDisplayName)?.staffDisplayName
                     }
-                    alt=""
+                    url={
+                      conversation?.operatorAvatarUrl ||
+                      messages.find((m) => m.role === 'staff' && m.staffAvatarUrl)?.staffAvatarUrl
+                    }
                     className={styles.headerAvatar}
-                    width={32}
-                    height={32}
-                    referrerPolicy="no-referrer"
+                    size={32}
                   />
                   <p className={styles.headerThreadTitle}>{title}</p>
                 </div>

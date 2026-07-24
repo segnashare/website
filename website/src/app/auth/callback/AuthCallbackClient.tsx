@@ -1,12 +1,13 @@
 'use client'
 
 import {bootstrapUserAfterSignup} from '@/lib/auth/bootstrap-user'
+import {WEBSITE_AUTH_NEXT_STORAGE_KEY} from '@/lib/auth/website-auth-next'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import {useRouter} from 'next/navigation'
 import {useEffect, useState} from 'react'
 
 function safeNextPath(raw: string | null): string {
-  const fallback = '/catalogue'
+  const fallback = '/abonnement'
   if (!raw?.trim()) return fallback
   try {
     const decoded = decodeURIComponent(raw.trim())
@@ -17,8 +18,25 @@ function safeNextPath(raw: string | null): string {
   }
 }
 
+function readStoredNext(): string | null {
+  try {
+    return window.sessionStorage.getItem(WEBSITE_AUTH_NEXT_STORAGE_KEY)
+  } catch {
+    return null
+  }
+}
+
+function clearStoredNext(): void {
+  try {
+    window.sessionStorage.removeItem(WEBSITE_AUTH_NEXT_STORAGE_KEY)
+  } catch {
+    // ignore
+  }
+}
+
 /**
- * Reçoit le handoff OAuth depuis l’app (`#access_token=…`) puis renvoie vers la fiche produit.
+ * Finalise l’OAuth website (hash tokens, flow implicit) puis renvoie vers `next`.
+ * Ne dépend plus du handoff app → website.
  */
 export function AuthCallbackClient() {
   const router = useRouter()
@@ -29,14 +47,22 @@ export function AuthCallbackClient() {
 
     const run = async () => {
       const params = new URLSearchParams(window.location.search)
-      const nextPath = safeNextPath(params.get('next'))
-      const authError = params.get('auth_error')
+      const nextPath = safeNextPath(params.get('next') || readStoredNext())
+      clearStoredNext()
+      const authError = params.get('auth_error') || params.get('error')
 
       if (authError) {
         const target = new URL(nextPath, window.location.origin)
-        target.searchParams.set('checkout', '1')
-        target.searchParams.set('auth_error', authError)
-        router.replace(`${target.pathname}${target.search}`)
+        // Renvoie l’erreur sur signup/signin si possible, sinon next.
+        const errHost =
+          target.pathname === '/signup' || target.pathname === '/signin'
+            ? target
+            : new URL('/signin', window.location.origin)
+        if (target.pathname !== '/signup' && target.pathname !== '/signin') {
+          errHost.searchParams.set('next', `${target.pathname}${target.search}`)
+        }
+        errHost.searchParams.set('auth_error', authError === 'access_denied' ? 'provider_error' : authError)
+        router.replace(`${errHost.pathname}${errHost.search}`)
         return
       }
 
@@ -47,39 +73,47 @@ export function AuthCallbackClient() {
       const accessToken = hashParams.get('access_token')
       const refreshToken = hashParams.get('refresh_token')
 
-      if (!accessToken || !refreshToken) {
-        setMessage('Session manquante. Retour au catalogue…')
-        router.replace(nextPath)
-        return
-      }
+      // PKCE / code flow (si un jour activé côté client)
+      const code = params.get('code')
 
       try {
         const supabase = createSupabaseBrowserClient()
-        const {error} = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        })
-        if (error) {
-          setMessage('Impossible de finaliser la connexion.')
-          const target = new URL(nextPath, window.location.origin)
-          target.searchParams.set('checkout', '1')
-          target.searchParams.set('auth_error', 'exchange_failed')
-          router.replace(`${target.pathname}${target.search}`)
-          return
+
+        if (accessToken && refreshToken) {
+          const {error} = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          })
+          if (error) throw error
+        } else if (code) {
+          const {error} = await supabase.auth.exchangeCodeForSession(code)
+          if (error) throw error
+        } else {
+          // Session déjà détectée via detectSessionInUrl
+          const {data} = await supabase.auth.getSession()
+          if (!data.session) {
+            setMessage('Session manquante. Retour…')
+            router.replace(nextPath.startsWith('/signin') || nextPath.startsWith('/signup') ? nextPath : '/signin')
+            return
+          }
         }
 
         await bootstrapUserAfterSignup(supabase)
 
         if (cancelled) return
         const target = new URL(nextPath, window.location.origin)
-        target.searchParams.set('checkout', '1')
-        // Nettoie le hash (tokens) de l’historique.
+        if (!target.searchParams.has('checkout') && !target.pathname.startsWith('/signin') && !target.pathname.startsWith('/signup')) {
+          target.searchParams.set('checkout', '1')
+        }
         window.history.replaceState(null, '', `${target.pathname}${target.search}`)
         router.replace(`${target.pathname}${target.search}`)
       } catch {
         if (!cancelled) {
-          setMessage('Erreur de connexion.')
-          router.replace(nextPath)
+          setMessage('Impossible de finaliser la connexion.')
+          const target = new URL('/signin', window.location.origin)
+          target.searchParams.set('next', nextPath)
+          target.searchParams.set('auth_error', 'exchange_failed')
+          router.replace(`${target.pathname}${target.search}`)
         }
       }
     }

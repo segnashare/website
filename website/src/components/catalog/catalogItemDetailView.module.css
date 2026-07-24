@@ -441,6 +441,23 @@
   width: auto;
 }
 
+.ctaSegnaX {
+  display: block;
+  flex: 0 0 auto;
+  height: 1.15rem;
+  width: auto;
+  max-width: 5.5rem;
+  object-fit: contain;
+  transform: translateY(1px);
+}
+
+.ctaSecondary .ctaInline {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  gap: 0.3rem;
+  text-align: center;
+}
+
 .ctaPrimary {
   background: #14110f;
   color: #fff;

@@ -22,6 +22,63 @@
   padding: 1.35rem 1.35rem 1.25rem;
 }
 
+.panel {
+  display: block;
+}
+
+.panelPage {
+  width: 100%;
+}
+
+.footerPage {
+  display: grid;
+  margin-top: 0.15rem;
+}
+
+.submitBtnPage {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.75rem 1.15rem;
+  border: none;
+  border-radius: 0.55rem;
+  background: #14110f;
+  color: #fff;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  appearance: none;
+}
+
+.submitBtnPage:hover:not(:disabled) {
+  background: #000;
+}
+
+.submitBtnPage:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.submitBtnPage[data-ready='false']:not(:disabled) {
+  background: #d3d3d3;
+  color: #fff;
+  cursor: pointer;
+}
+
+.submitBtnPage[data-ready='false']:not(:disabled):hover {
+  background: #c4c4c4;
+}
+
+.passwordHint {
+  margin: 0.15rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: #71717a;
+}
+
 .closeBtn {
   position: absolute;
   top: 0.75rem;
@@ -59,6 +116,62 @@
   color: #14110f;
 }
 
+.panelPage .title {
+  margin-right: 0;
+  text-align: center;
+}
+
+.panelPage .switchLine {
+  text-align: center;
+}
+
+.emailReadonlyRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0 0 0.15rem;
+}
+
+.emailReadonly {
+  margin: 0;
+  min-width: 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #14110f;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.passwordWrap {
+  position: relative;
+}
+
+.passwordWrap .input {
+  padding-right: 4.25rem;
+}
+
+.passwordToggle {
+  position: absolute;
+  top: 50%;
+  right: 0.65rem;
+  transform: translateY(-50%);
+  margin: 0;
+  padding: 0.25rem 0.15rem;
+  border: none;
+  background: none;
+  color: #52525b;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.passwordToggle:hover {
+  color: #14110f;
+}
+
 .switchLine {
   margin: 0 0 1.15rem;
   font-size: 0.9rem;
@@ -77,6 +190,10 @@
   text-decoration: underline;
   text-underline-offset: 2px;
   cursor: pointer;
+}
+
+a.switchBtn {
+  display: inline;
 }
 
 .switchBtn:hover {
