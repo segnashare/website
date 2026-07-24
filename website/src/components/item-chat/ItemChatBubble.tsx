@@ -98,9 +98,10 @@ export function ItemChatBubble() {
   }, [panelOpen, expanded])
 
   const title =
-    conversation?.itemTitle ||
-    pendingItem?.itemTitle ||
-    (conversation && !conversation.itemId ? 'Question générale' : 'Question')
+    conversation?.operatorDisplayName?.trim() ||
+    (messages.find((m) => m.role === 'staff' && m.staffDisplayName?.trim())?.staffDisplayName?.trim() ??
+      null) ||
+    'Chatbot'
 
   const welcomeCopy = conversation?.itemId || pendingItem?.itemId
     ? "Qu'est-ce que tu aimerais savoir sur cette pièce ?"
@@ -143,9 +144,6 @@ export function ItemChatBubble() {
                     </button>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src="/brand/segna-logo.svg" alt="Segna" className={styles.logo} width={72} height={28} />
-                    <div className={styles.headerText}>
-                      <p className={styles.headerSub}>Question générale</p>
-                    </div>
                   </div>
                   <div className={styles.headerActions}>
                     <button
@@ -223,19 +221,6 @@ export function ItemChatBubble() {
                   <button
                     type="button"
                     className={styles.expand}
-                    aria-label="Nouveau chat"
-                    disabled={sending}
-                    onClick={() => {
-                      void startNewChat()
-                    }}
-                  >
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                      <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.expand}
                     aria-label={expanded ? 'Réduire le chat' : 'Agrandir le chat'}
                     aria-pressed={expanded}
                     onClick={() => setExpanded((v) => !v)}
@@ -268,32 +253,45 @@ export function ItemChatBubble() {
                   {conversations.length === 0 ? (
                     <p className={styles.emptyList}>Aucune discussion pour l’instant.</p>
                   ) : (
-                    conversations.map((c) => (
-                      <button
-                        key={c.id}
-                        type="button"
-                        className={styles.listRow}
-                        onClick={() => void openConversation(c.id)}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src="/brand/segna-logo.svg" alt="" className={styles.listAvatar} width={36} height={36} />
-                        <span className={styles.listBody}>
-                          <span className={styles.listTop}>
-                            <span className={styles.listName}>{c.itemTitle || (c.itemId ? 'Pièce' : 'Question générale')}</span>
-                            <span className={styles.listWhen}>{formatWhen(c.lastMessageAt)}</span>
+                    conversations.map((c) => {
+                      const operatorName = c.operatorDisplayName?.trim() || null
+                      const avatarSrc =
+                        resolveStaffAvatarUrl(operatorName, c.operatorAvatarUrl) || '/brand/segna-logo.svg'
+                      const listTitle = operatorName || 'Chatbot'
+                      const preview =
+                        c.lastMessagePreview?.trim() ||
+                        (c.usefulnessRating ? 'Merci pour ton retour' : 'Ouvrir la discussion')
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          className={styles.listRow}
+                          onClick={() => void openConversation(c.id)}
+                        >
+                          <span className={styles.listAvatarWrap}>
+                            {c.unreadStaffCount > 0 ? (
+                              <span className={styles.listUnreadDot} aria-label="Nouvelle réponse" />
+                            ) : null}
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={avatarSrc}
+                              alt=""
+                              className={styles.listAvatar}
+                              width={36}
+                              height={36}
+                              referrerPolicy="no-referrer"
+                            />
                           </span>
-                          <span className={styles.listPreview}>
-                            {c.unreadStaffCount > 0
-                              ? `${c.unreadStaffCount} nouvelle${c.unreadStaffCount > 1 ? 's' : ''} réponse${c.unreadStaffCount > 1 ? 's' : ''}`
-                              : c.usefulnessRating
-                                ? 'Merci pour ton retour'
-                                : c.hasVisitorMessage
-                                  ? 'En attente de réponse'
-                                  : 'Ouvrir la discussion'}
+                          <span className={styles.listBody}>
+                            <span className={styles.listTop}>
+                              <span className={styles.listName}>{listTitle}</span>
+                              <span className={styles.listWhen}>{formatWhen(c.lastMessageAt)}</span>
+                            </span>
+                            <span className={styles.listPreview}>{preview}</span>
                           </span>
-                        </span>
-                      </button>
-                    ))
+                        </button>
+                      )
+                    })
                   )}
                 </div>
                 <form className={styles.listComposer} onSubmit={onListNewChat}>
@@ -339,10 +337,25 @@ export function ItemChatBubble() {
                     ‹
                   </button>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/brand/segna-logo.svg" alt="Segna" className={styles.logo} width={72} height={28} />
-                  <div className={styles.headerText}>
-                    <p className={styles.headerSub}>{title}</p>
-                  </div>
+                  <img
+                    src={
+                      resolveStaffAvatarUrl(
+                        conversation?.operatorDisplayName,
+                        conversation?.operatorAvatarUrl,
+                      ) ||
+                      resolveStaffAvatarUrl(
+                        messages.find((m) => m.role === 'staff' && m.staffDisplayName)?.staffDisplayName,
+                        messages.find((m) => m.role === 'staff' && m.staffAvatarUrl)?.staffAvatarUrl,
+                      ) ||
+                      '/brand/segna-logo.svg'
+                    }
+                    alt=""
+                    className={styles.headerAvatar}
+                    width={32}
+                    height={32}
+                    referrerPolicy="no-referrer"
+                  />
+                  <p className={styles.headerThreadTitle}>{title}</p>
                 </div>
                 <div className={styles.headerActions}>
                   <button
