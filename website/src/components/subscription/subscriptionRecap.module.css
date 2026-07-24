@@ -1,114 +1,107 @@
 .page {
-  min-height: 100dvh;
+  min-height: calc(100dvh - 4.5rem);
   background: #fff;
   color: #14110f;
 }
 
+.shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: inherit;
+}
+
 .main {
-  width: min(100%, 40rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: min(100%, 28rem);
   margin: 0 auto;
   padding:
-    max(1.75rem, calc(env(safe-area-inset-top, 0px) + 1.25rem))
-    1.25rem
+    max(1.75rem, calc(env(safe-area-inset-top, 0px) + 1.5rem))
+    clamp(1.25rem, 4vw, 2.5rem)
     max(2.5rem, calc(env(safe-area-inset-bottom, 0px) + 2rem));
-}
-
-.brand {
-  display: inline-flex;
-  align-items: center;
-  margin-bottom: 1.75rem;
-  text-decoration: none;
-}
-
-.brandLogo {
-  display: block;
-  height: 2.35rem;
-  width: auto;
-  filter: brightness(0);
 }
 
 .title {
   margin: 0 0 0.85rem;
-  font-size: clamp(1.55rem, 4.5vw, 1.95rem);
+  font-size: clamp(1.65rem, 4.5vw, 2.15rem);
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.15;
   letter-spacing: -0.02em;
 }
 
 .lead {
-  margin: 0 0 0.35rem;
+  margin: 0 0 1.65rem;
   font-size: 1.05rem;
-  line-height: 1.5;
+  line-height: 1.55;
   color: #3f3f46;
 }
 
-.price {
+.priceGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem 1.25rem;
   margin: 0 0 1.75rem;
-  font-size: 1.05rem;
-  line-height: 1.5;
-  color: #3f3f46;
-}
-
-.compareTitle {
-  margin: 0 0 0.85rem;
-  font-size: 1.15rem;
-  font-weight: 600;
-}
-
-.tableWrap {
-  overflow-x: auto;
-  border-radius: 1rem;
-  border: 1px solid #e4e4e7;
-  margin-bottom: 1.25rem;
-}
-
-.table {
-  width: 100%;
-  min-width: 32rem;
-  border-collapse: collapse;
-  font-size: 0.86rem;
-}
-
-.table th,
-.table td {
-  padding: 0.8rem 0.85rem;
-  text-align: left;
-  vertical-align: top;
+  padding: 1.1rem 0;
+  border-top: 1px solid #e4e4e7;
   border-bottom: 1px solid #e4e4e7;
 }
 
-.table thead th:nth-child(3) {
-  background: #14110f;
-  color: #fff;
-  text-align: center;
+.priceLabel {
+  margin: 0 0 0.2rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #71717a;
 }
 
-.table tbody th {
+.priceValue {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #14110f;
+}
+
+.benefitsIntro {
+  margin: 0 0 0.85rem;
+  font-size: 1rem;
   font-weight: 600;
   color: #14110f;
-  width: 28%;
 }
 
-.table tbody td {
-  color: #52525b;
+.benefits {
+  margin: 0 0 1.35rem;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.65rem;
 }
 
-.table tbody tr:last-child th,
-.table tbody tr:last-child td {
-  border-bottom: none;
+.benefit {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  font-size: 0.98rem;
+  line-height: 1.4;
+  color: #3f3f46;
 }
 
-.memberCell {
-  background: #18181b;
-  color: #fff !important;
-  font-weight: 500;
-}
-
-.memberLogo {
-  display: block;
-  margin: 0 auto;
-  height: 1.15rem;
-  width: auto;
+.check {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.1rem;
+  border-radius: 999px;
+  background: #14110f;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .cancelNote {
@@ -123,7 +116,7 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: 3.1rem;
+  min-height: 3.15rem;
   padding: 0.8rem 1.25rem;
   border: none;
   border-radius: 0.55rem;
@@ -155,12 +148,137 @@
   color: #3f3f46;
 }
 
-@media (min-width: 720px) {
-  .main {
-    padding-top: 2.75rem;
+.wall {
+  display: none;
+  position: relative;
+  overflow: hidden;
+  background: #0c0b0a;
+  min-height: 22rem;
+}
+
+.wallFadeTop,
+.wallFadeBottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  height: 4.5rem;
+  pointer-events: none;
+}
+
+.wallFadeTop {
+  top: 0;
+  background: linear-gradient(to bottom, #0c0b0a 0%, transparent 100%);
+}
+
+.wallFadeBottom {
+  bottom: 0;
+  background: linear-gradient(to top, #0c0b0a 0%, transparent 100%);
+}
+
+.wallStage {
+  position: absolute;
+  inset: -8% -6%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  padding: 0 1.1rem;
+  transform: perspective(1400px) rotateY(-14deg) scale(1.08);
+  transform-origin: 70% 50%;
+}
+
+.column {
+  overflow: hidden;
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 8%, #000 92%, transparent 100%);
+}
+
+.columnTrack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  will-change: transform;
+  animation: wall-scroll-down var(--wall-duration, 42s) linear infinite;
+}
+
+.column:nth-child(2) .columnTrack {
+  animation-duration: 52s;
+  animation-delay: -12s;
+}
+
+.column:nth-child(3) .columnTrack {
+  animation-duration: 36s;
+  animation-delay: -22s;
+}
+
+.card {
+  display: block;
+  flex: 0 0 auto;
+  aspect-ratio: 3 / 4;
+  border-radius: 0.35rem;
+  overflow: hidden;
+  background: #1f1c1a;
+}
+
+.cardImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@keyframes wall-scroll-down {
+  from {
+    transform: translateY(-50%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 960px) {
+  .shell {
+    grid-template-columns: minmax(22rem, 0.92fr) minmax(0, 1.15fr);
+    align-items: stretch;
   }
 
-  .title {
-    max-width: 22rem;
+  .main {
+    width: auto;
+    max-width: 28rem;
+    margin: 0 0 0 auto;
+    padding:
+      clamp(2.25rem, 5vw, 3.75rem)
+      clamp(1.75rem, 3.5vw, 3rem)
+      clamp(2.25rem, 5vw, 3.75rem)
+      clamp(1.5rem, 4vw, 3.5rem);
+  }
+
+  .wall {
+    display: block;
+    min-height: calc(100dvh - 4.5rem);
+  }
+}
+
+@media (max-width: 959px) {
+  .wall {
+    display: block;
+    height: min(42vh, 22rem);
+  }
+
+  .wallStage {
+    transform: none;
+    inset: 0;
+    padding: 0 0.75rem;
+    gap: 0.45rem;
+  }
+
+  .columnTrack {
+    gap: 0.45rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .columnTrack {
+    animation: none;
+    transform: none;
   }
 }

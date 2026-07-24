@@ -5,6 +5,16 @@
   padding-block: clamp(1.25rem, 2.5vw, 2rem);
 }
 
+/* Compense le gap du shell entre deux bandeaux petits (éditorial + catalogue). */
+.sectionStackedAfter {
+  margin-top: clamp(-2.5rem, -5.5vw, -4.75rem);
+  padding-top: clamp(0.45rem, 1.1vw, 0.75rem);
+}
+
+.sectionStackedBefore {
+  padding-bottom: clamp(0.45rem, 1.1vw, 0.75rem);
+}
+
 .introWrap {
   width: 80%;
   max-width: 100%;

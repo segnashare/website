@@ -19,6 +19,9 @@ const UUID_RE =
 
 type Props = {
   section: WebsiteDbCatalogSection
+  /** Resserre l’espacement quand un autre bandeau petit précède / suit. */
+  stackedAfterSmall?: boolean
+  stackedBeforeSmall?: boolean
 }
 
 function coverUrlFromSanity(image?: SanityImage | null): string | null {
@@ -63,7 +66,11 @@ function rowToBrowseItem(
   }
 }
 
-export async function SectionWebsiteDbCatalog({section}: Props) {
+export async function SectionWebsiteDbCatalog({
+  section,
+  stackedAfterSmall,
+  stackedBeforeSmall,
+}: Props) {
   const mode = section.catalogMode === 'curated' ? 'curated' : 'full_catalog'
   const heading = section.heading?.trim() ?? ''
   const intro = section.intro?.trim() ?? ''
@@ -230,6 +237,11 @@ export async function SectionWebsiteDbCatalog({section}: Props) {
       introCtaHref={section.introCtaHref}
       cardSize={section.cardSize ?? 'small'}
       sectionKey={section._key}
+      scrollMotion={section.scrollMotion}
+      scrollDirection={section.scrollDirection}
+      scrollSpeed={section.scrollSpeed}
+      stackedAfterSmall={stackedAfterSmall}
+      stackedBeforeSmall={stackedBeforeSmall}
     />
   )
 }

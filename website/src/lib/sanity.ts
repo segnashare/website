@@ -540,6 +540,9 @@ export type WebsiteDbCatalogSection = {
   introCtaLabel?: string
   introCtaHref?: string
   dbItems?: WebsiteDbCatalogItemEntry[] | null
+  scrollMotion?: HorizontalScrollScrollMotion
+  scrollDirection?: HorizontalScrollScrollDirection
+  scrollSpeed?: HorizontalScrollScrollSpeed
 }
 
 export type SplitPaneContentKind = 'text' | 'image' | 'video'

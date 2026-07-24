@@ -106,6 +106,17 @@ function isSmallHorizontalScrollBand(section: PageSection): boolean {
   return normalizeScrollCardSize(section.cardSize) === 'small'
 }
 
+function isSmallCuratedCatalogBand(section: PageSection): boolean {
+  if (!isWebsiteDbCatalogSection(section)) return false
+  if (section.catalogMode === 'full_catalog') return false
+  return normalizeScrollCardSize(section.cardSize ?? 'small') === 'small'
+}
+
+/** Bandeaux horizontaux petits (éditorial ou sélection catalogue) à resserrer entre eux. */
+function isCompactScrollBand(section: PageSection): boolean {
+  return isSmallHorizontalScrollBand(section) || isSmallCuratedCatalogBand(section)
+}
+
 export function PageSectionsRenderer({
   sections,
   variant = 'onLight',
@@ -125,6 +136,14 @@ export function PageSectionsRenderer({
     <div className={shellClass}>
       {sections.map((section, index) => {
         const key = section._key
+        const prev = index > 0 ? sections[index - 1] : null
+        const next = index < sections.length - 1 ? sections[index + 1] : null
+        const stackedAfterSmall = Boolean(
+          prev && isCompactScrollBand(prev) && isCompactScrollBand(section),
+        )
+        const stackedBeforeSmall = Boolean(
+          next && isCompactScrollBand(next) && isCompactScrollBand(section),
+        )
 
         const gate = (content: React.ReactNode) => (
           <SectionVisibilityGate key={key} section={section}>
@@ -157,10 +176,6 @@ export function PageSectionsRenderer({
         }
 
         if (isHorizontalScrollCardsSection(section)) {
-          const prev = index > 0 ? sections[index - 1] : null
-          const next = index < sections.length - 1 ? sections[index + 1] : null
-          const stackedAfterSmall = Boolean(prev && isSmallHorizontalScrollBand(prev) && isSmallHorizontalScrollBand(section))
-          const stackedBeforeSmall = Boolean(next && isSmallHorizontalScrollBand(next) && isSmallHorizontalScrollBand(section))
           return gate(
             <SectionHorizontalScrollCards
               section={section}
@@ -173,7 +188,11 @@ export function PageSectionsRenderer({
         if (isWebsiteDbCatalogSection(section)) {
           return gate(
             <Suspense fallback={<p className={styles.asyncFallback}>Chargement du catalogue…</p>}>
-              <SectionWebsiteDbCatalog section={section} />
+              <SectionWebsiteDbCatalog
+                section={section}
+                stackedAfterSmall={stackedAfterSmall}
+                stackedBeforeSmall={stackedBeforeSmall}
+              />
             </Suspense>,
           )
         }

@@ -1,6 +1,14 @@
 'use client'
 
-import {useEffect, useRef, useState, type CSSProperties, type TouchEvent as ReactTouchEvent} from 'react'
+import {
+  Fragment,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+  type TouchEvent as ReactTouchEvent,
+} from 'react'
 import type {
   HorizontalScrollCard as HorizontalScrollCardData,
   HorizontalScrollScrollDirection,
@@ -10,12 +18,22 @@ import type {
 import {HorizontalScrollCard as HorizontalScrollCardView} from '@/components/page-sections/HorizontalScrollCard'
 import styles from '@/components/page-sections/horizontalScrollCards.module.css'
 
-type Props = {
-  items: HorizontalScrollCardData[]
+type MotionProps = {
   scrollMotion?: HorizontalScrollScrollMotion
   scrollDirection?: HorizontalScrollScrollDirection
   scrollSpeed?: HorizontalScrollScrollSpeed
+}
+
+type Props = MotionProps & {
+  items: HorizontalScrollCardData[]
   flipEnabled?: boolean
+}
+
+export type HorizontalScrollSlide = {
+  key: string
+  node: ReactNode
+  /** Contenu alternatif pour le clone (ex. carte sans listeners). */
+  cloneNode?: ReactNode
 }
 
 const SECONDS_PER_ITEM: Record<HorizontalScrollScrollSpeed, number> = {
@@ -30,8 +48,8 @@ const DRAG_THRESHOLD_PX = 8
 /** Filet de sécurité si le navigateur ne remonte pas touchend. */
 const TOUCH_WATCHDOG_MS = 12_000
 
-function marqueeDuration(items: HorizontalScrollCardData[], speed: HorizontalScrollScrollSpeed): number {
-  return Math.max(12, items.length * SECONDS_PER_ITEM[speed])
+function marqueeDuration(itemCount: number, speed: HorizontalScrollScrollSpeed): number {
+  return Math.max(12, itemCount * SECONDS_PER_ITEM[speed])
 }
 
 function wrapOffset(offset: number, loopWidth: number): number {
@@ -66,28 +84,26 @@ function clearTrackInlineMotion(track: HTMLElement) {
   track.style.transform = ''
 }
 
-function ManualTrack({items, flipEnabled}: {items: HorizontalScrollCardData[]; flipEnabled: boolean}) {
+function ManualSlidesTrack({slides}: {slides: HorizontalScrollSlide[]}) {
   return (
     <div className={styles.track}>
       <div className={styles.trackRow}>
-        {items.map((card) => (
-          <HorizontalScrollCardView key={card._key} card={card} flipEnabled={flipEnabled} />
+        {slides.map((slide) => (
+          <Fragment key={slide.key}>{slide.node}</Fragment>
         ))}
       </div>
     </div>
   )
 }
 
-function LoopMarqueeTrack({
-  items,
+function LoopMarqueeSlidesTrack({
+  slides,
   scrollDirection,
   scrollSpeed,
-  flipEnabled,
 }: {
-  items: HorizontalScrollCardData[]
+  slides: HorizontalScrollSlide[]
   scrollDirection: HorizontalScrollScrollDirection
   scrollSpeed: HorizontalScrollScrollSpeed
-  flipEnabled: boolean
 }) {
   const [animationDelay, setAnimationDelay] = useState('0s')
   const animationDelayRef = useRef('0s')
@@ -109,7 +125,7 @@ function LoopMarqueeTrack({
     pointerEnd: (event: PointerEvent) => void
   } | null>(null)
 
-  const duration = marqueeDuration(items, scrollSpeed)
+  const duration = marqueeDuration(slides.length, scrollSpeed)
   const directionCls = scrollDirection === 'to-right' ? styles.marqueeToRight : styles.marqueeToLeft
 
   const measureLoopWidth = () => {
@@ -342,16 +358,11 @@ function LoopMarqueeTrack({
     >
       <div ref={trackRef} className={`${styles.marqueeTrack} ${directionCls}`} style={trackStyle}>
         <div ref={rowRef} className={styles.marqueeRow}>
-          {items.map((card) => (
-            <HorizontalScrollCardView key={card._key} card={card} eagerLoad flipEnabled={flipEnabled} />
+          {slides.map((slide) => (
+            <Fragment key={slide.key}>{slide.node}</Fragment>
           ))}
-          {items.map((card) => (
-            <HorizontalScrollCardView
-              key={`clone-${card._key}`}
-              card={card}
-              visualClone
-              flipEnabled={flipEnabled}
-            />
+          {slides.map((slide) => (
+            <Fragment key={`clone-${slide.key}`}>{slide.cloneNode ?? slide.node}</Fragment>
           ))}
         </div>
       </div>
@@ -359,13 +370,13 @@ function LoopMarqueeTrack({
   )
 }
 
-export function HorizontalScrollTrack({
-  items,
+/** Piste manuelle ou marquee auto — slides React (catalogue, éditorial, etc.). */
+export function HorizontalScrollSlidesTrack({
+  slides,
   scrollMotion = 'manual',
   scrollDirection = 'to-left',
   scrollSpeed = 'normal',
-  flipEnabled = true,
-}: Props) {
+}: MotionProps & {slides: HorizontalScrollSlide[]}) {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
 
   useEffect(() => {
@@ -376,18 +387,40 @@ export function HorizontalScrollTrack({
     return () => mq.removeEventListener('change', update)
   }, [])
 
-  const useAutoLoop = scrollMotion === 'auto_loop' && !prefersReducedMotion && items.length > 0
+  const useAutoLoop = scrollMotion === 'auto_loop' && !prefersReducedMotion && slides.length > 0
 
   if (useAutoLoop) {
     return (
-      <LoopMarqueeTrack
-        items={items}
-        scrollDirection={scrollDirection}
-        scrollSpeed={scrollSpeed}
-        flipEnabled={flipEnabled}
+      <LoopMarqueeSlidesTrack
+        slides={slides}
+        scrollDirection={scrollDirection ?? 'to-left'}
+        scrollSpeed={scrollSpeed ?? 'normal'}
       />
     )
   }
 
-  return <ManualTrack items={items} flipEnabled={flipEnabled} />
+  return <ManualSlidesTrack slides={slides} />
+}
+
+export function HorizontalScrollTrack({
+  items,
+  scrollMotion = 'manual',
+  scrollDirection = 'to-left',
+  scrollSpeed = 'normal',
+  flipEnabled = true,
+}: Props) {
+  const slides: HorizontalScrollSlide[] = items.map((card) => ({
+    key: card._key,
+    node: <HorizontalScrollCardView card={card} eagerLoad flipEnabled={flipEnabled} />,
+    cloneNode: <HorizontalScrollCardView card={card} visualClone flipEnabled={flipEnabled} />,
+  }))
+
+  return (
+    <HorizontalScrollSlidesTrack
+      slides={slides}
+      scrollMotion={scrollMotion}
+      scrollDirection={scrollDirection}
+      scrollSpeed={scrollSpeed}
+    />
+  )
 }
