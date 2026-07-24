@@ -379,22 +379,16 @@
 }
 
 .staffJoined {
-  display: flex;
-  align-items: center;
-  align-self: flex-start;
-  gap: 0.45rem;
+  margin: 0.35rem 0 0;
+  align-self: center;
   max-width: 95%;
-  padding: 0.15rem 0;
-}
-
-.staffJoinedText {
-  margin: 0;
+  color: #a1a1aa;
   font-size: 0.75rem;
   line-height: 1.35;
-  color: #71717a;
+  text-align: center;
 }
 
-.staffJoinedText strong {
+.staffJoined strong {
   font-weight: 650;
   color: #27272a;
 }
@@ -415,8 +409,8 @@
 
 .staffAvatarSm,
 .staffAvatar {
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.75rem;
+  height: 1.75rem;
   flex-shrink: 0;
   border-radius: 999px;
   object-fit: cover;
@@ -426,8 +420,8 @@
 .staffAvatarFallbackSm,
 .staffAvatarFallback {
   display: inline-flex;
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.75rem;
+  height: 1.75rem;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
@@ -446,12 +440,15 @@
   max-width: 92%;
 }
 
-.staffCol {
+.staffBubble {
+  max-width: none;
+  flex: 1;
   min-width: 0;
 }
 
 .staffMsg .bubbleStaffSolo,
-.staffCol .bubbleStaffSolo {
+.staffCol .bubbleStaffSolo,
+.staffRow .bubbleStaff {
   border-top-left-radius: 0.35rem;
 }
 

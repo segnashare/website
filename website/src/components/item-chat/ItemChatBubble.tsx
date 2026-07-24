@@ -2,6 +2,7 @@
 
 import {FormEvent, useEffect, useRef, useState} from 'react'
 import {useItemChat} from '@/components/item-chat/ItemChatProvider'
+import {resolveStaffAvatarUrl} from '@/lib/item-chat/staff-avatars'
 import {ITEM_CHAT_STAFF_JOINED_BODY} from '@/lib/item-chat/types'
 import styles from './itemChatBubble.module.css'
 
@@ -12,14 +13,15 @@ function StaffAvatar({
   name: string
   url?: string | null
 }) {
-  if (url) {
+  const resolved = resolveStaffAvatarUrl(name, url)
+  if (resolved) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src={url}
+        src={resolved}
         alt=""
-        width={24}
-        height={24}
+        width={28}
+        height={28}
         className={styles.staffAvatarSm}
         referrerPolicy="no-referrer"
       />
@@ -394,12 +396,9 @@ export function ItemChatBubble() {
                     const joinName = m.staffDisplayName?.trim()
                     if (joinName && m.body === ITEM_CHAT_STAFF_JOINED_BODY) {
                       return (
-                        <div key={m.id} className={styles.staffJoined}>
-                          <StaffAvatar name={joinName} url={m.staffAvatarUrl} />
-                          <p className={styles.staffJoinedText}>
-                            <strong>{joinName}</strong> a rejoint la conversation
-                          </p>
-                        </div>
+                        <p key={m.id} className={styles.staffJoined}>
+                          <strong>{joinName}</strong> a rejoint la conversation
+                        </p>
                       )
                     }
                     return (
@@ -411,14 +410,14 @@ export function ItemChatBubble() {
                   const name = m.staffDisplayName?.trim()
                   if (name) {
                     return (
-                      <div key={m.id} className={styles.staffMsg}>
-                        <div className={styles.staffMsgHeader}>
-                          <StaffAvatar name={name} url={m.staffAvatarUrl} />
+                      <div key={m.id} className={styles.staffRow}>
+                        <StaffAvatar name={name} url={m.staffAvatarUrl} />
+                        <div className={`${styles.bubbleStaff} ${styles.staffBubble}`}>
                           <p className={styles.staffMeta}>
                             <strong>{name}</strong>
                           </p>
+                          {m.body}
                         </div>
-                        <div className={styles.bubbleStaffSolo}>{m.body}</div>
                       </div>
                     )
                   }
