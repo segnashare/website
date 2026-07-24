@@ -35,6 +35,90 @@
   overflow-y: visible;
 }
 
+.skeletonTrack {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: flex-start;
+  gap: clamp(1.05rem, 3.2vw, 1.75rem);
+  width: max-content;
+  box-sizing: border-box;
+  padding-inline-start: var(--scroll-strip-inset, 10vw);
+  padding-bottom: 0.35rem;
+}
+
+.skeletonCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.skeletonPhoto,
+.skeletonLine,
+.skeletonLineShort {
+  position: relative;
+  overflow: hidden;
+  background: #e5e5ea;
+}
+
+.skeletonPhoto {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: 4px;
+}
+
+.skeletonMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-inline: 0.05rem;
+}
+
+.skeletonLine,
+.skeletonLineShort {
+  height: 0.7rem;
+  border-radius: 4px;
+}
+
+.skeletonLine {
+  width: 78%;
+}
+
+.skeletonLineShort {
+  width: 42%;
+}
+
+.skeletonPhoto::after,
+.skeletonLine::after,
+.skeletonLineShort::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    92deg,
+    transparent 0%,
+    rgb(255 255 255 / 0.35) 45%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  animation: catalogStripShimmer 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeletonPhoto::after,
+  .skeletonLine::after,
+  .skeletonLineShort::after {
+    animation: none;
+  }
+}
+
+@keyframes catalogStripShimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 .catalogCard {
   display: flex;
   flex-direction: column;

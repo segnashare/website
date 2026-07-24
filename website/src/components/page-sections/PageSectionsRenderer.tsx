@@ -1,6 +1,7 @@
 import {Suspense} from 'react'
 import type {HomeSection, PageSection} from '@/lib/sanity'
 import {normalizeScrollCardSize} from '@/lib/catalog/scroll-card-size'
+import {CatalogScrollStripSkeleton} from '@/components/catalog/CatalogScrollStripSkeleton'
 import {SectionCatalogPuzzle} from './SectionCatalogPuzzle'
 import {SectionHorizontalScrollCards} from './SectionHorizontalScrollCards'
 import {SectionHelpCenterHub} from './SectionHelpCenterHub'
@@ -187,7 +188,7 @@ export function PageSectionsRenderer({
 
         if (isWebsiteDbCatalogSection(section)) {
           return gate(
-            <Suspense fallback={<p className={styles.asyncFallback}>Chargement du catalogue…</p>}>
+            <Suspense fallback={<CatalogScrollStripSkeleton />}>
               <SectionWebsiteDbCatalog
                 section={section}
                 stackedAfterSmall={stackedAfterSmall}
