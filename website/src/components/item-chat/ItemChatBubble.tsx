@@ -222,9 +222,9 @@ export function ItemChatBubble() {
                     type="button"
                     className={styles.expand}
                     aria-label="Nouveau chat"
+                    disabled={sending}
                     onClick={() => {
-                      if (conversations.length === 0) setBrowseEmptyList(false)
-                      else listInputRef.current?.focus()
+                      void startNewChat()
                     }}
                   >
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
