@@ -2,9 +2,14 @@
 
 import {bootstrapUserAfterSignup} from '@/lib/auth/bootstrap-user'
 import {
+  isBanAddressSelectionValid,
+  searchBanAddresses,
+  type BanAddressSuggestion,
+} from '@/lib/auth/ban-address-search'
+import {
   isValidBirthDate,
   saveOnboardingBirthDate,
-  saveOnboardingName,
+  saveOnboardingNameAndAddress,
   saveOnboardingSizes,
 } from '@/lib/auth/checkout-onboarding-persist'
 import {resolveCheckoutOnboardingResume} from '@/lib/auth/checkout-onboarding-resume'
@@ -45,8 +50,8 @@ const STEP_META: Record<Step, {title: string; subtitle: string}> = {
     subtitle: 'Entre le code reçu pour sécuriser ton compte.',
   },
   2: {
-    title: "Comment t'appelles-tu ?",
-    subtitle: "Segna ne procède à aucun contrôle d'identité ou d'antécédents.",
+    title: 'Qui es-tu ?',
+    subtitle: 'Prénom, nom et adresse de livraison. Seul le quartier apparaît sur ton profil.',
   },
   3: {
     title: 'Quelle est ta date de naissance ?',
@@ -149,11 +154,28 @@ export function CheckoutSignupOnboardingModal({
   const [resendRemaining, setResendRemaining] = useState(0)
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
+  const [locationQuery, setLocationQuery] = useState('')
+  const [locationSuggestions, setLocationSuggestions] = useState<BanAddressSuggestion[]>([])
+  const [locationLoading, setLocationLoading] = useState(false)
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false)
+  const [activeLocationIndex, setActiveLocationIndex] = useState(-1)
+  const [selectedLocation, setSelectedLocation] = useState<BanAddressSuggestion | null>(null)
   const [digits, setDigits] = useState<string[]>(['', '', '', '', '', '', '', ''])
   const birthRefs = useRef<Array<HTMLInputElement | null>>([])
   const [topSelected, setTopSelected] = useState<Set<string>>(new Set())
   const [bottomSelected, setBottomSelected] = useState<Set<string>>(new Set())
   const [shoesSelected, setShoesSelected] = useState<Set<string>>(new Set())
+
+  const isLocationValid = isBanAddressSelectionValid(locationQuery, selectedLocation)
+
+  const selectLocationSuggestion = useCallback((suggestion: BanAddressSuggestion) => {
+    setLocationQuery(suggestion.label)
+    setSelectedLocation(suggestion)
+    setShowLocationSuggestions(false)
+    setActiveLocationIndex(-1)
+    setLocationSuggestions([])
+    setError(null)
+  }, [])
 
   const otpChars = Array.from({length: OTP_LENGTH}, (_, i) => otp[i] ?? '')
 
@@ -194,6 +216,12 @@ export function CheckoutSignupOnboardingModal({
     setOtp('')
     setFirstName('')
     setLastName('')
+    setLocationQuery('')
+    setLocationSuggestions([])
+    setLocationLoading(false)
+    setShowLocationSuggestions(false)
+    setActiveLocationIndex(-1)
+    setSelectedLocation(null)
     setDigits(['', '', '', '', '', '', '', ''])
     setTopSelected(new Set())
     setBottomSelected(new Set())
@@ -249,6 +277,39 @@ export function CheckoutSignupOnboardingModal({
   }, [open, resendRemaining])
 
   useEffect(() => {
+    if (!open || step !== 2) return
+    const query = locationQuery.trim()
+    if (query.length < 3 || (selectedLocation && query === selectedLocation.label)) {
+      setLocationSuggestions([])
+      setActiveLocationIndex(-1)
+      setLocationLoading(false)
+      return
+    }
+
+    const controller = new AbortController()
+    const timeoutId = window.setTimeout(() => {
+      void (async () => {
+        setLocationLoading(true)
+        try {
+          const next = await searchBanAddresses(query, controller.signal)
+          setLocationSuggestions(next)
+          setActiveLocationIndex(next.length > 0 ? 0 : -1)
+        } catch {
+          setLocationSuggestions([])
+          setActiveLocationIndex(-1)
+        } finally {
+          setLocationLoading(false)
+        }
+      })()
+    }, 240)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+      controller.abort()
+    }
+  }, [locationQuery, open, selectedLocation, step])
+
+  useEffect(() => {
     if (!open) return
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -267,7 +328,7 @@ export function CheckoutSignupOnboardingModal({
     (step === 1
       ? otp.trim().length === OTP_LENGTH
       : step === 2
-        ? firstName.trim().length >= 2
+        ? firstName.trim().length >= 2 && isLocationValid
         : step === 3
           ? isValidBirthDate(day, month, year)
           : topSelected.size > 0 && bottomSelected.size > 0 && shoesSelected.size > 0)
@@ -417,7 +478,18 @@ export function CheckoutSignupOnboardingModal({
         }
 
         if (step === 2) {
-          const result = await saveOnboardingName(supabase, firstName, lastName)
+          if (!selectedLocation || !isLocationValid) {
+            setError('Sélectionne une adresse complète (rue + ville) dans la liste.')
+            setPending(false)
+            return
+          }
+          const result = await saveOnboardingNameAndAddress(supabase, firstName, lastName, {
+            label: selectedLocation.label,
+            relativeCity: selectedLocation.relativeCity,
+            timezone: selectedLocation.timezone,
+            lat: selectedLocation.lat,
+            lon: selectedLocation.lon,
+          })
           if (!result.ok) {
             setError(result.message)
             setPending(false)
@@ -478,11 +550,13 @@ export function CheckoutSignupOnboardingModal({
       firstName,
       forceEmailOtp,
       intent,
+      isLocationValid,
       lastName,
       month,
       onComplete,
       otp,
       pending,
+      selectedLocation,
       shoesSelected,
       step,
       topSelected,
@@ -633,6 +707,86 @@ export function CheckoutSignupOnboardingModal({
                     onChange={(e) => setLastName(e.target.value)}
                     disabled={pending}
                   />
+                </div>
+                <div className={styles.addressWrap}>
+                  <div className={styles.framedInput}>
+                    <input
+                      type="text"
+                      autoComplete="street-address"
+                      placeholder="Saisis ton adresse, ton quartier ou ta ville…"
+                      value={locationQuery}
+                      disabled={pending}
+                      required
+                      aria-autocomplete="list"
+                      aria-expanded={showLocationSuggestions}
+                      onFocus={() => setShowLocationSuggestions(true)}
+                      onBlur={() => {
+                        window.setTimeout(() => setShowLocationSuggestions(false), 120)
+                      }}
+                      onChange={(e) => {
+                        setError(null)
+                        setLocationQuery(e.target.value)
+                        setSelectedLocation(null)
+                        setShowLocationSuggestions(true)
+                        setActiveLocationIndex(-1)
+                      }}
+                      onKeyDown={(e) => {
+                        if (!showLocationSuggestions || locationSuggestions.length === 0) return
+                        if (e.key === 'ArrowDown') {
+                          e.preventDefault()
+                          setActiveLocationIndex((prev) => {
+                            if (prev < 0) return 0
+                            return Math.min(prev + 1, locationSuggestions.length - 1)
+                          })
+                          return
+                        }
+                        if (e.key === 'ArrowUp') {
+                          e.preventDefault()
+                          setActiveLocationIndex((prev) => {
+                            if (prev <= 0) return 0
+                            return prev - 1
+                          })
+                          return
+                        }
+                        if (
+                          e.key === 'Enter' &&
+                          activeLocationIndex >= 0 &&
+                          activeLocationIndex < locationSuggestions.length
+                        ) {
+                          e.preventDefault()
+                          selectLocationSuggestion(locationSuggestions[activeLocationIndex]!)
+                        }
+                      }}
+                    />
+                  </div>
+                  {showLocationSuggestions && (locationLoading || locationSuggestions.length > 0) ? (
+                    <div className={styles.addressSuggestions} role="listbox" aria-label="Suggestions d’adresse">
+                      {locationLoading ? (
+                        <p className={styles.addressHint}>Recherche d’adresses…</p>
+                      ) : (
+                        locationSuggestions.map((suggestion, index) => (
+                          <button
+                            key={suggestion.id}
+                            type="button"
+                            role="option"
+                            aria-selected={index === activeLocationIndex}
+                            className={`${styles.addressSuggestion} ${
+                              index === activeLocationIndex ? styles.addressSuggestionActive : ''
+                            }`}
+                            onMouseDown={(e) => {
+                              e.preventDefault()
+                              selectLocationSuggestion(suggestion)
+                            }}
+                          >
+                            <span className={styles.addressSuggestionLabel}>{suggestion.label}</span>
+                            {suggestion.secondary ? (
+                              <span className={styles.addressSuggestionSecondary}>{suggestion.secondary}</span>
+                            ) : null}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </form>

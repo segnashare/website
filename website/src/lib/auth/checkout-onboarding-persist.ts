@@ -16,7 +16,15 @@ function rpcOf(supabase: SupabaseClient): RpcUntyped {
   return supabase.rpc.bind(supabase) as unknown as RpcUntyped
 }
 
-export async function saveOnboardingName(
+export type OnboardingLocationPayload = {
+  label: string
+  relativeCity: string | null
+  timezone: string
+  lat: number | null
+  lon: number | null
+}
+
+async function persistOnboardingNameFields(
   supabase: SupabaseClient,
   firstName: string,
   lastName: string,
@@ -32,7 +40,79 @@ export async function saveOnboardingName(
   if (settingsResult.error) {
     return {ok: false, message: settingsResult.error.message ?? "Impossible d'enregistrer ton nom."}
   }
+  return {ok: true}
+}
 
+async function persistOnboardingLocationFields(
+  supabase: SupabaseClient,
+  location: OnboardingLocationPayload,
+): Promise<{ok: true} | {ok: false; message: string}> {
+  const rpc = rpcOf(supabase)
+  const label = location.label.trim()
+  if (!label) return {ok: false, message: 'Sélectionne une adresse dans la liste.'}
+
+  const locationResult = await rpc('set_user_location', {
+    p_adress: label,
+    p_timezone: location.timezone || 'Europe/Paris',
+    p_relative_city: location.relativeCity,
+    p_request_id: crypto.randomUUID(),
+  })
+  if (locationResult.error) {
+    return {ok: false, message: locationResult.error.message ?? "Impossible d'enregistrer ton adresse."}
+  }
+
+  const profileResult = await rpc('update_user_profile_public', {
+    p_profile_json: {
+      profile_data: {
+        location: {
+          label,
+          lat: location.lat,
+          lon: location.lon,
+          timezone: location.timezone || 'Europe/Paris',
+        },
+      },
+    },
+    p_request_id: crypto.randomUUID(),
+  })
+  if (profileResult.error) {
+    return {ok: false, message: profileResult.error.message ?? 'Impossible de mettre à jour le profil.'}
+  }
+
+  return {ok: true}
+}
+
+export async function saveOnboardingName(
+  supabase: SupabaseClient,
+  firstName: string,
+  lastName: string,
+): Promise<{ok: true} | {ok: false; message: string}> {
+  const nameResult = await persistOnboardingNameFields(supabase, firstName, lastName)
+  if (!nameResult.ok) return nameResult
+
+  const rpc = rpcOf(supabase)
+  const progress = await rpc('upsert_onboarding_progress', {
+    p_current_step: '/onboarding/birth',
+    p_progress_json: {checkpoint: '/onboarding/name'},
+    p_request_id: crypto.randomUUID(),
+  })
+  if (progress.error) return {ok: false, message: progress.error.message ?? 'Erreur de progression.'}
+  return {ok: true}
+}
+
+/** Nom + adresse (étape 2 du tunnel website) — progression seulement si les deux OK. */
+export async function saveOnboardingNameAndAddress(
+  supabase: SupabaseClient,
+  firstName: string,
+  lastName: string,
+  location: OnboardingLocationPayload,
+): Promise<{ok: true} | {ok: false; message: string}> {
+  const nameResult = await persistOnboardingNameFields(supabase, firstName, lastName)
+  if (!nameResult.ok) return nameResult
+
+  const locationResult = await persistOnboardingLocationFields(supabase, location)
+  if (!locationResult.ok) return locationResult
+
+  const rpc = rpcOf(supabase)
   const progress = await rpc('upsert_onboarding_progress', {
     p_current_step: '/onboarding/birth',
     p_progress_json: {checkpoint: '/onboarding/name'},

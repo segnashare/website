@@ -13,6 +13,7 @@ import {homeHeroActionFromPage} from '@/lib/home-hero-action'
 import {visibleMobileMainNavItems} from '@/lib/mobileMainNav'
 import {CartNavLink} from '@/components/cart/CartNavLink'
 import {CtaHrefLink} from './heroShared'
+import {JoinClubCtaLink} from './JoinClubCtaLink'
 import {MobileMainMenu} from './MobileMainMenu'
 import {useNavScrollElevated} from './useNavScrollElevated'
 import styles from './homeHero.module.css'
@@ -185,9 +186,9 @@ export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeH
                 </CtaHrefLink>
               ) : null}
               <CartNavLink className={styles.navCartLink} />
-              <CtaHrefLink href={primaryHref} className={styles.downloadButton}>
+              <JoinClubCtaLink href={primaryHref} className={styles.downloadButton}>
                 {primaryLabel}
-              </CtaHrefLink>
+              </JoinClubCtaLink>
             </nav>
           </motion.header>
 
@@ -229,9 +230,9 @@ export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeH
 
             <div className={styles.mobileHeaderActions}>
               <CartNavLink className={styles.navCartLink} tone="dark" />
-              <CtaHrefLink href={primaryHref} className={styles.mobileHeaderCta}>
+              <JoinClubCtaLink href={primaryHref} className={styles.mobileHeaderCta}>
                 {primaryLabel}
-              </CtaHrefLink>
+              </JoinClubCtaLink>
             </div>
           </motion.header>
         </div>

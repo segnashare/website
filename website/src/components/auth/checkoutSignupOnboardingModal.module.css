@@ -62,7 +62,9 @@
 
 .subtitle {
   margin: 0;
-  font-size: 0.9rem;
+  font-family: var(--font-playfair-display), Georgia, 'Times New Roman', serif;
+  font-size: 0.95rem;
+  font-weight: 500;
   line-height: 1.4;
   color: #71717a;
 }
@@ -237,6 +239,70 @@
   gap: 0.65rem;
 }
 
+.addressWrap {
+  position: relative;
+  z-index: 2;
+}
+
+.addressSuggestions {
+  position: relative;
+  z-index: 5;
+  margin-top: 0.45rem;
+  max-height: 14rem;
+  overflow: auto;
+  border: 1px solid #e4e4e7;
+  border-radius: 0.75rem;
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+}
+
+.addressSuggestion {
+  display: grid;
+  gap: 0.15rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.75rem 0.95rem;
+  border: none;
+  border-bottom: 1px solid #f4f4f5;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.addressSuggestion:last-child {
+  border-bottom: none;
+}
+
+.addressSuggestion:hover,
+.addressSuggestionActive {
+  background: #f4f4f5;
+}
+
+.addressSuggestionLabel {
+  font-family: var(--font-montserrat), system-ui, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #14110f;
+  line-height: 1.3;
+}
+
+.addressSuggestionSecondary {
+  font-family: var(--font-playfair-display), Georgia, 'Times New Roman', serif;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #71717a;
+  line-height: 1.3;
+}
+
+.addressHint {
+  margin: 0;
+  padding: 0.85rem 0.95rem;
+  font-family: var(--font-playfair-display), Georgia, 'Times New Roman', serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #71717a;
+}
+
 .framedInput {
   width: 100%;
   border-radius: 0.75rem;
@@ -261,18 +327,20 @@
 }
 
 .framedInput input::placeholder {
-  font-family: var(--font-montserrat), system-ui, sans-serif;
+  font-family: var(--font-playfair-display), Georgia, 'Times New Roman', serif;
   font-style: normal;
   font-weight: 600;
   color: #999;
+  opacity: 1;
 }
 
 .legalTiny {
   margin: 0.35rem 0 0;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-family: var(--font-playfair-display), Georgia, 'Times New Roman', serif;
+  font-size: 0.88rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-transform: none;
   color: #999;
   line-height: 1.35;
 }
@@ -343,9 +411,11 @@
 }
 
 .birthSlot input::placeholder {
+  font-family: var(--font-playfair-display), Georgia, 'Times New Roman', serif;
   font-weight: 600;
   color: #999;
   font-size: 0.85em;
+  opacity: 1;
 }
 
 .sizeSection {

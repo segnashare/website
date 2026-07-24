@@ -58,11 +58,15 @@ export async function resolveCheckoutOnboardingResume(
   }
 
   const [{data: member}, {data: onboarding}] = await Promise.all([
-    supabase.from('users').select('first_name, birth_date').eq('id', user.id).maybeSingle(),
+    supabase.from('users').select('first_name, birth_date, adress').eq('id', user.id).maybeSingle(),
     supabase.from('onboarding_sessions').select('current_step, status').eq('user_id', user.id).maybeSingle(),
   ])
 
-  const row = member as {first_name?: string | null; birth_date?: string | null} | null
+  const row = member as {
+    first_name?: string | null
+    birth_date?: string | null
+    adress?: string | null
+  } | null
   const progress = onboarding as {current_step?: string | null; status?: string | null} | null
 
   if (progress?.status === 'completed' || isPastWebsiteCheckoutOnboarding(progress?.current_step)) {
@@ -70,18 +74,20 @@ export async function resolveCheckoutOnboardingResume(
   }
 
   const hasName = (row?.first_name ?? '').trim().length >= 2
+  const hasAddress = (row?.adress ?? '').trim().length > 0
+  const hasIdentity = hasName && hasAddress
   const hasBirth = Boolean(row?.birth_date)
-  const sized = hasName && hasBirth ? await hasCheckoutSizes(supabase, user.id) : false
+  const sized = hasIdentity && hasBirth ? await hasCheckoutSizes(supabase, user.id) : false
 
-  if (hasName && hasBirth && sized) {
+  if (hasIdentity && hasBirth && sized) {
     return {status: 'ready', email}
   }
 
   const path = progress?.current_step ?? ''
-  if (path === '/onboarding/size' || (hasName && hasBirth)) {
+  if (path === '/onboarding/size' || (hasIdentity && hasBirth)) {
     return {status: 'resume', email, step: 4}
   }
-  if (path === '/onboarding/birth' || hasName) {
+  if (path === '/onboarding/birth' || hasIdentity) {
     return {status: 'resume', email, step: 3}
   }
 

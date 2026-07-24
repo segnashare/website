@@ -5,6 +5,7 @@ import {createPortal} from 'react-dom'
 import Link from 'next/link'
 import type {MobileMainNavItem} from '@/lib/mobileMainNav'
 import {CtaHrefLink} from './heroShared'
+import {JoinClubCtaLink} from './JoinClubCtaLink'
 import styles from './homeHero.module.css'
 
 type Props = {
@@ -69,14 +70,14 @@ export function MobileMainMenu({
           <span className={styles.brandWrap}>{brand}</span>
         </Link>
 
-        <CtaHrefLink
+        <JoinClubCtaLink
           href={primaryCta.href}
           className={styles.mobileHeaderCta}
           tabIndex={open ? undefined : -1}
           onClick={onClose}
         >
           {primaryCta.label}
-        </CtaHrefLink>
+        </JoinClubCtaLink>
       </div>
 
       <nav id={id} className={styles.mobileMenuOverlay}>

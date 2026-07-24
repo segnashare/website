@@ -1,6 +1,6 @@
 import type {Metadata} from 'next'
 import {SubscriptionRecapClient} from '@/components/subscription/SubscriptionRecapClient'
-import {fetchRecapWallItems} from '@/lib/subscription/fetch-recap-wall-items'
+import {RECAP_WALL_ITEMS} from '@/lib/subscription/recap-wall-items'
 
 export const metadata: Metadata = {
   title: 'Votre mois offert | Segna',
@@ -8,9 +8,13 @@ export const metadata: Metadata = {
     'Activez votre abonnement Segna : le premier mois est offert, puis 39,99 €/mois. Annulation possible avant le renouvellement.',
 }
 
-export const revalidate = 3600
-
-export default async function AbonnementRecapPage() {
-  const wallItems = await fetchRecapWallItems(45)
-  return <SubscriptionRecapClient wallItems={wallItems} />
+export default function AbonnementRecapPage() {
+  return (
+    <>
+      {RECAP_WALL_ITEMS.slice(0, 12).map((item) => (
+        <link key={item.id} rel="preload" as="image" href={item.coverUrl} />
+      ))}
+      <SubscriptionRecapClient wallItems={RECAP_WALL_ITEMS} />
+    </>
+  )
 }

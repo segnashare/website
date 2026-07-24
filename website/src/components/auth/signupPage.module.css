@@ -1,6 +1,6 @@
 .page {
   min-height: 100dvh;
-  background: #fef8ef;
+  background: #fff;
   color: #14110f;
 }
 
@@ -82,7 +82,7 @@
 
 @media (min-width: 901px) {
   .page {
-    background: #fef8ef;
+    background: #fff;
   }
 
   .shell {
@@ -113,18 +113,8 @@
     position: relative;
     display: block;
     min-height: 100dvh;
-    background: #0a0a0a;
+    background: #fff;
     overflow: hidden;
-  }
-
-  .visualMedia {
-    position: absolute;
-    inset: 0;
-  }
-
-  .visualImg {
-    object-fit: cover;
-    object-position: center 20%;
   }
 }
 

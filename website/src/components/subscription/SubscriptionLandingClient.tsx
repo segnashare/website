@@ -5,7 +5,9 @@ import {CheckoutAuthModal} from '@/components/auth/CheckoutAuthModal'
 import {CheckoutSignupOnboardingModal} from '@/components/auth/CheckoutSignupOnboardingModal'
 import type {CheckoutOnboardingStep} from '@/lib/auth/checkout-onboarding-resume'
 import {resolveCheckoutOnboardingResume} from '@/lib/auth/checkout-onboarding-resume'
+import {hasActivePaidSubscription} from '@/lib/auth/has-active-subscription'
 import {WEBSITE_SUBSCRIPTION_PATH, WEBSITE_SUBSCRIPTION_RECAP_PATH} from '@/lib/cart/paths'
+import {SEGNA_APP_BASE_URL} from '@/lib/catalog/catalog-app-links'
 import {SEGNAX_COMPARE_ROWS} from '@/lib/subscription/segnax-compare'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import {useRouter} from 'next/navigation'
@@ -22,6 +24,29 @@ export function SubscriptionLandingClient() {
   const checkoutHandledRef = useRef(false)
 
   const authReturnPath = `${WEBSITE_SUBSCRIPTION_PATH}?checkout=1`
+
+  const redirectSubscribedToApp = useCallback(async () => {
+    try {
+      const supabase = createSupabaseBrowserClient()
+      const {data} = await supabase.auth.getSession()
+      const accessToken = data.session?.access_token
+      const refreshToken = data.session?.refresh_token
+      if (accessToken && refreshToken) {
+        const target = new URL('/auth/handoff', SEGNA_APP_BASE_URL)
+        target.hash = new URLSearchParams({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+          token_type: 'bearer',
+          type: 'website_signin',
+        }).toString()
+        window.location.assign(target.toString())
+        return
+      }
+    } catch {
+      // fallback below
+    }
+    window.location.assign(`${SEGNA_APP_BASE_URL}/auth/login?from=member`)
+  }, [])
 
   const beginReady = useCallback(() => {
     setAuthOpen(false)
@@ -43,6 +68,10 @@ export function SubscriptionLandingClient() {
     setAuthError(null)
     try {
       const supabase = createSupabaseBrowserClient()
+      if (await hasActivePaidSubscription(supabase)) {
+        await redirectSubscribedToApp()
+        return
+      }
       const resume = await resolveCheckoutOnboardingResume(supabase)
       if (resume.status === 'ready') {
         beginReady()
@@ -58,7 +87,7 @@ export function SubscriptionLandingClient() {
     } finally {
       setPending(false)
     }
-  }, [beginReady, openOnboardingResume, pending])
+  }, [beginReady, openOnboardingResume, pending, redirectSubscribedToApp])
 
   useEffect(() => {
     if (typeof window === 'undefined') return

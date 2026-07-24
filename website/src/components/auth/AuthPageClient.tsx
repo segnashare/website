@@ -4,10 +4,12 @@ import {CheckoutAuthPanel, type CheckoutAuthMode} from '@/components/auth/Checko
 import {CheckoutSignupOnboardingModal} from '@/components/auth/CheckoutSignupOnboardingModal'
 import type {CheckoutOnboardingStep} from '@/lib/auth/checkout-onboarding-resume'
 import {resolveCheckoutOnboardingResume} from '@/lib/auth/checkout-onboarding-resume'
+import {hasActivePaidSubscription} from '@/lib/auth/has-active-subscription'
 import {SEGNA_APP_BASE_URL} from '@/lib/catalog/catalog-app-links'
 import {WEBSITE_SUBSCRIPTION_RECAP_PATH} from '@/lib/cart/paths'
+import {RECAP_WALL_ITEMS} from '@/lib/subscription/recap-wall-items'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
-import Image from 'next/image'
+import {RecapPiecesWall} from '@/components/subscription/RecapPiecesWall'
 import Link from 'next/link'
 import {useRouter, useSearchParams} from 'next/navigation'
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
@@ -21,25 +23,23 @@ const LEGAL = [
 
 type Props = {
   mode: CheckoutAuthMode
-  /** Image hero droite (desktop uniquement). */
-  heroImageSrc?: string
 }
 
-export function AuthPageClient({mode, heroImageSrc = '/brand/signup-hero-gold.png'}: Props) {
+export function AuthPageClient({mode}: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const nextPath = useMemo(() => {
     const raw = searchParams.get('next')?.trim()
     if (raw && raw.startsWith('/') && !raw.startsWith('//')) {
-      // Signup terminé → toujours le récap d’activation (pas la landing abo).
-      if (mode === 'signup' && (raw === '/abonnement' || raw.startsWith('/abonnement?'))) {
+      // Auth website → récap activation (pas la landing `/abonnement`).
+      if (raw === '/abonnement' || raw.startsWith('/abonnement?') || raw.startsWith('/abonnement/recap')) {
         return WEBSITE_SUBSCRIPTION_RECAP_PATH
       }
       return raw
     }
-    // Signup → récap mois offert ; signin → l’app gère la destination.
-    return mode === 'signin' ? '/' : WEBSITE_SUBSCRIPTION_RECAP_PATH
-  }, [mode, searchParams])
+    // Fallback signin / signup → récap activation (sauf abo déjà actif, géré dans `goNext`).
+    return WEBSITE_SUBSCRIPTION_RECAP_PATH
+  }, [searchParams])
 
   const nextQuery = useMemo(() => {
     if (mode === 'signin') return ''
@@ -49,13 +49,16 @@ export function AuthPageClient({mode, heroImageSrc = '/brand/signup-hero-gold.pn
   }, [mode, nextPath])
 
   const returnPath = useMemo(() => {
+    // Signin : revenir sur /signin pour reprendre l’onboarding website si incomplet.
+    if (mode === 'signin') return '/signin?resume=1'
     const url = new URL(nextPath, 'https://segna.local')
     url.searchParams.set('checkout', '1')
     return `${url.pathname}${url.search}`
-  }, [nextPath])
+  }, [mode, nextPath])
 
   const switchHref = mode === 'signup' ? `/signin${nextQuery}` : `/signup${nextQuery}`
-  const authDestination = mode === 'signin' ? 'app' : 'website'
+  /** Toujours website : la redirection app ne se fait qu’après onboarding website complet (`goNext`). */
+  const authDestination = 'website' as const
 
   const prefillEmail = useMemo(() => {
     const raw = searchParams.get('email')?.trim().toLowerCase() ?? ''
@@ -87,32 +90,63 @@ export function AuthPageClient({mode, heroImageSrc = '/brand/signup-hero-gold.pn
     [nextPath, router],
   )
 
-  const goNext = useCallback(async () => {
-    if (mode === 'signin') {
-      try {
-        const supabase = createSupabaseBrowserClient()
-        const {data} = await supabase.auth.getSession()
-        const accessToken = data.session?.access_token
-        const refreshToken = data.session?.refresh_token
-        if (accessToken && refreshToken) {
-          const target = new URL('/auth/handoff', SEGNA_APP_BASE_URL)
-          target.hash = new URLSearchParams({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-            token_type: 'bearer',
-            type: 'website_signin',
-          }).toString()
-          window.location.assign(target.toString())
-          return
-        }
-      } catch {
-        // fallback below
+  const openOnboardingResume = useCallback((email: string, step: CheckoutOnboardingStep) => {
+    setOnboardingIntent(mode)
+    setOnboardingInitialStep(step)
+    setForceEmailOtp(false)
+    setOnboardingEmail(email)
+  }, [mode])
+
+  const redirectToApp = useCallback(async () => {
+    try {
+      const supabase = createSupabaseBrowserClient()
+      const {data} = await supabase.auth.getSession()
+      const accessToken = data.session?.access_token
+      const refreshToken = data.session?.refresh_token
+      if (accessToken && refreshToken) {
+        const target = new URL('/auth/handoff', SEGNA_APP_BASE_URL)
+        target.hash = new URLSearchParams({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+          token_type: 'bearer',
+          type: 'website_signin',
+        }).toString()
+        window.location.assign(target.toString())
+        return
       }
-      window.location.assign(`${SEGNA_APP_BASE_URL}/auth/login?from=member`)
-      return
+    } catch {
+      // fallback below
     }
-    router.replace(nextPath)
-  }, [mode, nextPath, router])
+    window.location.assign(`${SEGNA_APP_BASE_URL}/auth/login?from=member`)
+  }, [])
+
+  const goNext = useCallback(async () => {
+    try {
+      const supabase = createSupabaseBrowserClient()
+      const resume = await resolveCheckoutOnboardingResume(supabase)
+
+      // Tunnel website incomplet → reprendre la modale (nom / adresse / …).
+      if (resume.status === 'resume') {
+        openOnboardingResume(resume.email, resume.step)
+        return
+      }
+
+      if (resume.status === 'need_auth') {
+        return
+      }
+
+      // Déjà abonné → app ; sinon toujours récap activation SegnaX.
+      const alreadySubscribed = await hasActivePaidSubscription(supabase)
+      if (alreadySubscribed) {
+        await redirectToApp()
+        return
+      }
+
+      router.replace(WEBSITE_SUBSCRIPTION_RECAP_PATH)
+    } catch {
+      router.replace(WEBSITE_SUBSCRIPTION_RECAP_PATH)
+    }
+  }, [openOnboardingResume, redirectToApp, router])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -143,16 +177,14 @@ export function AuthPageClient({mode, heroImageSrc = '/brand/signup-hero-gold.pn
             return
           }
           if (resume.status === 'resume') {
-            setOnboardingIntent('signup')
-            setOnboardingInitialStep(resume.step)
-            setOnboardingEmail(resume.email)
+            openOnboardingResume(resume.email, resume.step)
           }
         }
       } finally {
         cleanUrl()
       }
     })()
-  }, [goNext])
+  }, [goNext, openOnboardingResume])
 
   const intro =
     mode === 'signup'
@@ -208,16 +240,7 @@ export function AuthPageClient({mode, heroImageSrc = '/brand/signup-hero-gold.pn
         </section>
 
         <aside className={styles.visualCol} aria-hidden>
-          <div className={styles.visualMedia}>
-            <Image
-              src={heroImageSrc}
-              alt=""
-              fill
-              priority
-              sizes="(max-width: 900px) 0px, 50vw"
-              className={styles.visualImg}
-            />
-          </div>
+          <RecapPiecesWall items={RECAP_WALL_ITEMS} fade="left" />
         </aside>
       </div>
 

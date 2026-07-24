@@ -4,14 +4,18 @@ import {CheckoutSignupOnboardingModal} from '@/components/auth/CheckoutSignupOnb
 import type {CheckoutOnboardingStep} from '@/lib/auth/checkout-onboarding-resume'
 import {resolveCheckoutOnboardingResume} from '@/lib/auth/checkout-onboarding-resume'
 import {WEBSITE_SUBSCRIPTION_RECAP_PATH} from '@/lib/cart/paths'
+import {openIosAppOrAppStore, SEGNA_APP_BASE_URL} from '@/lib/catalog/catalog-app-links'
+import {detectClientPlatform, type ClientPlatform} from '@/lib/platform/client-platform'
 import type {RecapWallItem} from '@/lib/subscription/recap-wall-types'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import {useRouter} from 'next/navigation'
-import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
+import {useCallback, useEffect, useRef, useState} from 'react'
+import {RecapPiecesWall} from './RecapPiecesWall'
 import styles from './subscriptionRecap.module.css'
 
 const BENEFITS = [
-  '1 mois pour commencer',
+  '400 € de pièces à louer',
+  'Livraison à domicile partout en France',
   'Pressing inclus',
   'Assurance incluse',
   '1 échange inclus par mois',
@@ -22,39 +26,19 @@ type Props = {
   wallItems: RecapWallItem[]
 }
 
-function splitIntoColumns(items: RecapWallItem[], columnCount: number): RecapWallItem[][] {
-  const columns: RecapWallItem[][] = Array.from({length: columnCount}, () => [])
-  items.forEach((item, index) => {
-    columns[index % columnCount]!.push(item)
-  })
-  return columns
-}
-
-function WallColumn({items, ariaHidden}: {items: RecapWallItem[]; ariaHidden?: boolean}) {
-  const loop = items.length > 0 ? [...items, ...items] : []
-  return (
-    <div className={styles.column} aria-hidden={ariaHidden || undefined}>
-      <div className={styles.columnTrack}>
-        {loop.map((item, index) => (
-          <div key={`${item.id}-${index}`} className={styles.card}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={item.coverUrl} alt="" className={styles.cardImg} loading="lazy" decoding="async" />
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 export function SubscriptionRecapClient({wallItems}: Props) {
   const router = useRouter()
   const resumeHandledRef = useRef(false)
   const [pending, setPending] = useState(false)
   const [activatedNote, setActivatedNote] = useState(false)
+  const [activateError, setActivateError] = useState<string | null>(null)
   const [onboardingEmail, setOnboardingEmail] = useState<string | null>(null)
   const [onboardingInitialStep, setOnboardingInitialStep] = useState<CheckoutOnboardingStep>(1)
+  const [platform, setPlatform] = useState<ClientPlatform>('desktop')
 
-  const columns = useMemo(() => splitIntoColumns(wallItems, 3), [wallItems])
+  useEffect(() => {
+    setPlatform(detectClientPlatform())
+  }, [])
 
   useEffect(() => {
     if (resumeHandledRef.current) return
@@ -74,10 +58,29 @@ export function SubscriptionRecapClient({wallItems}: Props) {
     })()
   }, [])
 
+  const buildAppHandoffUrl = useCallback(async (type: string): Promise<string> => {
+    const supabase = createSupabaseBrowserClient()
+    const {data} = await supabase.auth.getSession()
+    const accessToken = data.session?.access_token
+    const refreshToken = data.session?.refresh_token
+    if (accessToken && refreshToken) {
+      const target = new URL('/auth/handoff', SEGNA_APP_BASE_URL)
+      target.hash = new URLSearchParams({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        token_type: 'bearer',
+        type,
+      }).toString()
+      return target.toString()
+    }
+    return `${SEGNA_APP_BASE_URL}/auth/login?from=member`
+  }, [])
+
   const handleActivate = useCallback(async () => {
     if (pending) return
     setPending(true)
     setActivatedNote(false)
+    setActivateError(null)
     try {
       const supabase = createSupabaseBrowserClient()
       const resume = await resolveCheckoutOnboardingResume(supabase)
@@ -90,70 +93,146 @@ export function SubscriptionRecapClient({wallItems}: Props) {
         setOnboardingEmail(resume.email)
         return
       }
-      // Stripe checkout abonnement — à brancher (Phase C).
-      setActivatedNote(true)
-    } catch {
+
+      const {data} = await supabase.auth.getSession()
+      const accessToken = data.session?.access_token
+      if (!accessToken) {
+        router.replace(`/signup?next=${encodeURIComponent(WEBSITE_SUBSCRIPTION_RECAP_PATH)}`)
+        return
+      }
+
+      // Checkout Stripe direct (proxy website → app), sans passer par l’UI app.
+      const response = await fetch('/api/subscription/checkout', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      })
+      const payload = (await response.json().catch(() => null)) as {
+        url?: string
+        message?: string
+        code?: string
+      } | null
+
+      if (response.status === 401) {
+        setActivateError('Session expirée. Reconnecte-toi pour activer ton mois offert.')
+        return
+      }
+
+      if (response.status === 403 && payload?.code === 'kyc_required') {
+        setActivateError(
+          'La vérification d’identité est requise avant d’activer SegnaX. Continuer dans l’app pour la finaliser.',
+        )
+        return
+      }
+
+      if (!response.ok || !payload?.url) {
+        throw new Error(payload?.message ?? 'Impossible de lancer le checkout Stripe.')
+      }
+
+      window.location.assign(payload.url)
+    } catch (error) {
+      setActivateError(error instanceof Error ? error.message : 'Impossible de lancer le checkout Stripe.')
       setActivatedNote(true)
     } finally {
       setPending(false)
     }
   }, [pending, router])
 
+  const handleSecondaryCta = useCallback(async () => {
+    if (pending) return
+    setPending(true)
+    try {
+      const appUrl = await buildAppHandoffUrl('website_skip_subscription')
+      if (platform === 'ios') {
+        openIosAppOrAppStore(appUrl)
+        return
+      }
+      // Desktop + Android : continuer sur le web app.
+      window.location.assign(appUrl)
+    } catch {
+      if (platform === 'ios') {
+        openIosAppOrAppStore(`${SEGNA_APP_BASE_URL}/auth/login?from=member`)
+        return
+      }
+      window.location.assign(`${SEGNA_APP_BASE_URL}/auth/login?from=member`)
+    } finally {
+      setPending(false)
+    }
+  }, [buildAppHandoffUrl, pending, platform])
+
   return (
     <div className={styles.page}>
       <div className={styles.shell}>
         <main className={styles.main}>
-          <h1 className={styles.title}>Votre mois offert est prêt</h1>
-          <p className={styles.lead}>
-            Vous allez pouvoir commencer à louer vos prochaines pièces avec Segna dès aujourd’hui.
-          </p>
-
-          <div className={styles.priceGrid}>
-            <div>
-              <p className={styles.priceLabel}>Aujourd’hui</p>
-              <p className={styles.priceValue}>Mois offert</p>
-            </div>
-            <div>
-              <p className={styles.priceLabel}>Ensuite</p>
-              <p className={styles.priceValue}>39,99&nbsp;€/mois</p>
-            </div>
-          </div>
-
-          <p className={styles.benefitsIntro}>Avec SegnaX, vous profitez de&nbsp;:</p>
-          <ul className={styles.benefits}>
-            {BENEFITS.map((benefit) => (
-              <li key={benefit} className={styles.benefit}>
-                <span className={styles.check} aria-hidden>
-                  ✓
-                </span>
-                <span>{benefit}</span>
-              </li>
-            ))}
-          </ul>
-
-          <p className={styles.cancelNote}>Annulation possible avant le renouvellement.</p>
-
-          <button type="button" className={styles.cta} disabled={pending} onClick={handleActivate}>
-            {pending ? 'Préparation…' : 'Activer mon mois offert'}
-          </button>
-
-          {activatedNote ? (
-            <p className={styles.status} role="status">
-              Prochaine étape&nbsp;: paiement Stripe pour activer SegnaX. Le checkout abonnement arrive bientôt&nbsp;;
-              tu pourras ensuite composer ta box.
+          <div className={styles.panel}>
+            <h1 className={styles.title}>Votre mois offert est prêt</h1>
+            <p className={styles.lead}>
+              Vous allez pouvoir commencer à louer vos prochaines pièces avec Segna dès aujourd’hui.
             </p>
-          ) : null}
+
+            <div className={styles.priceGrid}>
+              <div>
+                <p className={styles.priceLabel}>Aujourd’hui</p>
+                <p className={styles.priceValue}>Mois offert</p>
+              </div>
+              <div>
+                <p className={styles.priceLabel}>Ensuite</p>
+                <p className={styles.priceValue}>39,99&nbsp;€/mois</p>
+              </div>
+              <p className={styles.priceCommitment}>Sans engagement</p>
+            </div>
+
+            <p className={styles.benefitsIntro}>
+              <span>Avec</span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/brand/segnaX_logo_mark.png"
+                alt="SegnaX"
+                className={styles.segnaXLogo}
+                width={96}
+                height={28}
+                decoding="async"
+              />
+              <span>, vous profitez de&nbsp;:</span>
+            </p>
+            <ul className={styles.benefits}>
+              {BENEFITS.map((benefit) => (
+                <li key={benefit} className={styles.benefit}>
+                  <span className={styles.check} aria-hidden>
+                    ✓
+                  </span>
+                  <span>{benefit}</span>
+                </li>
+              ))}
+            </ul>
+
+            <button type="button" className={styles.cta} disabled={pending} onClick={handleActivate}>
+              {pending ? 'Préparation…' : 'Activer mon mois offert'}
+            </button>
+
+            <button
+              type="button"
+              className={styles.secondaryCta}
+              disabled={pending}
+              onClick={() => void handleSecondaryCta()}
+            >
+              Continuer sans abonnement
+            </button>
+
+            {activateError || activatedNote ? (
+              <p className={styles.status} role="status">
+                {activateError ??
+                  'Impossible de lancer le checkout SegnaX. Réessaie dans un instant, ou connecte-toi à nouveau.'}
+              </p>
+            ) : null}
+          </div>
         </main>
 
         {wallItems.length > 0 ? (
-          <aside className={styles.wall} aria-hidden>
-            <div className={styles.wallFadeTop} />
-            <div className={styles.wallFadeBottom} />
-            <div className={styles.wallStage}>
-              {columns.map((columnItems, index) => (
-                <WallColumn key={index} items={columnItems} ariaHidden />
-              ))}
-            </div>
+          <aside className={styles.wallSlot}>
+            <RecapPiecesWall items={wallItems} fade="top" />
           </aside>
         ) : null}
       </div>
