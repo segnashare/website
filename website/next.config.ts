@@ -16,20 +16,23 @@ const posthogAssetsHost = posthogHost.includes('eu.i.')
 const nextConfig: NextConfig = {
   skipTrailingSlashRedirect: true,
   async rewrites() {
-    return [
-      {
-        source: '/ingest/static/:path*',
-        destination: `${posthogAssetsHost}/static/:path*`,
-      },
-      {
-        source: '/ingest/array/:path*',
-        destination: `${posthogAssetsHost}/array/:path*`,
-      },
-      {
-        source: '/ingest/:path*',
-        destination: `${posthogHost}/:path*`,
-      },
-    ]
+    // beforeFiles: sinon `/ingest` est capturé par la page marketing `[slug]`.
+    return {
+      beforeFiles: [
+        {
+          source: '/ingest/static/:path*',
+          destination: `${posthogAssetsHost}/static/:path*`,
+        },
+        {
+          source: '/ingest/array/:path*',
+          destination: `${posthogAssetsHost}/array/:path*`,
+        },
+        {
+          source: '/ingest/:path*',
+          destination: `${posthogHost}/:path*`,
+        },
+      ],
+    }
   },
   async redirects() {
     return [
