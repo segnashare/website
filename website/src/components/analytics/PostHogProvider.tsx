@@ -19,40 +19,41 @@ function hasStatisticsConsent(): boolean {
   return Boolean(cookiebot?.consent?.statistics)
 }
 
+function getApiHost(): string {
+  return (process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com').replace(/\/+$/, '')
+}
+
 function initPostHog(): boolean {
   const apiKey = process.env.NEXT_PUBLIC_POSTHOG_KEY?.trim()
-  const posthogWindow = window as Window & {__segnaPosthogLoaded?: boolean}
+  const posthogWindow = window as Window & {
+    __segnaPosthogLoaded?: boolean
+    posthog?: typeof posthog
+  }
 
   if (!apiKey) return false
-  if (posthogWindow.__segnaPosthogLoaded) return true
 
-  // Host absolu (pas /ingest) : un POSTHOG_HOST vide sur Vercel cassait le rewrite
-  // et `/ingest` était avalé par la route marketing `[slug]`.
-  const apiHost = (
-    process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com'
-  ).replace(/\/+$/, '')
+  if (!posthog.__loaded) {
+    // Host absolu : un POSTHOG_HOST vide cassait le rewrite /ingest (avalé par [slug]).
+    posthog.init(apiKey, {
+      api_host: getApiHost(),
+      ui_host: 'https://eu.posthog.com',
+      capture_pageview: false,
+      capture_pageleave: true,
+      persistence: 'localStorage+cookie',
+      disable_session_recording: false,
+      session_recording: {
+        maskAllInputs: true,
+        maskTextSelector: '[data-ph-mask]',
+      },
+      disable_surveys: true,
+      debug: process.env.NODE_ENV === 'development',
+    })
+    posthog.register({surface: 'website'})
+  }
 
-  posthog.init(apiKey, {
-    api_host: apiHost,
-    ui_host: 'https://eu.posthog.com',
-    capture_pageview: false,
-    capture_pageleave: true,
-    persistence: 'localStorage+cookie',
-    disable_session_recording: false,
-    session_recording: {
-      maskAllInputs: true,
-      maskTextSelector: '[data-ph-mask]',
-    },
-    disable_surveys: true,
-    debug: process.env.NODE_ENV === 'development',
-  })
-
-  posthog.register({
-    surface: 'website',
-  })
-
+  posthogWindow.posthog = posthog
   posthogWindow.__segnaPosthogLoaded = true
-  return true
+  return posthog.__loaded
 }
 
 function PostHogPageView({enabled}: {enabled: boolean}): null {
@@ -83,11 +84,11 @@ export function PostHogProvider({children}: {children: React.ReactNode}) {
     const tryInit = () => {
       if (!hasStatisticsConsent()) {
         setCapturing(false)
+        if (posthog.__loaded) posthog.opt_out_capturing()
         return
       }
 
-      const ready = initPostHog()
-      if (!ready || !posthog.__loaded) return
+      if (!initPostHog()) return
 
       posthog.opt_in_capturing()
       setCapturing(true)
@@ -95,9 +96,7 @@ export function PostHogProvider({children}: {children: React.ReactNode}) {
 
     const onDecline = () => {
       setCapturing(false)
-      if (posthog.__loaded) {
-        posthog.opt_out_capturing()
-      }
+      if (posthog.__loaded) posthog.opt_out_capturing()
     }
 
     tryInit()
