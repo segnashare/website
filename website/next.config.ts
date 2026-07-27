@@ -8,7 +8,11 @@ try {
   supabaseHostname = undefined
 }
 
-const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST ?? 'https://eu.i.posthog.com'
+// `||` : une env Vercel vide ("") ne doit pas produire un rewrite relatif `/flags`.
+const posthogHost = (process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com').replace(
+  /\/+$/,
+  '',
+)
 const posthogAssetsHost = posthogHost.includes('eu.i.')
   ? 'https://eu-assets.i.posthog.com'
   : 'https://us-assets.i.posthog.com'

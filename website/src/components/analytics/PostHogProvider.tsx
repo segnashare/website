@@ -26,10 +26,11 @@ function initPostHog(): boolean {
   if (!apiKey) return false
   if (posthogWindow.__segnaPosthogLoaded) return true
 
-  const apiHost =
-    process.env.NODE_ENV === 'production'
-      ? '/ingest'
-      : (process.env.NEXT_PUBLIC_POSTHOG_HOST ?? 'https://eu.i.posthog.com')
+  // Host absolu (pas /ingest) : un POSTHOG_HOST vide sur Vercel cassait le rewrite
+  // et `/ingest` était avalé par la route marketing `[slug]`.
+  const apiHost = (
+    process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com'
+  ).replace(/\/+$/, '')
 
   posthog.init(apiKey, {
     api_host: apiHost,
