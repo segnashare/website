@@ -1,6 +1,7 @@
 import type {Metadata} from 'next'
 import {Montserrat, Playfair_Display} from 'next/font/google'
 import {GoogleAnalyticsHeadScripts} from '@/components/analytics/GoogleAnalytics'
+import {PostHogProvider} from '@/components/analytics/PostHogProvider'
 import {CookiebotScript} from '@/components/consent/Cookiebot'
 import {GoogleConsentModeDefault} from '@/components/consent/GoogleConsentModeDefault'
 import {ItemChatShell} from '@/components/item-chat/ItemChatShell'
@@ -39,7 +40,9 @@ export default function RootLayout({children}: Readonly<{children: React.ReactNo
         <GoogleAnalyticsHeadScripts />
       </head>
       <body>
-        <ItemChatShell>{children}</ItemChatShell>
+        <PostHogProvider>
+          <ItemChatShell>{children}</ItemChatShell>
+        </PostHogProvider>
       </body>
     </html>
   )
