@@ -22,14 +22,11 @@ import {
   websitePurchaseFreeShippingMissingCents,
   websitePurchaseFreeShippingProgressRatio,
 } from '@/lib/cart/website-cart-shipping'
-import {openItemChat} from '@/lib/item-chat/client-storage'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import Link from 'next/link'
 import {useRouter} from 'next/navigation'
 import {FormEvent, useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import styles from './cartPage.module.css'
-
-const CART_SUPPORT_EMAIL = 'hello@segna.fr'
 
 const PURCHASE_CHECKOUT_HREF = `${WEBSITE_CHECKOUT_PATH}?mode=purchase`
 const CART_AUTH_RETURN_PATH = `${WEBSITE_CART_PATH}?checkout=1`
@@ -46,7 +43,6 @@ export function CartPageClient() {
   const {items, count, removeItem} = useWebsiteCart()
   const [promoCode, setPromoCode] = useState('')
   const [promoNote, setPromoNote] = useState<string | null>(null)
-  const [supportMessage, setSupportMessage] = useState('')
   const [authOpen, setAuthOpen] = useState(false)
   const [onboardingEmail, setOnboardingEmail] = useState<string | null>(null)
   const [onboardingIntent, setOnboardingIntent] = useState<'signup' | 'signin'>('signup')
@@ -155,17 +151,6 @@ export function CartPageClient() {
       return
     }
     setPromoNote('Les codes promo seront disponibles à l’étape suivante.')
-  }
-
-  function onSupportSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const body = supportMessage.trim()
-    if (!body) return
-    openItemChat({
-      itemTitle: 'Panier',
-      initialMessage: body,
-    })
-    setSupportMessage('')
   }
 
   return (
@@ -383,61 +368,6 @@ export function CartPageClient() {
             </a>
           </aside>
 
-          <section className={styles.contactSection} aria-labelledby="cart-contact-heading">
-            <h2 id="cart-contact-heading" className={styles.contactHeading}>
-              Nous contacter
-            </h2>
-            <div className={styles.contactGrid}>
-              <a href={`mailto:${CART_SUPPORT_EMAIL}`} className={styles.contactCard}>
-                <span className={styles.contactIcon} aria-hidden>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M4 6h16v12H4V6Zm0 0 8 7 8-7"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </span>
-                <p className={styles.contactCardEyebrow}>Écrivez-nous</p>
-                <p className={styles.contactCardLead}>Contactez-nous par e-mail</p>
-                <p className={styles.contactCardValue}>{CART_SUPPORT_EMAIL}</p>
-              </a>
-
-              <form className={styles.contactCard} onSubmit={onSupportSubmit}>
-                <span className={styles.contactIcon} aria-hidden>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </span>
-                <p className={styles.contactCardEyebrow}>Chat en direct</p>
-                <p className={styles.contactCardLead}>Une question sur ton panier&nbsp;?</p>
-                <div className={styles.contactMessageRow}>
-                  <input
-                    type="text"
-                    className={styles.contactInput}
-                    placeholder="Écris ton message…"
-                    value={supportMessage}
-                    onChange={(e) => setSupportMessage(e.target.value)}
-                    maxLength={4000}
-                    aria-label="Message pour le support"
-                  />
-                  <button
-                    type="submit"
-                    className={styles.contactSend}
-                    disabled={!supportMessage.trim()}
-                  >
-                    Envoyer
-                  </button>
-                </div>
-              </form>
-            </div>
-          </section>
         </div>
       )}
     </main>
