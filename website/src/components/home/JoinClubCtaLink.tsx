@@ -1,7 +1,7 @@
 'use client'
 
 import {hasActivePaidSubscription} from '@/lib/auth/has-active-subscription'
-import {WEBSITE_SUBSCRIPTION_PATH, WEBSITE_SUBSCRIPTION_RECAP_PATH} from '@/lib/cart/paths'
+import {WEBSITE_LOCATION_PATH} from '@/lib/cart/paths'
 import {SEGNA_APP_BASE_URL} from '@/lib/catalog/catalog-app-links'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import Link from 'next/link'
@@ -18,15 +18,12 @@ type Props = {
 }
 
 function guestDestination(href: string): string {
-  const h = href.trim() || WEBSITE_SUBSCRIPTION_PATH
-  // Landing abo / signup générique → signup avec next = récap.
-  if (
-    h === WEBSITE_SUBSCRIPTION_PATH ||
-    h.startsWith(`${WEBSITE_SUBSCRIPTION_PATH}?`) ||
-    h === '/signup' ||
-    h.startsWith('/signup?')
-  ) {
-    return `/signup?next=${encodeURIComponent(WEBSITE_SUBSCRIPTION_RECAP_PATH)}`
+  const h = href.trim() || WEBSITE_LOCATION_PATH
+  if (h === '/signup' || h.startsWith('/signup?')) {
+    return `/signup?next=${encodeURIComponent(WEBSITE_LOCATION_PATH)}`
+  }
+  if (h === '/abonnement' || h.startsWith('/abonnement/') || h.startsWith('/abonnement?')) {
+    return WEBSITE_LOCATION_PATH
   }
   return h
 }
@@ -56,8 +53,8 @@ async function redirectSubscribedToApp(): Promise<void> {
 
 /**
  * CTA nav « Rejoindre le club » :
- * - non connecté → signup (next = récap) ou href CMS
- * - connecté sans abo → `/abonnement/recap`
+ * - non connecté → href CMS (souvent `/location` ou signup)
+ * - connecté sans abo → `/location`
  * - déjà abonné → app
  */
 export function JoinClubCtaLink({href, className, children, onClick, ariaLabel, tabIndex}: Props) {
@@ -84,7 +81,7 @@ export function JoinClubCtaLink({href, className, children, onClick, ariaLabel, 
           return
         }
 
-        router.push(WEBSITE_SUBSCRIPTION_RECAP_PATH)
+        router.push(WEBSITE_LOCATION_PATH)
       } catch {
         router.push(fallbackHref)
       }

@@ -1,4 +1,4 @@
-import {WEBSITE_SUBSCRIPTION_RECAP_PATH} from '@/lib/cart/paths'
+import {WEBSITE_LOCATION_PATH} from '@/lib/cart/paths'
 import {SEGNA_APP_BASE_URL} from '@/lib/catalog/catalog-app-links'
 import {NextResponse} from 'next/server'
 
@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   }
 
   const origin = new URL(request.url).origin
-  const cancelReturnPath = `${origin}${WEBSITE_SUBSCRIPTION_RECAP_PATH}?checkout=cancelled`
+  const cancelReturnPath = `${origin}${WEBSITE_LOCATION_PATH}?checkout=cancelled`
 
   try {
     const response = await fetch(`${SEGNA_APP_BASE_URL}/api/stripe/subscription/checkout`, {

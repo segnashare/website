@@ -1,5 +1,7 @@
 import type {SupabaseClient} from '@supabase/supabase-js'
 
+import {savePendingCheckoutPhone} from '@/lib/auth/checkout-phone'
+
 function capitalizeFirstLetter(value: string): string {
   const t = value.trim()
   if (!t) return t
@@ -43,6 +45,35 @@ async function persistOnboardingNameFields(
   return {ok: true}
 }
 
+async function persistOnboardingBirthFields(
+  supabase: SupabaseClient,
+  isoDate: string,
+): Promise<{ok: true} | {ok: false; message: string}> {
+  const rpc = rpcOf(supabase)
+  const birthResult = await rpc('set_user_birth_date', {
+    p_birth_date: isoDate,
+    p_request_id: crypto.randomUUID(),
+  })
+  if (birthResult.error) {
+    return {ok: false, message: birthResult.error.message ?? "Impossible d'enregistrer ta date de naissance."}
+  }
+
+  const profileResult = await rpc('update_user_profile_public', {
+    p_profile_json: {
+      profile_data: {
+        birth_date: isoDate,
+        age: {visibility: true},
+      },
+    },
+    p_request_id: crypto.randomUUID(),
+  })
+  if (profileResult.error) {
+    return {ok: false, message: profileResult.error.message ?? 'Impossible de mettre à jour le profil.'}
+  }
+
+  return {ok: true}
+}
+
 async function persistOnboardingLocationFields(
   supabase: SupabaseClient,
   location: OnboardingLocationPayload,
@@ -81,25 +112,54 @@ async function persistOnboardingLocationFields(
   return {ok: true}
 }
 
-export async function saveOnboardingName(
+/** Étape 2 : prénom / nom / téléphone / date de naissance → puis adresse. */
+export async function saveOnboardingIdentity(
   supabase: SupabaseClient,
   firstName: string,
   lastName: string,
+  phoneRaw: string,
+  isoBirthDate: string,
 ): Promise<{ok: true} | {ok: false; message: string}> {
   const nameResult = await persistOnboardingNameFields(supabase, firstName, lastName)
   if (!nameResult.ok) return nameResult
 
+  // Tél en attente uniquement — validation OTP + unicité au moment « Activer mon mois offert ».
+  const phoneResult = await savePendingCheckoutPhone(supabase, phoneRaw)
+  if (!phoneResult.ok) return phoneResult
+
+  const birthResult = await persistOnboardingBirthFields(supabase, isoBirthDate)
+  if (!birthResult.ok) return birthResult
+
   const rpc = rpcOf(supabase)
+  // `/onboarding/location` n’est pas dans le CHECK DB actuel → étape autorisée + checkpoint adresse.
   const progress = await rpc('upsert_onboarding_progress', {
     p_current_step: '/onboarding/birth',
-    p_progress_json: {checkpoint: '/onboarding/name'},
+    p_progress_json: {checkpoint: '/onboarding/birth', website_next: 'address'},
     p_request_id: crypto.randomUUID(),
   })
   if (progress.error) return {ok: false, message: progress.error.message ?? 'Erreur de progression.'}
   return {ok: true}
 }
 
-/** Nom + adresse (étape 2 du tunnel website) — progression seulement si les deux OK. */
+/** Étape 3 : adresse seule (carte) → puis tailles. */
+export async function saveOnboardingAddress(
+  supabase: SupabaseClient,
+  location: OnboardingLocationPayload,
+): Promise<{ok: true} | {ok: false; message: string}> {
+  const locationResult = await persistOnboardingLocationFields(supabase, location)
+  if (!locationResult.ok) return locationResult
+
+  const rpc = rpcOf(supabase)
+  const progress = await rpc('upsert_onboarding_progress', {
+    p_current_step: '/onboarding/size',
+    p_progress_json: {checkpoint: '/onboarding/size', website_address_done: true},
+    p_request_id: crypto.randomUUID(),
+  })
+  if (progress.error) return {ok: false, message: progress.error.message ?? 'Erreur de progression.'}
+  return {ok: true}
+}
+
+/** @deprecated Prefer `saveOnboardingIdentity` + `saveOnboardingAddress`. */
 export async function saveOnboardingNameAndAddress(
   supabase: SupabaseClient,
   firstName: string,
@@ -122,32 +182,15 @@ export async function saveOnboardingNameAndAddress(
   return {ok: true}
 }
 
+/** @deprecated Birth is saved in `saveOnboardingIdentity`. */
 export async function saveOnboardingBirthDate(
   supabase: SupabaseClient,
   isoDate: string,
 ): Promise<{ok: true} | {ok: false; message: string}> {
+  const birthResult = await persistOnboardingBirthFields(supabase, isoDate)
+  if (!birthResult.ok) return birthResult
+
   const rpc = rpcOf(supabase)
-  const birthResult = await rpc('set_user_birth_date', {
-    p_birth_date: isoDate,
-    p_request_id: crypto.randomUUID(),
-  })
-  if (birthResult.error) {
-    return {ok: false, message: birthResult.error.message ?? "Impossible d'enregistrer ta date de naissance."}
-  }
-
-  const profileResult = await rpc('update_user_profile_public', {
-    p_profile_json: {
-      profile_data: {
-        birth_date: isoDate,
-        age: {visibility: true},
-      },
-    },
-    p_request_id: crypto.randomUUID(),
-  })
-  if (profileResult.error) {
-    return {ok: false, message: profileResult.error.message ?? 'Impossible de mettre à jour le profil.'}
-  }
-
   const progress = await rpc('upsert_onboarding_progress', {
     p_current_step: '/onboarding/size',
     p_progress_json: {checkpoint: '/onboarding/birth'},
@@ -248,4 +291,32 @@ export function isValidBirthDate(day: string, month: string, year: string): bool
     candidate.getMonth() === monthNumber - 1 &&
     candidate.getDate() === dayNumber
   )
+}
+
+/** Page checkout achat : prénom / nom / téléphone / adresse (sans tailles ni date de naissance). */
+export async function savePurchaseCheckoutDelivery(
+  supabase: SupabaseClient,
+  input: {
+    firstName: string
+    lastName: string
+    phoneRaw: string
+    location: OnboardingLocationPayload
+    addressLine2?: string
+  },
+): Promise<{ok: true} | {ok: false; message: string}> {
+  const nameResult = await persistOnboardingNameFields(supabase, input.firstName, input.lastName)
+  if (!nameResult.ok) return nameResult
+
+  const phoneResult = await savePendingCheckoutPhone(supabase, input.phoneRaw)
+  if (!phoneResult.ok) return phoneResult
+
+  const line2 = (input.addressLine2 ?? '').trim()
+  const label = line2 ? `${input.location.label.trim()} — ${line2}` : input.location.label
+  const locationResult = await persistOnboardingLocationFields(supabase, {
+    ...input.location,
+    label,
+  })
+  if (!locationResult.ok) return locationResult
+
+  return {ok: true}
 }

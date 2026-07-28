@@ -6,7 +6,7 @@ import type {CheckoutOnboardingStep} from '@/lib/auth/checkout-onboarding-resume
 import {resolveCheckoutOnboardingResume} from '@/lib/auth/checkout-onboarding-resume'
 import {hasActivePaidSubscription} from '@/lib/auth/has-active-subscription'
 import {SEGNA_APP_BASE_URL} from '@/lib/catalog/catalog-app-links'
-import {WEBSITE_SUBSCRIPTION_RECAP_PATH} from '@/lib/cart/paths'
+import {WEBSITE_LOCATION_PATH} from '@/lib/cart/paths'
 import {RECAP_WALL_ITEMS} from '@/lib/subscription/recap-wall-items'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import {RecapPiecesWall} from '@/components/subscription/RecapPiecesWall'
@@ -31,14 +31,12 @@ export function AuthPageClient({mode}: Props) {
   const nextPath = useMemo(() => {
     const raw = searchParams.get('next')?.trim()
     if (raw && raw.startsWith('/') && !raw.startsWith('//')) {
-      // Auth website → récap activation (pas la landing `/abonnement`).
-      if (raw === '/abonnement' || raw.startsWith('/abonnement?') || raw.startsWith('/abonnement/recap')) {
-        return WEBSITE_SUBSCRIPTION_RECAP_PATH
+      if (raw === '/abonnement' || raw.startsWith('/abonnement?') || raw.startsWith('/abonnement/')) {
+        return WEBSITE_LOCATION_PATH
       }
       return raw
     }
-    // Fallback signin / signup → récap activation (sauf abo déjà actif, géré dans `goNext`).
-    return WEBSITE_SUBSCRIPTION_RECAP_PATH
+    return WEBSITE_LOCATION_PATH
   }, [searchParams])
 
   const nextQuery = useMemo(() => {
@@ -68,7 +66,9 @@ export function AuthPageClient({mode}: Props) {
   const accountExistsNotice =
     searchParams.get('notice') === 'account_exists'
       ? 'Un compte existe déjà avec cette adresse. Connecte-toi.'
-      : null
+      : searchParams.get('notice') === 'password_updated'
+        ? 'Mot de passe mis à jour. Connecte-toi.'
+        : null
 
   const [onboardingEmail, setOnboardingEmail] = useState<string | null>(null)
   const [onboardingIntent, setOnboardingIntent] = useState<'signup' | 'signin'>(mode)
@@ -135,16 +135,17 @@ export function AuthPageClient({mode}: Props) {
         return
       }
 
-      // Déjà abonné → app ; sinon toujours récap activation SegnaX.
+      // Déjà abonné → app ; sinon toujours récap activation SegnaX
+      // (OTP téléphone géré sur le récap avant Stripe).
       const alreadySubscribed = await hasActivePaidSubscription(supabase)
       if (alreadySubscribed) {
         await redirectToApp()
         return
       }
 
-      router.replace(WEBSITE_SUBSCRIPTION_RECAP_PATH)
+      router.replace(WEBSITE_LOCATION_PATH)
     } catch {
-      router.replace(WEBSITE_SUBSCRIPTION_RECAP_PATH)
+      router.replace(WEBSITE_LOCATION_PATH)
     }
   }, [openOnboardingResume, redirectToApp, router])
 
@@ -222,8 +223,8 @@ export function AuthPageClient({mode}: Props) {
                 onStartEmailOnboarding={(email, intent = mode, step = 1) => {
                   setOnboardingIntent(intent)
                   setOnboardingInitialStep(step)
-                  // Signup page : toujours forcer l’OTP après le mot de passe.
-                  setForceEmailOtp(mode === 'signup' && intent === 'signup' && step === 1)
+                  // Ne pas forcer signInWithOtp (Magic Link). L’OTP signup = Confirm signup.
+                  setForceEmailOtp(intent === 'signin')
                   setOnboardingEmail(email)
                 }}
               />
@@ -240,7 +241,10 @@ export function AuthPageClient({mode}: Props) {
         </section>
 
         <aside className={styles.visualCol} aria-hidden>
-          <RecapPiecesWall items={RECAP_WALL_ITEMS} fade="left" />
+          <RecapPiecesWall items={RECAP_WALL_ITEMS} fade="none" layout="columns" />
+        </aside>
+        <aside className={styles.visualColMobile} aria-hidden>
+          <RecapPiecesWall items={RECAP_WALL_ITEMS} fade="none" layout="rows" />
         </aside>
       </div>
 

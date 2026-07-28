@@ -6,18 +6,21 @@ import {CatalogItemPhotoCover} from '@/components/catalog/CatalogItemPhotoCover'
 import {openItemChat} from '@/lib/item-chat/client-storage'
 import {formatCatalogPurchasePriceLabel} from '@/lib/catalog/catalog-borrow-price-label'
 import {isMarketingCatalogItemSold} from '@/lib/catalog/catalog-card-badges'
-import {catalogSubscriptionHref} from '@/lib/catalog/catalog-app-links'
+import {catalogItemPagePath, catalogSubscriptionHref} from '@/lib/catalog/catalog-app-links'
 import type {CatalogItemDetailPayload} from '@/lib/catalog/catalog-item-detail'
 import type {CatalogItemLookMedia} from '@/lib/catalog/catalog-item-style-looks'
 import {formatCatalogCardSizeLabel} from '@/lib/catalog/format-catalog-card-size'
 import {itemDescriptionToSafeHtml} from '@/lib/catalog/item-description-format'
 import {formatItemDimensionDisplayValue, formatItemEraLabel} from '@/lib/catalog/item-era-fitting-dimensions'
-import {addWebsiteCartItem} from '@/lib/cart/website-cart'
+import {addWebsiteCartItem, removeWebsiteCartItem} from '@/lib/cart/website-cart'
+import {useWebsiteCart} from '@/lib/cart/use-website-cart'
 import {useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type UIEvent} from 'react'
 import {createPortal} from 'react-dom'
 import styles from './catalogItemDetailView.module.css'
 
 const HELP_URL = 'https://help.segnashare.com'
+/** Intent « ouvrir le volet panier » après ajout depuis la modale catalogue. */
+const OPEN_CART_DRAWER_KEY = 'segna-open-cart-drawer'
 
 type Props = {
   detail: CatalogItemDetailPayload
@@ -285,12 +288,16 @@ function CtaBlock({
   sold,
   subscriptionHref,
   addPending,
+  inCart,
   onAddToCart,
+  onRemoveFromCart,
 }: {
   sold: boolean
   subscriptionHref: string
   addPending: boolean
+  inCart: boolean
   onAddToCart: () => void
+  onRemoveFromCart: () => void
 }) {
   if (sold) {
     return <p className={styles.soldNote}>Cette pièce n&apos;est plus disponible.</p>
@@ -300,15 +307,15 @@ function CtaBlock({
       <div className={styles.ctaRow}>
         <button
           type="button"
-          className={styles.ctaPrimary}
+          className={inCart ? styles.ctaPrimaryInverse : styles.ctaPrimary}
           disabled={addPending}
-          onClick={onAddToCart}
+          onClick={inCart ? onRemoveFromCart : onAddToCart}
         >
-          {addPending ? 'Ajout…' : 'Ajouter au panier'}
+          {addPending ? 'Ajout…' : inCart ? 'Retirer du panier' : 'Ajouter au panier'}
         </button>
-        <a href={subscriptionHref} className={styles.ctaSecondary} aria-label="Louer 1 mois avec SegnaX">
+        <a href={subscriptionHref} className={styles.ctaSecondary} aria-label="Tester SegnaX">
           <span className={styles.ctaInline}>
-            <span>Louer 1 mois avec</span>
+            <span>Tester</span>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/brand/segnaX_logo_mark.png"
@@ -337,7 +344,9 @@ function InfoPanel({
   subscriptionHref,
   looks,
   addPending,
+  inCart,
   onAddToCart,
+  onRemoveFromCart,
 }: {
   detail: CatalogItemDetailPayload
   titleId?: string
@@ -346,7 +355,9 @@ function InfoPanel({
   subscriptionHref: string
   looks: CatalogItemLookMedia[]
   addPending: boolean
+  inCart: boolean
   onAddToCart: () => void
+  onRemoveFromCart: () => void
 }) {
   const description = detail.description?.trim() || ''
   const descriptionHtml = useMemo(() => itemDescriptionToSafeHtml(description), [description])
@@ -383,7 +394,9 @@ function InfoPanel({
         sold={sold}
         subscriptionHref={subscriptionHref}
         addPending={addPending}
+        inCart={inCart}
         onAddToCart={onAddToCart}
+        onRemoveFromCart={onRemoveFromCart}
       />
 
       <div className={styles.appAccordionList}>
@@ -491,12 +504,44 @@ function InfoPanel({
   )
 }
 
+function shouldOpenCartDrawerOnPage(itemId: string): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    if (sessionStorage.getItem(OPEN_CART_DRAWER_KEY) === itemId) return true
+  } catch {
+    // ignore
+  }
+  return new URLSearchParams(window.location.search).get('cart') === '1'
+}
+
+function clearOpenCartDrawerIntent(itemId: string) {
+  if (typeof window === 'undefined') return
+  try {
+    if (sessionStorage.getItem(OPEN_CART_DRAWER_KEY) === itemId) {
+      sessionStorage.removeItem(OPEN_CART_DRAWER_KEY)
+    }
+  } catch {
+    // ignore
+  }
+  const params = new URLSearchParams(window.location.search)
+  if (params.get('cart') === '1') {
+    params.delete('cart')
+    const next = params.toString()
+    const path = `${window.location.pathname}${next ? `?${next}` : ''}${window.location.hash}`
+    window.history.replaceState(null, '', path)
+  }
+}
+
 export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks = []}: Props) {
   const [photoIndex, setPhotoIndex] = useState(0)
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [addPending, setAddPending] = useState(false)
-  const [addModalOpen, setAddModalOpen] = useState(false)
+  const [addModalOpen, setAddModalOpen] = useState(
+    () => layout === 'page' && shouldOpenCartDrawerOnPage(detail.id),
+  )
+  const {items: cartItems} = useWebsiteCart()
+  const inCart = cartItems.some((item) => item.id === detail.id)
   const heroTrackRef = useRef<HTMLDivElement | null>(null)
   const lightboxTrackRef = useRef<HTMLDivElement | null>(null)
   const photoIndexRef = useRef(0)
@@ -523,11 +568,35 @@ export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks 
         size_label: detail.size_label,
         size_code: detail.size_code,
       })
+      // Depuis la modale catalogue : ouvrir la page pièce + volet panier dessus
+      // (évite le volet derrière la modale). sessionStorage survit au remount Strict Mode
+      // qui peut consommer `?cart=1` trop tôt.
+      if (layout === 'modal') {
+        try {
+          sessionStorage.setItem(OPEN_CART_DRAWER_KEY, detail.id)
+        } catch {
+          // ignore quota / private mode
+        }
+        window.location.assign(`${catalogItemPagePath(detail.id)}?cart=1`)
+        return
+      }
       setAddModalOpen(true)
     } finally {
       setAddPending(false)
     }
-  }, [addPending, detail, sold])
+  }, [addPending, detail, layout, sold])
+
+  const handleRemoveFromCart = useCallback(() => {
+    if (sold || addPending) return
+    removeWebsiteCartItem(detail.id)
+    clearOpenCartDrawerIntent(detail.id)
+    setAddModalOpen(false)
+  }, [addPending, detail.id, sold])
+
+  const closeCartDrawer = useCallback(() => {
+    clearOpenCartDrawerIntent(detail.id)
+    setAddModalOpen(false)
+  }, [detail.id])
 
   useEffect(() => {
     setMounted(true)
@@ -536,10 +605,25 @@ export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks 
   useEffect(() => {
     setPhotoIndex(0)
     setLightboxOpen(false)
-    setAddModalOpen(false)
+    if (!shouldOpenCartDrawerOnPage(detail.id)) setAddModalOpen(false)
     const track = heroTrackRef.current
     if (track) track.scrollTo({left: 0, behavior: 'auto'})
   }, [detail.id])
+
+  /** Arrivée depuis la modale : dérouler le volet (intent sessionStorage gardé jusqu’à fermeture). */
+  useEffect(() => {
+    if (layout !== 'page' || typeof window === 'undefined') return
+    if (!shouldOpenCartDrawerOnPage(detail.id)) return
+    setAddModalOpen(true)
+    // Nettoie l’URL tout de suite ; garde sessionStorage pour survivre au remount Strict Mode.
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('cart') === '1') {
+      params.delete('cart')
+      const next = params.toString()
+      const path = `${window.location.pathname}${next ? `?${next}` : ''}${window.location.hash}`
+      window.history.replaceState(null, '', path)
+    }
+  }, [layout, detail.id])
 
   useEffect(() => {
     if (!lightboxOpen) return
@@ -683,16 +767,17 @@ export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks 
               subscriptionHref={subscriptionHref}
               looks={looks}
               addPending={addPending}
+              inCart={inCart}
               onAddToCart={handleAddToCart}
+              onRemoveFromCart={handleRemoveFromCart}
             />
           </div>
         </div>
         {lightbox}
         <AddToCartModal
           open={addModalOpen}
-          itemTitle={detail.title}
-          onClose={() => setAddModalOpen(false)}
-          onContinueShopping={() => setAddModalOpen(false)}
+          onClose={closeCartDrawer}
+          onContinueShopping={closeCartDrawer}
         />
       </div>
     )
@@ -760,15 +845,16 @@ export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks 
           subscriptionHref={subscriptionHref}
           looks={[]}
           addPending={addPending}
+          inCart={inCart}
           onAddToCart={handleAddToCart}
+          onRemoveFromCart={handleRemoveFromCart}
         />
       </div>
       {lightbox}
       <AddToCartModal
         open={addModalOpen}
-        itemTitle={detail.title}
-        onClose={() => setAddModalOpen(false)}
-        onContinueShopping={() => setAddModalOpen(false)}
+        onClose={closeCartDrawer}
+        onContinueShopping={closeCartDrawer}
       />
     </div>
   )

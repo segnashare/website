@@ -73,7 +73,7 @@ export function SubscriptionLandingClient() {
         return
       }
       const resume = await resolveCheckoutOnboardingResume(supabase)
-      if (resume.status === 'ready') {
+      if (resume.status === 'ready' || resume.status === 'need_phone_verify') {
         beginReady()
         return
       }
@@ -116,7 +116,7 @@ export function SubscriptionLandingClient() {
         if (wantsCheckout && !oauthError) {
           const supabase = createSupabaseBrowserClient()
           const resume = await resolveCheckoutOnboardingResume(supabase)
-          if (resume.status === 'ready') beginReady()
+          if (resume.status === 'ready' || resume.status === 'need_phone_verify') beginReady()
           else if (resume.status === 'resume') openOnboardingResume(resume.email, resume.step)
           else setAuthOpen(true)
         }

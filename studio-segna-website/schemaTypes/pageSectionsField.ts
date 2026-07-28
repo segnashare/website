@@ -7,7 +7,7 @@ export const pageSectionsField = () =>
     title: 'Sections (contenu modulaire)',
     type: 'array',
     description:
-      'Blocs sous le hero : FAQ (deux colonnes), 3 cartes étapes, bandeau, tryptique, grille catalogue puzzle, défilement horizontal, citation, texte + image, contenu riche, tableau deux colonnes. Réordonnez par glisser-déposer. Chaque bloc peut être limité au desktop, au mobile, ou aux deux. Sans bloc ajouté ici, rien n’apparaît sous le hero sur le site. Le site affiche la dernière version publiée : après modification, cliquez sur Publier (un brouillon non publié n’apparaît pas sur le site).',
+      'Blocs sous le hero. Pour Best-sellers / pieces du moment : utilisez « Bandeau / grille catalogue (pièces BO) » en mode sélection (recherche dans le catalogue), pas le « Bandeau défilant (cartes) » (images Sanity manuelles). Réordonnez par glisser-déposer. Publiez pour voir sur le site.',
     of: [
       defineArrayMember({type: 'helpCenterHubSection'}),
       defineArrayMember({type: 'threeStepCardsSection'}),
@@ -23,6 +23,14 @@ export const pageSectionsField = () =>
       defineArrayMember({
         type: 'twoColumnTableSection',
         title: 'Tableau (2 colonnes)',
+      }),
+      defineArrayMember({
+        type: 'comparisonTableSection',
+        title: 'Tableau comparatif (2 modes)',
+      }),
+      defineArrayMember({
+        type: 'shuffleBasketSection',
+        title: 'Shuffle panier (≤ 400 €)',
       }),
     ],
   })

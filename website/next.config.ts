@@ -45,6 +45,16 @@ const nextConfig: NextConfig = {
         destination: 'https://help.segnashare.com/:path*',
         permanent: true,
       },
+      {
+        source: '/abonnement',
+        destination: '/location',
+        permanent: true,
+      },
+      {
+        source: '/abonnement/:path*',
+        destination: '/location',
+        permanent: true,
+      },
       // Anciennes URLs catalogue (marque / catégorie). Ne pas matcher `piece`
       // (page détail `/catalogue/piece/:itemId` — gérée par l’App Router).
       {

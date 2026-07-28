@@ -34,17 +34,27 @@ export async function POST(request: Request) {
       ok?: boolean
       planCode?: string
       message?: string
+      code?: string
     } | null
 
     if (!response.ok) {
+      const detail =
+        typeof payload?.message === 'string' && payload.message.trim()
+          ? payload.message.trim()
+          : `Impossible de confirmer l’abonnement (HTTP ${response.status}).`
       return NextResponse.json(
-        {message: payload?.message ?? 'Impossible de confirmer l’abonnement.'},
+        {message: detail, ...(payload?.code ? {code: payload.code} : {})},
         {status: response.status},
       )
     }
 
     return NextResponse.json({ok: true, planCode: payload?.planCode ?? 'segna_x'})
-  } catch {
-    return NextResponse.json({message: 'Impossible de confirmer l’abonnement.'}, {status: 502})
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : 'unknown'
+    console.error('[api/subscription/confirm] proxy failed', detail, '→', SEGNA_APP_BASE_URL)
+    return NextResponse.json(
+      {message: `Impossible de confirmer l’abonnement (app injoignable: ${SEGNA_APP_BASE_URL}).`},
+      {status: 502},
+    )
   }
 }

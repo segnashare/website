@@ -53,7 +53,17 @@ export const websiteHeaderNavType = defineType({
               name: 'href',
               title: 'Lien (href)',
               type: 'string',
+              description: 'Chemin interne avec / (ex. /location, /catalogue) ou URL https://…',
               initialValue: '',
+              validation: (rule) =>
+                rule.custom((value) => {
+                  const v = typeof value === 'string' ? value.trim() : ''
+                  if (!v || v === '#') return true
+                  if (v.startsWith('/')) return true
+                  if (v.startsWith('#')) return true
+                  if (/^https?:\/\//i.test(v)) return true
+                  return 'Utilisez un chemin qui commence par / (ex. /location) — sans / le lien devient relatif à la page courante.'
+                }),
             }),
           ],
           preview: {
@@ -78,7 +88,15 @@ export const websiteHeaderNavType = defineType({
           name: 'url',
           title: 'URL ou chemin',
           type: 'string',
-          description: 'URL absolue ou chemin interne (ex. /auth, https://…)',
+          description: 'URL absolue ou chemin interne (ex. /signin, https://…)',
+          validation: (rule) =>
+            rule.custom((value) => {
+              const v = typeof value === 'string' ? value.trim() : ''
+              if (!v) return true
+              if (v.startsWith('/')) return true
+              if (/^https?:\/\//i.test(v)) return true
+              return 'Utilisez un chemin qui commence par / (ex. /signin) ou une URL https://…'
+            }),
         }),
       ],
     }),
@@ -96,9 +114,17 @@ export const websiteHeaderNavType = defineType({
         }),
         defineField({
           name: 'url',
-          title: 'URL',
-          type: 'url',
-          validation: (rule) => rule.required(),
+          title: 'URL ou chemin',
+          type: 'string',
+          description: 'URL absolue ou chemin interne (ex. /signup, https://…)',
+          validation: (rule) =>
+            rule.required().custom((value) => {
+              const v = typeof value === 'string' ? value.trim() : ''
+              if (!v) return 'Requis'
+              if (v.startsWith('/')) return true
+              if (/^https?:\/\//i.test(v)) return true
+              return 'Utilisez un chemin qui commence par / (ex. /signup) ou une URL https://…'
+            }),
         }),
       ],
     }),

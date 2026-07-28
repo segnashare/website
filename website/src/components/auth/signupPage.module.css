@@ -10,6 +10,11 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
+/* Bandeau pièces mobile (rangées horizontales) — masqué desktop. */
+.visualColMobile {
+  display: none;
+}
+
 .formCol {
   display: flex;
   align-items: stretch;
@@ -118,21 +123,27 @@
   }
 }
 
-/* Phone : page blanche, logo + texte centrés, pas d’image. */
+/* Phone : formulaire puis défilé horizontal de pièces en bas. */
 @media (max-width: 900px) {
   .page {
     background: #fff;
   }
 
-  .formCol {
+  .shell {
+    display: flex;
+    flex-direction: column;
     min-height: 100dvh;
+  }
+
+  .formCol {
+    flex: 1 1 auto;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
     padding:
       max(2.25rem, calc(env(safe-area-inset-top, 0px) + 1.5rem))
       1.25rem
-      max(2rem, calc(env(safe-area-inset-bottom, 0px) + 1.25rem));
+      1.25rem;
   }
 
   .formInner {
@@ -177,5 +188,17 @@
 
   .visualCol {
     display: none !important;
+  }
+
+  .visualColMobile {
+    display: block;
+    flex: 0 0 auto;
+    width: 100%;
+    /* 2 rangées de portraits 3:4 côte à côte */
+    height: clamp(12.5rem, 38vw, 15.5rem);
+    margin-top: 1.5rem;
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+    overflow: hidden;
+    background: #fff;
   }
 }

@@ -1,119 +1,499 @@
 'use client'
 
-import Link from 'next/link'
-import {formatCatalogPurchasePriceLabel} from '@/lib/catalog/catalog-borrow-price-label'
+import {CheckoutAuthModal} from '@/components/auth/CheckoutAuthModal'
+import {CheckoutSignupOnboardingModal} from '@/components/auth/CheckoutSignupOnboardingModal'
+import {resolveCheckoutOnboardingResume} from '@/lib/auth/checkout-onboarding-resume'
+import {
+  catalogPurchasePriceCents,
+  formatCatalogPurchasePriceLabel,
+} from '@/lib/catalog/catalog-borrow-price-label'
 import {formatCatalogCardSizeLabel} from '@/lib/catalog/format-catalog-card-size'
-import {catalogItemPagePath} from '@/lib/catalog/catalog-app-links'
-import {WEBSITE_CHECKOUT_PATH, WEBSITE_SUBSCRIPTION_PATH} from '@/lib/cart/paths'
+import {catalogItemAppHref, catalogItemPagePath} from '@/lib/catalog/catalog-app-links'
+import {
+  WEBSITE_CART_PATH,
+  WEBSITE_CHECKOUT_PATH,
+  WEBSITE_LOCATION_PATH,
+} from '@/lib/cart/paths'
 import {useWebsiteCart} from '@/lib/cart/use-website-cart'
+import {
+  WEBSITE_DEFAULT_SHIPPING_LABEL,
+  WEBSITE_PURCHASE_FREE_SHIPPING_THRESHOLD_CENTS,
+  websiteChronopostHomeOutboundTtcCents,
+  websitePurchaseFreeShippingMissingCents,
+  websitePurchaseFreeShippingProgressRatio,
+} from '@/lib/cart/website-cart-shipping'
+import {openItemChat} from '@/lib/item-chat/client-storage'
+import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
+import Link from 'next/link'
+import {useRouter} from 'next/navigation'
+import {FormEvent, useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import styles from './cartPage.module.css'
 
+const CART_SUPPORT_EMAIL = 'hello@segna.fr'
+
+const PURCHASE_CHECKOUT_HREF = `${WEBSITE_CHECKOUT_PATH}?mode=purchase`
+const CART_AUTH_RETURN_PATH = `${WEBSITE_CART_PATH}?checkout=1`
+
+function formatEuroSummary(cents: number): string {
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'EUR',
+  }).format(cents / 100)
+}
+
 export function CartPageClient() {
+  const router = useRouter()
   const {items, count, removeItem} = useWebsiteCart()
+  const [promoCode, setPromoCode] = useState('')
+  const [promoNote, setPromoNote] = useState<string | null>(null)
+  const [supportMessage, setSupportMessage] = useState('')
+  const [authOpen, setAuthOpen] = useState(false)
+  const [onboardingEmail, setOnboardingEmail] = useState<string | null>(null)
+  const [onboardingIntent, setOnboardingIntent] = useState<'signup' | 'signin'>('signup')
+  const [checkoutPending, setCheckoutPending] = useState(false)
+  const [authError, setAuthError] = useState<string | null>(null)
+  const checkoutHandledRef = useRef(false)
+
+  const goToPurchaseCheckout = useCallback(() => {
+    setAuthOpen(false)
+    setOnboardingEmail(null)
+    setCheckoutPending(false)
+    router.push(PURCHASE_CHECKOUT_HREF)
+  }, [router])
+
+  const handleFinalizePurchase = useCallback(async () => {
+    if (checkoutPending) return
+    setCheckoutPending(true)
+    setAuthError(null)
+    try {
+      const supabase = createSupabaseBrowserClient()
+      const resume = await resolveCheckoutOnboardingResume(supabase)
+      if (resume.status === 'need_auth') {
+        setAuthOpen(true)
+        return
+      }
+      // E-mail pas encore confirmé → OTP uniquement, puis page checkout.
+      if (resume.status === 'resume' && resume.step === 1) {
+        setOnboardingIntent('signup')
+        setOnboardingEmail(resume.email)
+        return
+      }
+      // Profil incomplet OK : l’adresse se saisit sur la page checkout (pas de modale abo).
+      goToPurchaseCheckout()
+    } catch {
+      setAuthOpen(true)
+    } finally {
+      setCheckoutPending(false)
+    }
+  }, [checkoutPending, goToPurchaseCheckout])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || count === 0) return
+    const params = new URLSearchParams(window.location.search)
+    const wantsCheckout = params.get('checkout') === '1'
+    const oauthError = params.get('auth_error')
+    if (!wantsCheckout && !oauthError) return
+    if (checkoutHandledRef.current) return
+    checkoutHandledRef.current = true
+
+    if (oauthError) {
+      setAuthError(oauthError)
+      setAuthOpen(true)
+    }
+
+    const cleanUrl = () => {
+      params.delete('checkout')
+      params.delete('auth_error')
+      const next = params.toString()
+      const path = `${window.location.pathname}${next ? `?${next}` : ''}${window.location.hash}`
+      window.history.replaceState(null, '', path)
+    }
+
+    void (async () => {
+      try {
+        if (wantsCheckout && !oauthError) {
+          const supabase = createSupabaseBrowserClient()
+          const resume = await resolveCheckoutOnboardingResume(supabase)
+          if (resume.status === 'need_auth') setAuthOpen(true)
+          else if (resume.status === 'resume' && resume.step === 1) {
+            setOnboardingIntent('signup')
+            setOnboardingEmail(resume.email)
+          } else goToPurchaseCheckout()
+        }
+      } catch {
+        if (wantsCheckout) setAuthOpen(true)
+      } finally {
+        cleanUrl()
+      }
+    })()
+  }, [count, goToPurchaseCheckout])
+
+  const subtotalCents = useMemo(
+    () =>
+      items.reduce((sum, item) => {
+        if (typeof item.price_points !== 'number' || !Number.isFinite(item.price_points)) return sum
+        return sum + catalogPurchasePriceCents(item.price_points)
+      }, 0),
+    [items],
+  )
+
+  const freeShippingUnlocked = subtotalCents >= WEBSITE_PURCHASE_FREE_SHIPPING_THRESHOLD_CENTS
+  const shippingTtcCents = freeShippingUnlocked
+    ? 0
+    : websiteChronopostHomeOutboundTtcCents(count)
+  const totalCents = subtotalCents + shippingTtcCents
+  const freeShippingProgressPct = Math.round(
+    websitePurchaseFreeShippingProgressRatio(subtotalCents) * 100,
+  )
+  const freeShippingMissingCents = websitePurchaseFreeShippingMissingCents(subtotalCents)
+
+  function onPromoSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const code = promoCode.trim()
+    if (!code) {
+      setPromoNote(null)
+      return
+    }
+    setPromoNote('Les codes promo seront disponibles à l’étape suivante.')
+  }
+
+  function onSupportSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const body = supportMessage.trim()
+    if (!body) return
+    openItemChat({
+      itemTitle: 'Panier',
+      initialMessage: body,
+    })
+    setSupportMessage('')
+  }
 
   return (
+    <>
     <main className={styles.main}>
-      <header className={styles.header}>
-        <p className={styles.eyebrow}>Panier</p>
-        <h1 className={styles.title}>
-          {count === 0 ? 'Ton panier est vide' : `${count} pièce${count > 1 ? 's' : ''}`}
-        </h1>
-        <p className={styles.lead}>
-          {count === 0
-            ? 'Parcours le catalogue et ajoute les pièces qui te plaisent.'
-            : 'Choisis comment tu veux continuer : abonnement SegnaX, location ponctuelle ou achat.'}
-        </p>
-      </header>
-
       {count === 0 ? (
-        <div className={styles.emptyActions}>
-          <Link href="/catalogue" className={styles.primaryBtn}>
-            Voir le catalogue
-          </Link>
-          <Link href={WEBSITE_SUBSCRIPTION_PATH} className={styles.secondaryBtn}>
-            Découvrir SegnaX
-          </Link>
+        <div className={styles.emptyState}>
+          <h1 className={styles.emptyTitle}>Ton panier est vide</h1>
+          <p className={styles.emptyLead}>
+            Parcours le catalogue et ajoute les pièces qui te plaisent.
+          </p>
+          <div className={styles.emptyActions}>
+            <Link href="/catalogue" className={styles.primaryBtn}>
+              Voir le catalogue
+            </Link>
+            <Link href={WEBSITE_LOCATION_PATH} className={styles.secondaryBtn}>
+              Découvrir SegnaX
+            </Link>
+          </div>
         </div>
       ) : (
-        <>
-          <ul className={styles.list}>
-            {items.map((item) => {
-              const sizeLine = formatCatalogCardSizeLabel(item.size_label, item.size_code)
-              return (
-                <li key={item.id} className={styles.row}>
-                  <Link href={catalogItemPagePath(item.id)} className={styles.thumbLink}>
-                    {item.imageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={item.imageUrl} alt="" className={styles.thumb} />
-                    ) : (
-                      <span className={styles.thumbFallback} aria-hidden />
-                    )}
-                  </Link>
-                  <div className={styles.meta}>
-                    {item.brand_label ? <p className={styles.brand}>{item.brand_label}</p> : null}
-                    <Link href={catalogItemPagePath(item.id)} className={styles.itemTitle}>
-                      {item.title}
-                    </Link>
-                    {sizeLine ? <p className={styles.size}>{sizeLine}</p> : null}
-                    <p className={styles.price}>{formatCatalogPurchasePriceLabel(item.price_points)}</p>
-                  </div>
-                  <button
-                    type="button"
-                    className={styles.remove}
-                    onClick={() => removeItem(item.id)}
-                    aria-label={`Retirer ${item.title}`}
-                  >
-                    Retirer
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
+        <div className={styles.layout}>
+          <div className={styles.leftCol}>
+            <section className={styles.card} aria-labelledby="cart-items-heading">
+              <div className={styles.cardHeader}>
+                <h2 id="cart-items-heading" className={styles.cardTitle}>
+                  Votre panier ({count})
+                </h2>
+              </div>
+              <ul className={styles.list}>
+                {items.map((item) => {
+                  const sizeLine = formatCatalogCardSizeLabel(item.size_label, item.size_code)
+                  return (
+                    <li key={item.id} className={styles.row}>
+                      <Link href={catalogItemPagePath(item.id)} className={styles.thumbLink}>
+                        {item.imageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={item.imageUrl} alt="" className={styles.thumb} />
+                        ) : (
+                          <span className={styles.thumbFallback} aria-hidden />
+                        )}
+                      </Link>
+                      <div className={styles.meta}>
+                        {item.brand_label ? <p className={styles.brand}>{item.brand_label}</p> : null}
+                        <Link href={catalogItemPagePath(item.id)} className={styles.itemTitle}>
+                          {item.title}
+                        </Link>
+                        {sizeLine ? <p className={styles.size}>{sizeLine}</p> : null}
+                        <button
+                          type="button"
+                          className={styles.remove}
+                          onClick={() => removeItem(item.id)}
+                          aria-label={`Retirer ${item.title}`}
+                        >
+                          Retirer
+                        </button>
+                      </div>
+                      <p className={styles.rowPrice}>
+                        {formatCatalogPurchasePriceLabel(item.price_points)}
+                      </p>
+                    </li>
+                  )
+                })}
+              </ul>
+            </section>
 
-          <section className={styles.checkoutBlock} aria-labelledby="cart-next-steps">
-            <h2 id="cart-next-steps" className={styles.checkoutHeading}>
-              Et maintenant ?
-            </h2>
-            <p className={styles.checkoutLead}>
-              L&apos;abonnement SegnaX est le plus avantageux. Tu peux aussi louer ponctuellement ou acheter.
-            </p>
-
-            <div className={styles.ctaStack}>
-              <Link
-                href={WEBSITE_SUBSCRIPTION_PATH}
-                className={styles.primaryBtn}
-                aria-label="Louer 1 mois avec SegnaX"
-              >
-                <span className={styles.ctaWithLogo}>
-                  <span>Louer 1 mois avec</span>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/brand/segnaX_logo_mark_blanc.png"
-                    alt="segnaX"
-                    className={styles.ctaSegnaX}
-                    width={96}
-                    height={28}
-                    decoding="async"
-                  />
+            <Link href={WEBSITE_LOCATION_PATH} className={styles.segnaCard}>
+              <span className={styles.segnaCardCopy}>
+                <span className={styles.segnaCardTitle}>
+                  Un accès premium et illimité
+                  <span className={styles.segnaCardPrice}>
+                    20&nbsp;€ le 1er mois, puis 39,99&nbsp;€/mois
+                  </span>
                 </span>
-                <span className={styles.ctaHint}>puis 39,99&nbsp;€/mois</span>
-              </Link>
-              <Link
-                href={`${WEBSITE_CHECKOUT_PATH}?mode=rental`}
-                className={styles.secondaryBtn}
+                <ul className={styles.segnaCardBullets}>
+                  <li>Loue jusqu’à 400&nbsp;€ de pièces par mois</li>
+                  <li>Frais d’expédition inclus</li>
+                  <li>20&nbsp;% de réduction du prix d’achat sur tout le catalogue</li>
+                </ul>
+              </span>
+              <span className={styles.segnaCardMedia}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/brand/segnax-cart-promo.png"
+                  alt=""
+                  className={styles.segnaCardBg}
+                  aria-hidden
+                />
+                <span className={styles.segnaCardCta}>
+                  <span>Découvrir</span>
+                  <strong>SegnaX</strong>
+                </span>
+              </span>
+            </Link>
+          </div>
+
+          <aside className={styles.rightCol} aria-label="Finalisation de l’achat">
+            <section className={styles.card} aria-labelledby="cart-purchase-heading">
+              <h2 id="cart-purchase-heading" className={styles.cardTitle}>
+                Résumé de votre commande
+              </h2>
+              <dl className={styles.summaryRows}>
+                <div className={styles.summaryRow}>
+                  <dt>
+                    Sous-total ({count} pièce{count > 1 ? 's' : ''})
+                  </dt>
+                  <dd>{formatEuroSummary(subtotalCents)}</dd>
+                </div>
+                <div className={styles.summaryRow}>
+                  <dt>{WEBSITE_DEFAULT_SHIPPING_LABEL}</dt>
+                  <dd className={freeShippingUnlocked ? styles.summaryMuted : undefined}>
+                    {freeShippingUnlocked ? 'Offerte' : formatEuroSummary(shippingTtcCents)}
+                  </dd>
+                </div>
+                <div className={`${styles.summaryRow} ${styles.summaryTotal}`}>
+                  <dt>Total</dt>
+                  <dd>{formatEuroSummary(totalCents)}</dd>
+                </div>
+              </dl>
+              <form className={styles.promoForm} onSubmit={onPromoSubmit}>
+                <input
+                  type="text"
+                  name="promo"
+                  className={styles.promoInput}
+                  placeholder="Saisir code Promo"
+                  aria-label="Code promo"
+                  value={promoCode}
+                  onChange={(event) => {
+                    setPromoCode(event.target.value)
+                    if (promoNote) setPromoNote(null)
+                  }}
+                  autoComplete="off"
+                />
+                <button type="submit" className={styles.promoApply}>
+                  Appliquer
+                </button>
+              </form>
+              {promoNote ? <p className={styles.promoHint}>{promoNote}</p> : null}
+              <button
+                type="button"
+                className={styles.primaryBtn}
+                disabled={checkoutPending}
+                onClick={() => void handleFinalizePurchase()}
               >
-                Louer ponctuellement
-              </Link>
-              <Link
-                href={`${WEBSITE_CHECKOUT_PATH}?mode=purchase`}
-                className={styles.secondaryBtn}
-              >
-                Acheter
-              </Link>
+                {checkoutPending ? 'Chargement…' : 'Finaliser mon achat'}
+              </button>
+
+              <div className={styles.paymentMethods} aria-label="Moyens de paiement">
+                <p className={styles.paymentMethodsTitle}>Moyens de paiement</p>
+                <ul className={styles.paymentMethodsList}>
+                  <li className={styles.paymentBadge} title="American Express">
+                    <span className={styles.paymentAmex}>
+                      AMERICAN
+                      <br />
+                      EXPRESS
+                    </span>
+                  </li>
+                  <li className={styles.paymentBadge} title="Mastercard">
+                    <span className={styles.paymentMc} aria-hidden>
+                      <span className={styles.paymentMcRed} />
+                      <span className={styles.paymentMcOrange} />
+                    </span>
+                    <span className={styles.paymentMcLabel}>mastercard</span>
+                  </li>
+                  <li className={styles.paymentBadge} title="Visa">
+                    <span className={styles.paymentVisa}>VISA</span>
+                  </li>
+                  <li className={styles.paymentBadge} title="PayPal">
+                    <span className={styles.paymentPaypal}>
+                      <strong>P</strong>
+                      <span>PayPal</span>
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            </section>
+
+            <section className={styles.card} aria-label="Livraison et emballage">
+              <ul className={styles.perkList}>
+                <li className={styles.perkItem}>
+                  <span className={styles.perkIcon} aria-hidden>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M3 7h11v10H3V7Zm11 3h4l3 3v4h-7v-7Z"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinejoin="round"
+                      />
+                      <circle cx="7.5" cy="18.5" r="1.5" fill="currentColor" />
+                      <circle cx="17.5" cy="18.5" r="1.5" fill="currentColor" />
+                    </svg>
+                  </span>
+                  <div className={styles.perkBody}>
+                    <strong className={styles.perkTitle}>Livraison offerte</strong>
+                    <span className={styles.perkText}>
+                      {freeShippingUnlocked
+                        ? `Débloquée dès ${WEBSITE_PURCHASE_FREE_SHIPPING_THRESHOLD_CENTS / 100}\u00A0€ d’achat.`
+                        : `Plus que ${formatEuroSummary(freeShippingMissingCents)} pour la débloquer`}
+                    </span>
+                    <div
+                      className={styles.shippingProgress}
+                      role="progressbar"
+                      aria-valuenow={freeShippingProgressPct}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-label={`Progression vers la livraison offerte : ${freeShippingProgressPct} pour cent`}
+                    >
+                      <div
+                        className={styles.shippingProgressFill}
+                        style={{width: `${freeShippingProgressPct}%`}}
+                      />
+                    </div>
+                  </div>
+                </li>
+                <li className={styles.perkItem}>
+                  <span className={styles.perkIcon} aria-hidden>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M12 3 4.5 6.5v5.2c0 4.4 3 8.2 7.5 9.3 4.5-1.1 7.5-4.9 7.5-9.3V6.5L12 3Z"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                  <div className={styles.perkBody}>
+                    <strong className={styles.perkTitle}>Emballage sécurisé</strong>
+                    <span className={styles.perkText}>Pièces protégées et assurées pour l’envoi</span>
+                  </div>
+                </li>
+              </ul>
+            </section>
+
+            <a
+              href={catalogItemAppHref(items[0]?.id)}
+              className={styles.appPromo}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <p className={styles.appPromoTitle}>
+                Louer la pièce une semaine pour 10&nbsp;% de son prix depuis l’application
+              </p>
+              <span className={styles.appPromoCta}>Téléchargez l’APP</span>
+            </a>
+          </aside>
+
+          <section className={styles.contactSection} aria-labelledby="cart-contact-heading">
+            <h2 id="cart-contact-heading" className={styles.contactHeading}>
+              Nous contacter
+            </h2>
+            <div className={styles.contactGrid}>
+              <a href={`mailto:${CART_SUPPORT_EMAIL}`} className={styles.contactCard}>
+                <span className={styles.contactIcon} aria-hidden>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M4 6h16v12H4V6Zm0 0 8 7 8-7"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+                <p className={styles.contactCardEyebrow}>Écrivez-nous</p>
+                <p className={styles.contactCardLead}>Contactez-nous par e-mail</p>
+                <p className={styles.contactCardValue}>{CART_SUPPORT_EMAIL}</p>
+              </a>
+
+              <form className={styles.contactCard} onSubmit={onSupportSubmit}>
+                <span className={styles.contactIcon} aria-hidden>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+                <p className={styles.contactCardEyebrow}>Chat en direct</p>
+                <p className={styles.contactCardLead}>Une question sur ton panier&nbsp;?</p>
+                <div className={styles.contactMessageRow}>
+                  <input
+                    type="text"
+                    className={styles.contactInput}
+                    placeholder="Écris ton message…"
+                    value={supportMessage}
+                    onChange={(e) => setSupportMessage(e.target.value)}
+                    maxLength={4000}
+                    aria-label="Message pour le support"
+                  />
+                  <button
+                    type="submit"
+                    className={styles.contactSend}
+                    disabled={!supportMessage.trim()}
+                  >
+                    Envoyer
+                  </button>
+                </div>
+              </form>
             </div>
           </section>
-        </>
+        </div>
       )}
     </main>
+
+    <CheckoutAuthModal
+      open={authOpen}
+      onClose={() => setAuthOpen(false)}
+      onAuthenticated={goToPurchaseCheckout}
+      onStartEmailOnboarding={(email, intent = 'signup') => {
+        setAuthOpen(false)
+        setOnboardingIntent(intent)
+        setOnboardingEmail(email)
+      }}
+      returnPath={CART_AUTH_RETURN_PATH}
+      initialAuthError={authError}
+    />
+    <CheckoutSignupOnboardingModal
+      open={Boolean(onboardingEmail)}
+      email={onboardingEmail ?? ''}
+      intent={onboardingIntent}
+      emailOtpOnly
+      onClose={() => setOnboardingEmail(null)}
+      onComplete={() => {
+        setOnboardingEmail(null)
+        goToPurchaseCheckout()
+      }}
+    />
+    </>
   )
 }

@@ -113,8 +113,10 @@ export const horizontalScrollCardType = defineType({
 
 export const horizontalScrollCardsSectionType = defineType({
   name: 'horizontalScrollCardsSection',
-  title: 'Bandeau défilant (cartes)',
+  title: 'Bandeau défilant (cartes éditoriales)',
   type: 'object',
+  description:
+    'Cartes avec images / textes saisis à la main (éditorial). Pour Best-sellers ou listes d’articles catalogue, utilisez plutôt « Bandeau / grille catalogue (pièces BO) ».',
   fieldsets: [sectionVisibilityFieldset],
   fields: [
     defineField({

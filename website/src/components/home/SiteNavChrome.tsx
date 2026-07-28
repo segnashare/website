@@ -5,6 +5,7 @@ import Link from 'next/link'
 import {usePathname} from 'next/navigation'
 import {motion} from 'framer-motion'
 import type {WebsiteHeaderNavData} from '@/lib/sanity'
+import {normalizeHref} from '@/lib/normalize-href'
 import {visibleMobileMainNavItems} from '@/lib/mobileMainNav'
 import {CartNavLink} from '@/components/cart/CartNavLink'
 import {CtaHrefLink} from './heroShared'
@@ -70,9 +71,9 @@ export function SiteNavChrome({
     <span className={styles.brand}>Segna</span>
   )
   const primaryLabel = header?.primaryCta?.label || 'Essai gratuit'
-  const primaryHref = header?.primaryCta?.url?.trim() || '#'
+  const primaryHref = normalizeHref(header?.primaryCta?.url)
   const secondaryLabel = header?.secondaryCta?.label?.trim()
-  const secondaryHref = header?.secondaryCta?.url?.trim() || '#'
+  const secondaryHref = normalizeHref(header?.secondaryCta?.url)
   const showSecondaryCta = Boolean(secondaryLabel)
   const showNavDivider =
     navItems.length > 0 && (showSecondaryCta || Boolean(header?.primaryCta?.label?.trim()))
@@ -109,7 +110,7 @@ export function SiteNavChrome({
           <ul className={styles.desktopNavLinks}>
             {navItems.map((item) => (
               <li key={item._key}>
-                <Link href={item.href?.trim() ? item.href : '#'} className={styles.navLink}>
+                <Link href={normalizeHref(item.href)} className={styles.navLink}>
                   {item.label}
                 </Link>
               </li>

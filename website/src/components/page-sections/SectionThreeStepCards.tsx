@@ -1,8 +1,12 @@
 import type {CSSProperties} from 'react'
 import Image from 'next/image'
-import Link from 'next/link'
 import type {PortableTextBlock} from '@portabletext/types'
 import {PortableRichText} from '@/components/cms/PortableRichText'
+import {SectionIntroCtas} from '@/components/page-sections/SectionIntroCtas'
+import {
+  resolveMarketingCtaLabel,
+  resolveThreeStepPrimaryCtaHref,
+} from '@/lib/marketing-cta'
 import type {ThreeStepCardItem, ThreeStepCardsSection} from '@/lib/sanity'
 import {urlFor} from '@/lib/sanity'
 import styles from './threeStepCards.module.css'
@@ -19,17 +23,6 @@ function resolveBandColor(hex: string | undefined): string {
 
 function isWhiteText(section: ThreeStepCardsSection): boolean {
   return section.threeStepTextColor === 'white'
-}
-
-function isExternalHref(href: string) {
-  const t = href.trim().toLowerCase()
-  return (
-    t.startsWith('http://') ||
-    t.startsWith('https://') ||
-    t.startsWith('//') ||
-    t.startsWith('mailto:') ||
-    t.startsWith('tel:')
-  )
 }
 
 function mediaClass(format: ThreeStepCardItem['frameFormat']): string {
@@ -51,13 +44,10 @@ export function SectionThreeStepCards({section}: Props) {
   const toneClass = isWhiteText(section) ? styles.toneTextWhite : styles.toneTextBlack
   const bareLayout = section.threeStepCardsLayout === 'bare'
 
-  const primaryLabel = section.threeStepPrimaryCtaLabel?.trim()
-  const primaryHref = section.threeStepPrimaryCtaHref?.trim()
-  const showPrimary = Boolean(primaryLabel && primaryHref)
-
-  const secondaryLabel = section.threeStepSecondaryCtaLabel?.trim()
-  const secondaryHref = section.threeStepSecondaryCtaHref?.trim()
-  const showSecondary = Boolean(secondaryLabel && secondaryHref)
+  const primaryLabel = resolveMarketingCtaLabel(section.threeStepPrimaryCtaLabel)
+  const primaryHref = resolveThreeStepPrimaryCtaHref(section.threeStepPrimaryCtaHref)
+  const secondaryLabel = resolveMarketingCtaLabel(section.threeStepSecondaryCtaLabel)
+  const secondaryHref = resolveThreeStepPrimaryCtaHref(section.threeStepSecondaryCtaHref)
 
   const title = section.threeStepTitle?.trim()
   if (!title) return null
@@ -138,42 +128,17 @@ export function SectionThreeStepCards({section}: Props) {
           })}
         </div>
 
-        {showPrimary || showSecondary ? (
-          <footer className={styles.footer}>
-            {showPrimary ? (
-              isExternalHref(primaryHref!) ? (
-                <a
-                  href={primaryHref}
-                  className={styles.primaryCta}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {primaryLabel}
-                </a>
-              ) : (
-                <Link href={primaryHref!} className={styles.primaryCta}>
-                  {primaryLabel}
-                </Link>
-              )
-            ) : null}
-            {showSecondary ? (
-              isExternalHref(secondaryHref!) ? (
-                <a
-                  href={secondaryHref}
-                  className={styles.secondaryLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {secondaryLabel}
-                </a>
-              ) : (
-                <Link href={secondaryHref!} className={styles.secondaryLink}>
-                  {secondaryLabel}
-                </Link>
-              )
-            ) : null}
-          </footer>
-        ) : null}
+        <div className={styles.footer}>
+          <SectionIntroCtas
+            primaryCtaLabel={primaryLabel}
+            primaryCtaHref={primaryHref}
+            secondaryCtaLabel={secondaryLabel}
+            secondaryCtaHref={secondaryHref}
+            tone={isWhiteText(section) ? 'dark' : 'light'}
+            size="large"
+            nowrap
+          />
+        </div>
       </div>
     </section>
   )

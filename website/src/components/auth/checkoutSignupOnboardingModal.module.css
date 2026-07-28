@@ -23,6 +23,10 @@
   animation: dialogIn 0.24s ease;
 }
 
+.dialogWithMap {
+  max-height: min(94dvh, 860px);
+}
+
 .closeBtn {
   position: absolute;
   top: 0.75rem;
@@ -239,6 +243,107 @@
   gap: 0.65rem;
 }
 
+.phoneRow {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  border-radius: 0.75rem;
+  background: #f5f5f5;
+  padding: 0.85rem 1.1rem;
+  box-sizing: border-box;
+}
+
+.phonePrefix {
+  flex: 0 0 auto;
+  font-family: var(--font-playfair-display), Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.125rem, 5vw, 1.5rem);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: #71717a;
+}
+
+.phoneRow input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-family: var(--font-playfair-display), Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.125rem, 5vw, 1.5rem);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: #14110f;
+  outline: none;
+  caret-color: #18181b;
+}
+
+.phoneRow input::placeholder {
+  font-family: var(--font-playfair-display), Georgia, 'Times New Roman', serif;
+  font-style: normal;
+  font-weight: 600;
+  color: #999;
+  opacity: 1;
+}
+
+.birthLabel {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-playfair-display), Georgia, 'Times New Roman', serif;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #71717a;
+}
+
+.mapBlock {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  max-height: min(42vh, 320px);
+  overflow: hidden;
+  border-radius: 0.5rem;
+  border: 1px solid #e4e4e7;
+  background: #f4f4f5;
+}
+
+.mapFrame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.mapLocateBtn {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: #14110f;
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+}
+
+.mapLocateBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.addressStep {
+  display: grid;
+  gap: 0.85rem;
+}
+
 .addressWrap {
   position: relative;
   z-index: 2;
@@ -311,6 +416,11 @@
   box-sizing: border-box;
 }
 
+.framedInputInvalid {
+  background: #fff5f4;
+  box-shadow: inset 0 0 0 1.5px #df4e43;
+}
+
 .framedInput input {
   width: 100%;
   border: none;
@@ -326,12 +436,21 @@
   caret-color: #18181b;
 }
 
+.framedInputInvalid input {
+  color: #df4e43;
+  caret-color: #df4e43;
+}
+
 .framedInput input::placeholder {
   font-family: var(--font-playfair-display), Georgia, 'Times New Roman', serif;
   font-style: normal;
   font-weight: 600;
   color: #999;
   opacity: 1;
+}
+
+.framedInputInvalid input::placeholder {
+  color: #df4e43;
 }
 
 .legalTiny {

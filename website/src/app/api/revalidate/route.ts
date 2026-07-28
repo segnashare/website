@@ -9,6 +9,7 @@ type WebhookPayload = {
   documentId?: string
   /** Sanity transaction webhook: create | update | delete | publish | unpublish */
   transition?: string
+  slug?: {current?: string | null} | string | null
 }
 
 /** Ignore draft autosaves and non-publish edits — they were busting cache every keystroke. */
@@ -28,7 +29,17 @@ function shouldRevalidateFromWebhook(payload: WebhookPayload | null): boolean {
   return true
 }
 
-const REVALIDATED_PATHS = ['/', '/newsroom', '/catalogue'] as const
+const REVALIDATED_PATHS = ['/', '/newsroom', '/catalogue', '/sitemap.xml'] as const
+
+function postSlugFromPayload(payload: WebhookPayload | null): string | null {
+  if (!payload?.slug) return null
+  if (typeof payload.slug === 'string') {
+    const trimmed = payload.slug.trim()
+    return trimmed || null
+  }
+  const current = payload.slug.current?.trim()
+  return current || null
+}
 
 function revalidateConfigured(): boolean {
   return Boolean(process.env.SANITY_REVALIDATE_SECRET?.trim())
@@ -82,15 +93,24 @@ export async function POST(request: NextRequest) {
 
   revalidateTag(SANITY_CACHE_TAG, 'max')
 
+  const revalidated: string[] = [...REVALIDATED_PATHS]
   for (const path of REVALIDATED_PATHS) {
     revalidatePath(path, 'layout')
   }
 
+  const docType = payload?._type ?? payload?.type ?? null
+  const postSlug = docType === 'post' ? postSlugFromPayload(payload) : null
+  if (postSlug) {
+    const articlePath = `/newsroom/${postSlug}`
+    revalidatePath(articlePath)
+    revalidated.push(articlePath)
+  }
+
   return NextResponse.json({
     ok: true,
-    revalidated: REVALIDATED_PATHS,
+    revalidated,
     tag: SANITY_CACHE_TAG,
-    type: payload?._type ?? payload?.type ?? null,
+    type: docType,
     transition: payload?.transition ?? null,
     timestamp: new Date().toISOString(),
   })

@@ -12,6 +12,41 @@ import styles from './checkoutAuthModal.module.css'
 const PRIVACY_HREF = 'https://www.segnashare.com/politique-confidentialite'
 const TERMS_HREF = 'https://help.segnashare.com'
 
+function PasswordEyeIcon({open}: {open: boolean}) {
+  if (open) {
+    // Œil barré = masquer
+    return (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+        <path
+          d="M3 3l18 18"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+        <path
+          d="M10.5 10.7a2.2 2.2 0 0 0 3 3M9.4 5.5A10.5 10.5 0 0 1 12 5.2c5.2 0 8.8 4.2 10 6.8-.5 1.1-1.5 2.8-3.1 4.2M6.2 6.3C4.2 7.7 2.9 9.5 2 12c1.2 2.6 4.8 6.8 10 6.8 1.3 0 2.5-.2 3.6-.6"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    )
+  }
+  // Œil ouvert = afficher
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
+  )
+}
+
 export type CheckoutAuthMode = 'signup' | 'signin'
 
 type Props = {
@@ -282,8 +317,9 @@ export function CheckoutAuthPanel({
 
       setPending(false)
       onStartEmailOnboarding(trimmed, 'signup')
-    } catch {
-      setError('Une erreur est survenue. Réessaie.')
+    } catch (err) {
+      console.error('[checkout-auth] signup email step', err)
+      setError(err instanceof Error && err.message.trim() ? err.message : 'Une erreur est survenue. Réessaie.')
       setPending(false)
     }
   }
@@ -332,29 +368,28 @@ export function CheckoutAuthPanel({
         return
       }
 
-      // Confirm e-mail ON → Supabase envoie déjà le code via signUp.
-      // Confirm OFF (session immédiate) → on envoie un OTP de vérif explicitement.
+      // Confirm e-mail ON → Supabase envoie déjà le code via signUp (template Confirm signup).
+      // Confirm OFF (session immédiate) → renvoyer ce même mail de confirmation (pas Magic Link).
       if (data.session) {
-        const {error: otpError} = await supabase.auth.signInWithOtp({
+        const {error: otpError} = await supabase.auth.resend({
+          type: 'signup',
           email: trimmed,
-          options: {shouldCreateUser: false},
         })
         if (otpError) {
           const msg = (otpError.message ?? '').toLowerCase()
           if (msg.includes('rate limit') || msg.includes('login.new_email')) {
             setError('Compte créé. Trop de tentatives pour le code — réessaie dans un instant.')
           } else {
-            setError('Compte créé. Impossible d’envoyer le code de confirmation pour le moment.')
+            console.warn('[checkout-auth] signup resend after session', otpError.message)
           }
-          setPending(false)
-          return
         }
       }
 
       setPending(false)
       onStartEmailOnboarding(trimmed, 'signup', 1)
-    } catch {
-      setError('Une erreur est survenue. Réessaie.')
+    } catch (err) {
+      console.error('[checkout-auth] signup password', err)
+      setError(err instanceof Error && err.message.trim() ? err.message : 'Une erreur est survenue. Réessaie.')
       setPending(false)
     }
   }
@@ -393,8 +428,9 @@ export function CheckoutAuthPanel({
       setEmail(trimmed)
       setPending(false)
       onStartEmailOnboarding(trimmed, 'signin')
-    } catch {
-      setError('Une erreur est survenue. Réessaie.')
+    } catch (err) {
+      console.error('[checkout-auth] signin otp', err)
+      setError(err instanceof Error && err.message.trim() ? err.message : 'Une erreur est survenue. Réessaie.')
       setPending(false)
     }
   }
@@ -433,8 +469,9 @@ export function CheckoutAuthPanel({
         return
       }
       await finishAuthenticated()
-    } catch {
-      setError('Une erreur est survenue. Réessaie.')
+    } catch (err) {
+      console.error('[checkout-auth] signin password', err)
+      setError(err instanceof Error && err.message.trim() ? err.message : 'Une erreur est survenue. Réessaie.')
       setPending(false)
     }
   }
@@ -607,9 +644,10 @@ export function CheckoutAuthPanel({
             type="button"
             className={styles.passwordToggle}
             aria-label={passwordVisible ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+            aria-pressed={passwordVisible}
             onClick={() => setPasswordVisible((v) => !v)}
           >
-            {passwordVisible ? 'Masquer' : 'Voir'}
+            <PasswordEyeIcon open={passwordVisible} />
           </button>
         </div>
         <p className={styles.passwordHint}>8 caractères minimum</p>
@@ -656,19 +694,43 @@ export function CheckoutAuthPanel({
         />
       </div>
       <div className={styles.field}>
-        <label className={styles.label} htmlFor={passwordFieldId}>
-          Mot de passe
-        </label>
-        <input
-          id={passwordFieldId}
-          className={styles.input}
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          disabled={pending}
-          required
-        />
+        <div className={styles.labelRow}>
+          <label className={styles.label} htmlFor={passwordFieldId}>
+            Mot de passe
+          </label>
+          <Link
+            href={
+              email.trim()
+                ? `/forgot-password?email=${encodeURIComponent(email.trim().toLowerCase())}`
+                : '/forgot-password'
+            }
+            className={styles.forgotLink}
+          >
+            Mot de passe oublié ?
+          </Link>
+        </div>
+        <div className={styles.passwordWrap}>
+          <input
+            id={passwordFieldId}
+            className={styles.input}
+            type={passwordVisible ? 'text' : 'password'}
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={pending}
+            required
+          />
+          <button
+            type="button"
+            className={styles.passwordToggle}
+            aria-label={passwordVisible ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+            aria-pressed={passwordVisible}
+            disabled={pending}
+            onClick={() => setPasswordVisible((v) => !v)}
+          >
+            <PasswordEyeIcon open={passwordVisible} />
+          </button>
+        </div>
       </div>
 
       {error ? <p className={styles.error}>{error}</p> : null}

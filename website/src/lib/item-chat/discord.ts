@@ -66,7 +66,11 @@ async function discordFetch(path: string, init?: RequestInit): Promise<Response>
 function threadNameFromConversation(conv: ItemChatConversationRow): string {
   const who = (conv.contact_email || conv.visitor_id.slice(0, 8)).trim()
   const emailLocal = who.includes('@') ? who.split('@')[0]!.trim() : who
-  return (emailLocal || 'Visiteur').slice(0, 100)
+  const visitor = emailLocal || 'Visiteur'
+  if (conv.item_title?.trim() === 'Panier') {
+    return `Panier — ${visitor}`.slice(0, 100)
+  }
+  return visitor.slice(0, 100)
 }
 
 export async function discordCreateThreadAndPost(params: {

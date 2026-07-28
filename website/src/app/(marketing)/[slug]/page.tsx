@@ -14,7 +14,7 @@ type PageProps = {
 export async function generateStaticParams() {
   const slugs = await getMarketingPageSlugs()
   /** Routes app dédiées (hors CMS dynamique). */
-  const reserved = new Set(['catalogue', 'panier', 'abonnement', 'signup', 'signin'])
+  const reserved = new Set(['catalogue', 'panier', 'signup', 'signin'])
   return slugs.filter((slug) => !reserved.has(slug)).map((slug) => ({slug}))
 }
 
@@ -57,7 +57,7 @@ export default async function MarketingDynamicPage({params}: PageProps) {
   const fallbackCta =
     primary?.label?.trim() && primary?.url?.trim()
       ? {label: primary.label.trim(), href: primary.url.trim()}
-      : {label: 'Découvrir Segna', href: '/'}
+      : {label: 'Découvrir Segna', href: '/location'}
 
   const cta = customCta ?? fallbackCta
 

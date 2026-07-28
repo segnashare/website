@@ -37,7 +37,7 @@ async function getNewsroomMarketingShellUncached(): Promise<NewsroomMarketingShe
   const fallbackCta =
     primary?.label?.trim() && primary?.url?.trim()
       ? {label: primary.label.trim(), href: primary.url.trim()}
-      : {label: 'Découvrir Segna', href: '/'}
+      : {label: 'Découvrir Segna', href: '/location'}
 
   const cta = customCta ?? fallbackCta
 

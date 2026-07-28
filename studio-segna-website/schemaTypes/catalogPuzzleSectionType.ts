@@ -23,7 +23,40 @@ export const catalogPuzzleTileType = defineType({
       type: 'image',
       options: {hotspot: true},
       description:
-        'Dans l’éditeur d’image : **cadrez** la zone utile (rectangle) et le **point focal** (croix). Les aperçus 3:4 / carré / 16:9 sont indicatifs ; sur le site les cadres ont des ratios variables (souvent très hauts) : le cadre définit l’image chargée, le point focal ce qui reste visible au centre lors du recadrage.',
+        'Définissez le **point focal desktop** dans l’éditeur d’image (grille paysage). Sur téléphone les cadres changent — utilisez « Focus mobile » ci-dessous.',
+      fields: catalogImageFields,
+    }),
+    defineField({
+      name: 'mobileFocus',
+      title: 'Focus mobile (même photo)',
+      type: 'object',
+      description:
+        'Point mis en avant sur téléphone, indépendant du hotspot desktop. 0 = gauche / haut, 100 = droite / bas. Laissez vide pour réutiliser le focus desktop.',
+      options: {columns: 2},
+      fields: [
+        defineField({
+          name: 'x',
+          title: 'Horizontal (%)',
+          type: 'number',
+          initialValue: 50,
+          validation: (rule) => rule.min(0).max(100),
+        }),
+        defineField({
+          name: 'y',
+          title: 'Vertical (%)',
+          type: 'number',
+          initialValue: 50,
+          validation: (rule) => rule.min(0).max(100),
+        }),
+      ],
+    }),
+    defineField({
+      name: 'imageMobile',
+      title: 'Photo / focus mobile (avancé)',
+      type: 'image',
+      options: {hotspot: true},
+      description:
+        'Optionnel. Même asset + autre hotspot, ou autre photo. Priorité après « Focus mobile » si les deux sont renseignés. Préférez « Focus mobile » pour ne pas recharger l’image.',
       fields: catalogImageFields,
     }),
     defineField({

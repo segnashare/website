@@ -149,27 +149,36 @@
 }
 
 .passwordWrap .input {
-  padding-right: 4.25rem;
+  padding-right: 2.75rem;
 }
 
 .passwordToggle {
   position: absolute;
   top: 50%;
-  right: 0.65rem;
+  right: 0.45rem;
   transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
   margin: 0;
-  padding: 0.25rem 0.15rem;
+  padding: 0;
   border: none;
+  border-radius: 999px;
   background: none;
   color: #52525b;
-  font: inherit;
-  font-size: 0.78rem;
-  font-weight: 700;
   cursor: pointer;
 }
 
 .passwordToggle:hover {
   color: #14110f;
+  background: #f4f4f5;
+}
+
+.passwordToggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .switchLine {
@@ -267,9 +276,30 @@ a.switchBtn {
   gap: 0.35rem;
 }
 
+.labelRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
 .label {
   font-size: 0.82rem;
   font-weight: 700;
+  color: #14110f;
+}
+
+.forgotLink {
+  flex: 0 0 auto;
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #71717a;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.forgotLink:hover {
   color: #14110f;
 }
 

@@ -49,23 +49,36 @@ export function SubscriptionSuccessClient({wallItems}: Props) {
         const supabase = createSupabaseBrowserClient()
         const {data} = await supabase.auth.getSession()
         const accessToken = data.session?.access_token
+        const signedInEmail = data.session?.user?.email?.trim() || null
         if (!accessToken) {
-          setErrorMessage('Session expirée. Reconnecte-toi, ton abonnement est peut‑être déjà actif.')
+          setErrorMessage('Session expirée. Reconnecte-toi avec le même email que le checkout Stripe, puis réessaie.')
           setConfirmState('error')
           return
         }
 
+        // credentials: 'omit' — évite HTTP 431 (cookies localhost trop gros) ; auth = Bearer.
         const response = await fetch('/api/subscription/confirm', {
           method: 'POST',
+          credentials: 'omit',
           headers: {
             Authorization: `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({sessionId, planCode}),
         })
-        const payload = (await response.json().catch(() => null)) as {message?: string} | null
+        const payload = (await response.json().catch(() => null)) as {
+          message?: string
+          code?: string
+        } | null
         if (!response.ok) {
-          throw new Error(payload?.message ?? 'Impossible de confirmer l’abonnement.')
+          if (payload?.code === 'user_mismatch' || payload?.message === 'user_mismatch') {
+            throw new Error(
+              signedInEmail
+                ? `Ce paiement est lié à un autre compte. Tu es connecté en tant que ${signedInEmail}. Reconnecte-toi avec l’email du checkout, puis réessaie.`
+                : 'Ce paiement est lié à un autre compte Segna. Reconnecte-toi avec l’email utilisé lors du checkout, puis réessaie.',
+            )
+          }
+          throw new Error(payload?.message ?? `Impossible de confirmer l’abonnement (HTTP ${response.status}).`)
         }
         setConfirmState('ready')
       } catch (error) {
@@ -86,11 +99,12 @@ export function SubscriptionSuccessClient({wallItems}: Props) {
         access_token: accessToken,
         refresh_token: refreshToken,
         token_type: 'bearer',
-        type: 'website_signin',
+        // Arrive sur Exchange avec la modale « Bienvenue Segna X ».
+        type: 'website_subscription_success',
       }).toString()
       return target.toString()
     }
-    return `${SEGNA_APP_BASE_URL}/auth/login?from=member`
+    return `${SEGNA_APP_BASE_URL}/exchange?subscription=success&plan=segna_x`
   }, [])
 
   const handleDownloadApp = useCallback(async () => {
@@ -128,11 +142,15 @@ export function SubscriptionSuccessClient({wallItems}: Props) {
       <div className={styles.shell}>
         <main className={styles.main}>
           <div className={styles.panel}>
-            <h1 className={styles.title}>Abonnement lancé</h1>
+            <h1 className={styles.title}>
+              {confirmState === 'error' ? 'Paiement reçu' : 'Abonnement lancé'}
+            </h1>
             <p className={styles.lead}>
               {confirmState === 'loading'
                 ? 'Activation de ton abonnement SegnaX en cours…'
-                : 'Ton abonnement SegnaX est bien actif. Tu peux commencer à emprunter des pièces et profiter de tous les avantages de l’abonnement depuis l’app.'}
+                : confirmState === 'error'
+                  ? 'Ton paiement Stripe est passé, mais l’activation Segna n’a pas pu être confirmée automatiquement. Réessaie ou ouvre l’app — ton abonnement peut déjà être actif.'
+                  : 'Ton abonnement SegnaX est bien actif. Tu peux commencer à emprunter des pièces et profiter de tous les avantages de l’abonnement depuis l’app.'}
             </p>
 
             {confirmState === 'error' && errorMessage ? (
@@ -141,14 +159,25 @@ export function SubscriptionSuccessClient({wallItems}: Props) {
               </p>
             ) : null}
 
-            <button
-              type="button"
-              className={styles.cta}
-              disabled={pending || confirmState === 'loading'}
-              onClick={() => void handleDownloadApp()}
-            >
-              {pending ? 'Redirection…' : 'Télécharger l’app'}
-            </button>
+            {confirmState === 'error' ? (
+              <button
+                type="button"
+                className={styles.cta}
+                disabled={pending}
+                onClick={() => window.location.reload()}
+              >
+                Réessayer l’activation
+              </button>
+            ) : (
+              <button
+                type="button"
+                className={styles.cta}
+                disabled={pending || confirmState === 'loading'}
+                onClick={() => void handleDownloadApp()}
+              >
+                {pending ? 'Redirection…' : 'Télécharger l’app'}
+              </button>
+            )}
 
             <button
               type="button"
@@ -163,7 +192,7 @@ export function SubscriptionSuccessClient({wallItems}: Props) {
 
         {wallItems.length > 0 ? (
           <aside className={styles.wallSlot}>
-            <RecapPiecesWall items={wallItems} fade="top" />
+            <RecapPiecesWall items={wallItems} fade="none" />
           </aside>
         ) : null}
       </div>

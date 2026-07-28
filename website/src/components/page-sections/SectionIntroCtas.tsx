@@ -1,11 +1,12 @@
 import {CtaHrefLink} from '@/components/home/heroShared'
+import {resolveMarketingCtaHref, resolveMarketingCtaLabel} from '@/lib/marketing-cta'
 import styles from './sectionIntroCtas.module.css'
 
 type CtaPair = {label: string; href: string} | null
 
 function ctaPair(label?: string | null, href?: string | null): CtaPair {
-  const l = label?.trim()
-  const h = href?.trim()
+  const l = resolveMarketingCtaLabel(label)
+  const h = resolveMarketingCtaHref(href)
   return l && h ? {label: l, href: h} : null
 }
 

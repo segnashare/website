@@ -21,7 +21,14 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: `${title} | Segna`,
     description,
-    openGraph: ogImage ? {images: [{url: ogImage}]} : undefined,
+    alternates: {canonical: '/newsroom'},
+    openGraph: {
+      title: `${title} | Segna`,
+      description,
+      url: '/newsroom',
+      type: 'website',
+      ...(ogImage ? {images: [{url: ogImage}]} : {}),
+    },
   }
 }
 

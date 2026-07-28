@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type {ReactNode} from 'react'
+import {normalizeHref} from '@/lib/normalize-href'
 
 export function CtaHrefLink({
   href,
@@ -17,7 +18,7 @@ export function CtaHrefLink({
   ariaLabel?: string
   tabIndex?: number
 }) {
-  const h = href.trim() || '#'
+  const h = normalizeHref(href)
   const a11y = ariaLabel?.trim() ? {'aria-label': ariaLabel.trim()} : {}
   const ti = tabIndex !== undefined ? {tabIndex} : {}
   if (h.startsWith('/')) {
@@ -27,7 +28,7 @@ export function CtaHrefLink({
       </Link>
     )
   }
-  if (/^https?:\/\//i.test(h)) {
+  if (/^https?:\/\//i.test(h) || h.startsWith('//')) {
     return (
       <a href={h} className={className} rel="noopener noreferrer" onClick={onClick} {...a11y} {...ti}>
         {children}

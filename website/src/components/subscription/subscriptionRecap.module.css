@@ -254,16 +254,7 @@
 }
 
 @media (max-width: 959px) {
-  /* Recouvre la jointure subpixel main ↔ mur (overflow:hidden coupe tout débord du fondu). */
-  .main {
-    position: relative;
-    z-index: 2;
-    background: #fff;
-    margin-bottom: -3px;
-  }
-
   .wallSlot {
-    display: block;
-    height: min(42vh, 22rem);
+    display: none;
   }
 }

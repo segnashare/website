@@ -62,10 +62,13 @@ export function saveItemChatLocalState(state: ItemChatLocalState): void {
 }
 
 export type OpenItemChatDetail = {
-  itemId: string
+  /** Absent / null = conversation générale (ex. panier). */
+  itemId?: string | null
   itemTitle?: string | null
   itemSizeLabel?: string | null
   itemConditionLabel?: string | null
+  /** Envoyé juste après ouverture de la conversation. */
+  initialMessage?: string | null
 }
 
 export const ITEM_CHAT_OPEN_EVENT = 'segna:item-chat-open'

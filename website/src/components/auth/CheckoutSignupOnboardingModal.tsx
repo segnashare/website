@@ -1,27 +1,41 @@
 'use client'
 
-import {bootstrapUserAfterSignup} from '@/lib/auth/bootstrap-user'
 import {
   isBanAddressSelectionValid,
   searchBanAddresses,
   type BanAddressSuggestion,
 } from '@/lib/auth/ban-address-search'
+import {bootstrapUserAfterSignup} from '@/lib/auth/bootstrap-user'
 import {
   isValidBirthDate,
-  saveOnboardingBirthDate,
-  saveOnboardingNameAndAddress,
+  saveOnboardingAddress,
+  saveOnboardingIdentity,
   saveOnboardingSizes,
 } from '@/lib/auth/checkout-onboarding-persist'
 import {resolveCheckoutOnboardingResume} from '@/lib/auth/checkout-onboarding-resume'
 import type {CheckoutOnboardingStep} from '@/lib/auth/checkout-onboarding-resume'
+import {buildMapEmbedSrc, getDefaultMapCenter} from '@/lib/maps/google-maps-embed'
+import {normalizeFrenchLocalNumber} from '@/lib/phone/fr-mobile'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import type {User} from '@supabase/supabase-js'
 import {useCallback, useEffect, useId, useRef, useState, type FormEvent} from 'react'
 import {createPortal} from 'react-dom'
 import styles from './checkoutSignupOnboardingModal.module.css'
 
+function formatBirthDisplay(digits: string): string {
+  const d = digits.replace(/\D/g, '').slice(0, 8)
+  if (d.length <= 2) return d
+  if (d.length <= 4) return `${d.slice(0, 2)}/${d.slice(2)}`
+  return `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}`
+}
+
+function parseBirthDigits(value: string): {day: string; month: string; year: string} {
+  const d = value.replace(/\D/g, '').slice(0, 8)
+  return {day: d.slice(0, 2), month: d.slice(2, 4), year: d.slice(4, 8)}
+}
+
 const OTP_LENGTH = 6
-const RESEND_SECONDS = 60
+const RESEND_SECONDS = 30
 const TOP_OPTIONS = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL'] as const
 const BOTTOM_OPTIONS = ['32', '34', '36', '38', '40', '42', '44', '46', '48'] as const
 const SHOES_OPTIONS = Array.from({length: 12}, (_, i) => String(33 + i))
@@ -40,6 +54,11 @@ type Props = {
    * est déjà présente (ne pas skipper la vérif e-mail).
    */
   forceEmailOtp?: boolean
+  /**
+   * Tunnel achat panier : après validation e-mail seulement → `onComplete`
+   * (identité / adresse se font sur la page checkout, pas en modale).
+   */
+  emailOtpOnly?: boolean
   onClose: () => void
   onComplete: () => void
 }
@@ -51,11 +70,11 @@ const STEP_META: Record<Step, {title: string; subtitle: string}> = {
   },
   2: {
     title: 'Qui es-tu ?',
-    subtitle: 'Prénom, nom et adresse de livraison. Seul le quartier apparaît sur ton profil.',
+    subtitle: 'Prénom, nom, téléphone et date de naissance.',
   },
   3: {
-    title: 'Quelle est ta date de naissance ?',
-    subtitle: "Cela nous permet de calculer l'âge qui s'affiche sur ton profil.",
+    title: 'Où livrer tes pièces ?',
+    subtitle: 'Seul le quartier apparaît sur ton profil.',
   },
   4: {
     title: 'Les tailles que tu pourrais porter',
@@ -79,7 +98,6 @@ async function getAuthUserWithRetry(): Promise<User | null> {
         await new Promise((r) => setTimeout(r, 60 + attempt * 80))
         continue
       }
-      // Session corrompue / erreur client : ne pas faire échouer tout le step OTP.
       if (error) {
         console.warn('[checkout-onboarding] getUser', error.message)
         return null
@@ -91,7 +109,6 @@ async function getAuthUserWithRetry(): Promise<User | null> {
         continue
       }
       console.warn('[checkout-onboarding] getUser exception', e)
-      // Évite de remonter TypeError obscure (ex. regex JWT undefined après HMR).
       try {
         await supabase.auth.signOut({scope: 'local'})
       } catch {
@@ -139,6 +156,7 @@ export function CheckoutSignupOnboardingModal({
   intent = 'signup',
   initialStep = 1,
   forceEmailOtp = false,
+  emailOtpOnly = false,
   onClose,
   onComplete,
 }: Props) {
@@ -154,27 +172,61 @@ export function CheckoutSignupOnboardingModal({
   const [resendRemaining, setResendRemaining] = useState(0)
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
+  const [phoneLocal, setPhoneLocal] = useState('')
+  const [birthInput, setBirthInput] = useState('')
   const [locationQuery, setLocationQuery] = useState('')
   const [locationSuggestions, setLocationSuggestions] = useState<BanAddressSuggestion[]>([])
   const [locationLoading, setLocationLoading] = useState(false)
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false)
   const [activeLocationIndex, setActiveLocationIndex] = useState(-1)
   const [selectedLocation, setSelectedLocation] = useState<BanAddressSuggestion | null>(null)
-  const [digits, setDigits] = useState<string[]>(['', '', '', '', '', '', '', ''])
-  const birthRefs = useRef<Array<HTMLInputElement | null>>([])
+  const [mapCenter, setMapCenter] = useState(getDefaultMapCenter)
   const [topSelected, setTopSelected] = useState<Set<string>>(new Set())
   const [bottomSelected, setBottomSelected] = useState<Set<string>>(new Set())
   const [shoesSelected, setShoesSelected] = useState<Set<string>>(new Set())
+  const [identityErrors, setIdentityErrors] = useState<{
+    firstName: boolean
+    phone: boolean
+    birth: boolean
+  }>({firstName: false, phone: false, birth: false})
+  const [locationError, setLocationError] = useState(false)
 
   const isLocationValid = isBanAddressSelectionValid(locationQuery, selectedLocation)
+  /** Même règle que l’app `OnboardingPhoneCore` : 9 chiffres nationaux. */
+  const phoneOk = normalizeFrenchLocalNumber(phoneLocal).length === 9
+  const {day, month, year} = parseBirthDigits(birthInput)
+  const birthOk = isValidBirthDate(day, month, year)
+  const firstNameOk = firstName.trim().length >= 2
 
   const selectLocationSuggestion = useCallback((suggestion: BanAddressSuggestion) => {
     setLocationQuery(suggestion.label)
     setSelectedLocation(suggestion)
+    setMapCenter({lat: suggestion.lat, lon: suggestion.lon})
     setShowLocationSuggestions(false)
     setActiveLocationIndex(-1)
     setLocationSuggestions([])
+    setLocationError(false)
     setError(null)
+  }, [])
+
+  const handleLocateMe = useCallback(() => {
+    if (!navigator.geolocation) {
+      setError('La géolocalisation n’est pas disponible sur cet appareil.')
+      return
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setMapCenter({
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+        })
+        setError(null)
+      },
+      () => {
+        setError('Impossible de récupérer ta position actuelle.')
+      },
+      {enableHighAccuracy: true, timeout: 7000},
+    )
   }, [])
 
   const otpChars = Array.from({length: OTP_LENGTH}, (_, i) => otp[i] ?? '')
@@ -197,10 +249,6 @@ export function CheckoutSignupOnboardingModal({
     if (index < OTP_LENGTH - 1) otpRefs.current[index + 1]?.focus()
   }
 
-  const day = `${digits[0]}${digits[1]}`
-  const month = `${digits[2]}${digits[3]}`
-  const year = `${digits[4]}${digits[5]}${digits[6]}${digits[7]}`
-
   useEffect(() => {
     setMounted(true)
   }, [])
@@ -216,21 +264,23 @@ export function CheckoutSignupOnboardingModal({
     setOtp('')
     setFirstName('')
     setLastName('')
+    setPhoneLocal('')
+    setBirthInput('')
     setLocationQuery('')
     setLocationSuggestions([])
     setLocationLoading(false)
     setShowLocationSuggestions(false)
     setActiveLocationIndex(-1)
     setSelectedLocation(null)
-    setDigits(['', '', '', '', '', '', '', ''])
+    setMapCenter(getDefaultMapCenter())
     setTopSelected(new Set())
     setBottomSelected(new Set())
     setShoesSelected(new Set())
+    setIdentityErrors({firstName: false, phone: false, birth: false})
+    setLocationError(false)
     setResendRemaining(startStep === 1 ? RESEND_SECONDS : 0)
 
-    // E-mail déjà validé (session) ou reprise : aller à l’étape nom / naissance / tailles.
-    // Sauf après signup mdp (`forceEmailOtp`) où on exige le code de vérif.
-    if (startStep >= 2 || forceEmailOtp) {
+    if (startStep >= 2) {
       return () => {
         cancelled = true
       }
@@ -246,7 +296,7 @@ export function CheckoutSignupOnboardingModal({
           if (cancelled) return
           const resume = await resolveCheckoutOnboardingResume(supabase)
           if (cancelled) return
-          if (resume.status === 'ready') {
+          if (emailOtpOnly || resume.status === 'ready' || resume.status === 'need_phone_verify') {
             onComplete()
             return
           }
@@ -266,7 +316,7 @@ export function CheckoutSignupOnboardingModal({
     return () => {
       cancelled = true
     }
-  }, [open, email, forceEmailOtp, initialStep, onComplete])
+  }, [open, email, emailOtpOnly, initialStep, onComplete])
 
   useEffect(() => {
     if (!open || resendRemaining <= 0) return
@@ -277,7 +327,7 @@ export function CheckoutSignupOnboardingModal({
   }, [open, resendRemaining])
 
   useEffect(() => {
-    if (!open || step !== 2) return
+    if (!open || step !== 3) return
     const query = locationQuery.trim()
     if (query.length < 3 || (selectedLocation && query === selectedLocation.label)) {
       setLocationSuggestions([])
@@ -323,15 +373,9 @@ export function CheckoutSignupOnboardingModal({
     }
   }, [open, onClose, pending])
 
+  /** Étape 1 : bouton actif seulement avec OTP complet. Autres : toujours cliquable pour afficher les erreurs. */
   const canContinue =
-    !pending &&
-    (step === 1
-      ? otp.trim().length === OTP_LENGTH
-      : step === 2
-        ? firstName.trim().length >= 2 && isLocationValid
-        : step === 3
-          ? isValidBirthDate(day, month, year)
-          : topSelected.size > 0 && bottomSelected.size > 0 && shoesSelected.size > 0)
+    !pending && (step === 1 ? otp.trim().length === OTP_LENGTH : true)
 
   const handleResendOtp = async () => {
     if (pending || resendRemaining > 0) return
@@ -340,17 +384,52 @@ export function CheckoutSignupOnboardingModal({
     setPending(true)
     try {
       const supabase = createSupabaseBrowserClient()
-      const {error: otpError} = await supabase.auth.signInWithOtp({
-        email: email.trim().toLowerCase(),
-        // Après signup mdp le user existe déjà → ne pas recréer.
-        options: {shouldCreateUser: intent === 'signup' && !forceEmailOtp},
-      })
+      const normalizedEmail = email.trim().toLowerCase()
+
+      // Si l’e-mail est déjà confirmé, ne pas renvoyer de Magic Link : avancer.
+      const existingUser = await getAuthUserWithRetry()
+      if (isEmailVerified(existingUser, normalizedEmail)) {
+        await bootstrapUserAfterSignup(supabase)
+        if (emailOtpOnly) {
+          onComplete()
+          return
+        }
+        const resume = await resolveCheckoutOnboardingResume(supabase)
+        if (resume.status === 'ready' || resume.status === 'need_phone_verify') {
+          onComplete()
+          return
+        }
+        if (resume.status === 'resume' && resume.step >= 2) {
+          setStep(resume.step)
+          setStatus(null)
+          return
+        }
+        setStep(2)
+        setStatus(null)
+        return
+      }
+
+      // Inscription : toujours « Confirm signup » (code). Jamais signInWithOtp
+      // (template Magic Link — c’est ce qui envoyait « Your Magic Link »).
+      const {error: otpError} =
+        intent === 'signup'
+          ? await supabase.auth.resend({type: 'signup', email: normalizedEmail})
+          : await supabase.auth.signInWithOtp({
+              email: normalizedEmail,
+              options: {shouldCreateUser: false},
+            })
       if (otpError) {
         const msg = (otpError.message ?? '').toLowerCase()
         console.error('[checkout-onboarding] resend otp', otpError)
         if (msg.includes('rate limit') || msg.includes('login.new_email') || msg.includes('email rate') || msg.includes('after')) {
-          setError('Trop de tentatives. Attends ~60 s avant de renvoyer le code.')
+          setError('Trop de tentatives. Attends un peu avant de renvoyer le code.')
           setResendRemaining(RESEND_SECONDS)
+        } else if (msg.includes('already') || msg.includes('confirmed') || msg.includes('verified')) {
+          if (emailOtpOnly) onComplete()
+          else {
+            setStep(2)
+            setStatus(null)
+          }
         } else if (msg.includes('error sending') || msg.includes('confirmation email')) {
           setError("L'e-mail n'a pas pu être envoyé (SMTP). Vérifie Postmark / réessaie plus tard.")
         } else {
@@ -383,8 +462,6 @@ export function CheckoutSignupOnboardingModal({
           const normalizedEmail = email.trim().toLowerCase()
           const token = otp.trim()
 
-          // Déjà connecté / e-mail déjà confirmé (OTP consommé) → on continue,
-          // sauf si on force la vérif après création du mot de passe.
           const existingUser = await getAuthUserWithRetry()
           const alreadyVerified = isEmailVerified(existingUser, normalizedEmail)
           const mustVerifyOtp = forceEmailOtp || !alreadyVerified
@@ -401,7 +478,6 @@ export function CheckoutSignupOnboardingModal({
                   })
                 ).error ?? null
 
-              // Certains templates / flux signup exigent `type: 'signup'`.
               if (verifyError) {
                 const retry = await supabase.auth.verifyOtp({
                   email: normalizedEmail,
@@ -455,18 +531,17 @@ export function CheckoutSignupOnboardingModal({
           }
 
           const resume = await resolveCheckoutOnboardingResume(supabase)
-          if (resume.status === 'ready' || intent === 'signin') {
+          if (resume.status === 'ready' || resume.status === 'need_phone_verify') {
+            setPending(false)
+            onComplete()
+            return
+          }
+          if (intent === 'signin') {
             if (resume.status === 'resume' && resume.step >= 2) {
               setStep(resume.step)
               setPending(false)
               return
             }
-            if (resume.status === 'ready') {
-              setPending(false)
-              onComplete()
-              return
-            }
-            // signin sans progression connue → prénom
             setStep(2)
             setPending(false)
             return
@@ -478,12 +553,41 @@ export function CheckoutSignupOnboardingModal({
         }
 
         if (step === 2) {
+          const nextErrors = {
+            firstName: !firstNameOk,
+            phone: !phoneOk,
+            birth: !birthOk,
+          }
+          setIdentityErrors(nextErrors)
+          if (nextErrors.firstName || nextErrors.phone || nextErrors.birth) {
+            if (nextErrors.firstName) setError('Indique ton prénom (2 caractères minimum).')
+            else if (nextErrors.phone) setError('Saisis un numéro de mobile français valide (10 chiffres, ex. 06…).')
+            else setError("Merci d'indiquer une date de naissance valide (JJ/MM/AAAA).")
+            setPending(false)
+            return
+          }
+          const isoDate = `${year}-${month}-${day}`
+          const result = await saveOnboardingIdentity(supabase, firstName, lastName, phoneLocal, isoDate)
+          if (!result.ok) {
+            setError(result.message)
+            setPending(false)
+            return
+          }
+          setIdentityErrors({firstName: false, phone: false, birth: false})
+          setStep(3)
+          setPending(false)
+          return
+        }
+
+        if (step === 3) {
           if (!selectedLocation || !isLocationValid) {
+            setLocationError(true)
             setError('Sélectionne une adresse complète (rue + ville) dans la liste.')
             setPending(false)
             return
           }
-          const result = await saveOnboardingNameAndAddress(supabase, firstName, lastName, {
+          setLocationError(false)
+          const result = await saveOnboardingAddress(supabase, {
             label: selectedLocation.label,
             relativeCity: selectedLocation.relativeCity,
             timezone: selectedLocation.timezone,
@@ -495,25 +599,13 @@ export function CheckoutSignupOnboardingModal({
             setPending(false)
             return
           }
-          setStep(3)
+          setStep(4)
           setPending(false)
           return
         }
 
-        if (step === 3) {
-          if (!isValidBirthDate(day, month, year)) {
-            setError("Merci d'indiquer une date valide.")
-            setPending(false)
-            return
-          }
-          const isoDate = `${year}-${month}-${day}`
-          const result = await saveOnboardingBirthDate(supabase, isoDate)
-          if (!result.ok) {
-            setError(result.message)
-            setPending(false)
-            return
-          }
-          setStep(4)
+        if (topSelected.size === 0 || bottomSelected.size === 0 || shoesSelected.size === 0) {
+          setError('Sélectionne au moins une taille par catégorie (haut, bas, chaussures).')
           setPending(false)
           return
         }
@@ -543,11 +635,13 @@ export function CheckoutSignupOnboardingModal({
       }
     },
     [
+      birthOk,
       bottomSelected,
       canContinue,
       day,
       email,
       firstName,
+      firstNameOk,
       forceEmailOtp,
       intent,
       isLocationValid,
@@ -556,6 +650,8 @@ export function CheckoutSignupOnboardingModal({
       onComplete,
       otp,
       pending,
+      phoneLocal,
+      phoneOk,
       selectedLocation,
       shoesSelected,
       step,
@@ -590,6 +686,7 @@ export function CheckoutSignupOnboardingModal({
 
   const meta = STEP_META[step]
   const progressPct = (step / 4) * 100
+  const mapSrc = buildMapEmbedSrc(mapCenter.lat, mapCenter.lon)
 
   const dialog = (
     <div
@@ -600,7 +697,7 @@ export function CheckoutSignupOnboardingModal({
       }}
     >
       <div
-        className={styles.dialog}
+        className={`${styles.dialog} ${step === 3 ? styles.dialogWithMap : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
@@ -687,13 +784,22 @@ export function CheckoutSignupOnboardingModal({
           {step === 2 ? (
             <form id="checkout-onboarding-form" onSubmit={(e) => void submitStep(e)} noValidate>
               <div className={styles.framedStack}>
-                <div className={styles.framedInput}>
+                <div
+                  className={`${styles.framedInput} ${identityErrors.firstName ? styles.framedInputInvalid : ''}`}
+                >
                   <input
                     type="text"
                     autoComplete="given-name"
                     placeholder="Prénom"
                     value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
+                    aria-invalid={identityErrors.firstName}
+                    onChange={(e) => {
+                      setFirstName(e.target.value)
+                      if (identityErrors.firstName) {
+                        setIdentityErrors((prev) => ({...prev, firstName: false}))
+                      }
+                      if (error) setError(null)
+                    }}
                     disabled={pending}
                     required
                   />
@@ -708,15 +814,92 @@ export function CheckoutSignupOnboardingModal({
                     disabled={pending}
                   />
                 </div>
+                <div className={`${styles.framedInput} ${identityErrors.phone ? styles.framedInputInvalid : ''}`}>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    autoComplete="tel-national"
+                    placeholder="Numéro de téléphone"
+                    maxLength={10}
+                    value={phoneLocal}
+                    aria-invalid={identityErrors.phone}
+                    disabled={pending}
+                    required
+                    onChange={(e) => {
+                      setError(null)
+                      setPhoneLocal(e.target.value.replace(/\D/g, '').slice(0, 10))
+                      if (identityErrors.phone) {
+                        setIdentityErrors((prev) => ({...prev, phone: false}))
+                      }
+                    }}
+                  />
+                </div>
+                <div className={`${styles.framedInput} ${identityErrors.birth ? styles.framedInputInvalid : ''}`}>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="bday"
+                    placeholder="Date de naissance"
+                    value={birthInput}
+                    disabled={pending}
+                    required
+                    aria-invalid={identityErrors.birth}
+                    aria-label="Date de naissance (JJ/MM/AAAA)"
+                    onChange={(e) => {
+                      setError(null)
+                      setBirthInput(formatBirthDisplay(e.target.value))
+                      if (identityErrors.birth) {
+                        setIdentityErrors((prev) => ({...prev, birth: false}))
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            </form>
+          ) : null}
+
+          {step === 3 ? (
+            <form id="checkout-onboarding-form" onSubmit={(e) => void submitStep(e)} noValidate>
+              <div className={styles.addressStep}>
+                <div className={styles.mapBlock}>
+                  <iframe
+                    title="Carte de localisation"
+                    src={mapSrc}
+                    className={styles.mapFrame}
+                    loading="lazy"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allowFullScreen
+                  />
+                  <button
+                    type="button"
+                    className={styles.mapLocateBtn}
+                    aria-label="Centrer la carte sur ma position"
+                    disabled={pending}
+                    onClick={handleLocateMe}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+                      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
+                      <path
+                        d="M12 2v3M12 19v3M2 12h3M19 12h3"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
+
                 <div className={styles.addressWrap}>
-                  <div className={styles.framedInput}>
+                  <div className={`${styles.framedInput} ${locationError ? styles.framedInputInvalid : ''}`}>
                     <input
                       type="text"
                       autoComplete="street-address"
-                      placeholder="Saisis ton adresse, ton quartier ou ta ville…"
+                      placeholder="Adresse"
                       value={locationQuery}
                       disabled={pending}
                       required
+                      aria-invalid={locationError}
                       aria-autocomplete="list"
                       aria-expanded={showLocationSuggestions}
                       onFocus={() => setShowLocationSuggestions(true)}
@@ -725,6 +908,7 @@ export function CheckoutSignupOnboardingModal({
                       }}
                       onChange={(e) => {
                         setError(null)
+                        setLocationError(false)
                         setLocationQuery(e.target.value)
                         setSelectedLocation(null)
                         setShowLocationSuggestions(true)
@@ -787,58 +971,6 @@ export function CheckoutSignupOnboardingModal({
                       )}
                     </div>
                   ) : null}
-                </div>
-              </div>
-            </form>
-          ) : null}
-
-          {step === 3 ? (
-            <form id="checkout-onboarding-form" onSubmit={(e) => void submitStep(e)} noValidate>
-              <div className={styles.birthBox}>
-                <div className={styles.birthRow}>
-                  {digits.map((digit, index) => (
-                    <div
-                      key={`birth-${index}`}
-                      className={`${styles.birthSlot} ${index === 2 || index === 4 ? styles.birthSlotGap : ''}`}
-                    >
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        autoComplete={index === 0 ? 'bday-day' : 'off'}
-                        placeholder={index < 2 ? 'j' : index < 4 ? 'm' : 'a'}
-                        maxLength={1}
-                        value={digit}
-                        ref={(el) => {
-                          birthRefs.current[index] = el
-                        }}
-                        disabled={pending}
-                        onChange={(e) => {
-                          setError(null)
-                          const nextDigit = e.target.value.replace(/\D/g, '').slice(0, 1)
-                          setDigits((prev) => {
-                            const next = [...prev]
-                            next[index] = nextDigit
-                            return next
-                          })
-                          if (nextDigit && index < 7) birthRefs.current[index + 1]?.focus()
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Backspace' && !digits[index] && index > 0) {
-                            birthRefs.current[index - 1]?.focus()
-                          }
-                        }}
-                        onPaste={(e) => {
-                          const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 8)
-                          if (!pasted) return
-                          e.preventDefault()
-                          const next = ['', '', '', '', '', '', '', '']
-                          for (let i = 0; i < pasted.length; i += 1) next[i] = pasted[i] ?? ''
-                          setDigits(next)
-                          birthRefs.current[Math.min(pasted.length, 8) - 1]?.focus()
-                        }}
-                      />
-                    </div>
-                  ))}
                 </div>
               </div>
             </form>

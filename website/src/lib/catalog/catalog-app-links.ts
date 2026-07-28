@@ -24,9 +24,9 @@ export function catalogAppSignupHref(): string {
   return `${SEGNA_APP_BASE_URL}/auth/sign-up/email`
 }
 
-/** Landing abonnement SegnaX (1er mois gratuit) — plus de deep link app pour la loc. */
+/** Landing Location (CTAs SegnaX / abo historiques). */
 export function catalogSubscriptionHref(): string {
-  return '/abonnement'
+  return '/location'
 }
 
 /**

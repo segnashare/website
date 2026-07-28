@@ -2,7 +2,7 @@ import {defineArrayMember, defineField, defineType} from '@sanity/types'
 import {pageSectionsField} from './pageSectionsField'
 
 /** Routes système (hors pages marketing). */
-const RESERVED_SLUGS = ['newsroom', 'aide', 'api']
+const RESERVED_SLUGS = ['newsroom', 'aide', 'api', 'signup', 'signin', 'panier', 'abonnement']
 
 export const marketingPageType = defineType({
   name: 'marketingPage',
@@ -20,7 +20,8 @@ export const marketingPageType = defineType({
       name: 'slug',
       title: 'Slug URL',
       type: 'slug',
-      description: 'Définit l’URL publique : `/` + slug (ex. `tarifs` → `/tarifs`).',
+      description:
+        'Définit l’URL publique : `/` + slug (ex. `location` → `/location`). Pour l’abonnement SegnaX, crée une page avec le slug `abonnement` (hero + sections ; l’offre reste gérée par le site).',
       options: {source: 'title', maxLength: 96},
       validation: (rule) =>
         rule.required().custom((value) => {

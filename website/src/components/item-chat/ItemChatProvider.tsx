@@ -255,13 +255,14 @@ export function ItemChatProvider({children, source, apiBase = ''}: ProviderProps
       setMessages([])
       const state = local ?? loadItemChatLocalState()
       if (!local) setLocal(state)
+      const initialMessage = detail.initialMessage?.trim() || ''
 
       try {
         const res = await apiFetch(apiBase, '/api/item-chat/conversations', state.visitorId, {
           method: 'POST',
           body: JSON.stringify({
             visitorId: state.visitorId,
-            itemId: detail.itemId,
+            ...(detail.itemId ? {itemId: detail.itemId} : {}),
             source,
             itemTitle: detail.itemTitle ?? undefined,
             itemSizeLabel: detail.itemSizeLabel ?? undefined,
@@ -277,7 +278,45 @@ export function ItemChatProvider({children, source, apiBase = ''}: ProviderProps
         if (!data.conversation) return
         setConversation(data.conversation)
         persist({...state, conversationId: data.conversation.id})
-        await refreshConversation(data.conversation.id, state.visitorId)
+
+        if (initialMessage) {
+          setSending(true)
+          try {
+            const msgRes = await apiFetch(
+              apiBase,
+              `/api/item-chat/conversations/${data.conversation.id}/messages`,
+              state.visitorId,
+              {
+                method: 'POST',
+                body: JSON.stringify({
+                  visitorId: state.visitorId,
+                  body: initialMessage,
+                  source,
+                }),
+              },
+            )
+            if (!msgRes.ok) {
+              const err = (await msgRes.json().catch(() => null)) as {error?: string} | null
+              setError(err?.error || 'Envoi impossible')
+              await refreshConversation(data.conversation.id, state.visitorId)
+              return
+            }
+            const msgData = (await msgRes.json()) as {
+              message?: ItemChatMessage
+              ackMessage?: ItemChatMessage | null
+              conversation?: ItemChatConversation
+            }
+            const nextMessages: ItemChatMessage[] = []
+            if (msgData.message) nextMessages.push(msgData.message)
+            if (msgData.ackMessage) nextMessages.push(msgData.ackMessage)
+            setMessages(nextMessages)
+            if (msgData.conversation) setConversation(msgData.conversation)
+          } finally {
+            setSending(false)
+          }
+        } else {
+          await refreshConversation(data.conversation.id, state.visitorId)
+        }
         void refreshList(state.visitorId)
       } catch {
         setError('Réseau indisponible')
@@ -289,7 +328,8 @@ export function ItemChatProvider({children, source, apiBase = ''}: ProviderProps
   useEffect(() => {
     const onOpen = (e: Event) => {
       const ce = e as CustomEvent<OpenItemChatDetail>
-      if (!ce.detail?.itemId) return
+      if (!ce.detail) return
+      if (!ce.detail.itemId && !ce.detail.itemTitle && !ce.detail.initialMessage) return
       void openForItem(ce.detail)
     }
     window.addEventListener(ITEM_CHAT_OPEN_EVENT, onOpen)
@@ -362,7 +402,7 @@ export function ItemChatProvider({children, source, apiBase = ''}: ProviderProps
           }
           conv = {
             id: state.conversationId,
-            itemId: pendingItem.itemId,
+            itemId: pendingItem.itemId ?? null,
             itemTitle: pendingItem.itemTitle ?? null,
             itemSizeLabel: pendingItem.itemSizeLabel ?? null,
             itemConditionLabel: pendingItem.itemConditionLabel ?? null,

@@ -106,6 +106,7 @@ export const deskStructure: StructureResolver = (S) => {
                     .title('Posts & contenus listables')
                     .items([
                       S.documentTypeListItem('post').title('Posts'),
+                      S.documentTypeListItem('author').title('Auteurs'),
                       S.documentTypeListItem('catalogBrandPage').title('Marques'),
                     ]),
                 ),

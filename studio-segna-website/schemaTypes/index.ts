@@ -12,6 +12,7 @@ import {homePageType} from './homePageType'
 import {marketingPageType} from './marketingPageType'
 import {newsroomPageType} from './newsroomPageType'
 import {postType} from './postType'
+import {authorType} from './authorType'
 import {richTextSectionType} from './richTextSectionType'
 import {sectionBlockType} from './sectionBlockType'
 import {splitFeatureSectionType} from './splitFeatureSectionType'
@@ -31,6 +32,11 @@ import {
   triptychSectionType,
 } from './triptychSectionType'
 import {threeStepCardType, threeStepCardsSectionType} from './threeStepCardsSectionType'
+import {shuffleBasketSectionType} from './shuffleBasketSectionType'
+import {
+  comparisonTableRowType,
+  comparisonTableSectionType,
+} from './comparisonTableSectionType'
 import {twoColumnTableRowType, twoColumnTableSectionType} from './twoColumnTableSectionType'
 import {seoObjectType} from './objects/seoObjectType'
 import {websiteFooterType} from './websiteFooterType'
@@ -46,6 +52,9 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   richTextSectionType,
   twoColumnTableRowType,
   twoColumnTableSectionType,
+  comparisonTableRowType,
+  comparisonTableSectionType,
+  shuffleBasketSectionType,
   statementBandType,
   catalogPuzzleTileType,
   catalogPuzzleSectionType,
@@ -59,6 +68,7 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   websiteHeaderNavType,
   websiteFooterType,
   helpCenterHubSectionType,
+  authorType,
   postType,
   homeHeroStagedLayoutSlotType,
   homeHeroStagedStateFrameLayoutType,

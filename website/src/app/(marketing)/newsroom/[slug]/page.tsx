@@ -23,7 +23,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({params}: Props): Promise<Metadata> {
   const {slug} = await params
   const post = await getPostBySlug(slug)
-  if (!post) return {title: 'Article introuvable'}
+  if (!post) return {title: 'Article introuvable', robots: {index: false, follow: false}}
   const title = post.seo?.metaTitle?.trim() || post.title
   const description = post.seo?.metaDescription?.trim() || post.excerpt?.trim() || undefined
   const share = post.seo?.shareImage ?? post.image
@@ -31,10 +31,18 @@ export async function generateMetadata({params}: Props): Promise<Metadata> {
     share?.asset && (share.asset._ref || share.asset.url)
       ? urlFor(share).width(1200).height(630).fit('crop').url()
       : undefined
+  const path = `/newsroom/${slug}`
   return {
     title: `${title} | Segna`,
     description,
-    openGraph: ogImage ? {images: [{url: ogImage}]} : undefined,
+    alternates: {canonical: path},
+    openGraph: {
+      title: `${title} | Segna`,
+      description,
+      url: path,
+      type: 'article',
+      ...(ogImage ? {images: [{url: ogImage}]} : {}),
+    },
   }
 }
 
@@ -50,9 +58,41 @@ export default async function NewsroomPostPage({params}: Props) {
       : null
   const objectPosition = objectPositionFromHotspot(post.image?.hotspot)
   const hasBody = Array.isArray(post.body) && post.body.length > 0
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.segnashare.com').replace(/\/+$/, '')
+  const pageUrl = `${siteUrl}/newsroom/${slug}`
+  const share = post.seo?.shareImage ?? post.image
+  const shareUrl =
+    share?.asset && (share.asset._ref || share.asset.url)
+      ? urlFor(share).width(1200).height(630).fit('crop').url()
+      : imageUrl
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description: post.seo?.metaDescription?.trim() || post.excerpt?.trim() || undefined,
+    image: shareUrl ? [shareUrl] : undefined,
+    datePublished: post.publishedAt || undefined,
+    dateModified: post.publishedAt || undefined,
+    author: author
+      ? {'@type': 'Person', name: author}
+      : {'@type': 'Organization', name: 'Segna'},
+    publisher: {
+      '@type': 'Organization',
+      name: 'Segna',
+      logo: {
+        '@type': 'ImageObject',
+        url: `${siteUrl}/segna-icon.png`,
+      },
+    },
+    mainEntityOfPage: {'@type': 'WebPage', '@id': pageUrl},
+  }
 
   return (
     <main className={styles.page}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{__html: JSON.stringify(jsonLd)}}
+      />
       <div className={styles.hero} aria-hidden={!imageUrl}>
         {imageUrl ? (
           <Image

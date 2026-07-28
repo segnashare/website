@@ -10,6 +10,7 @@ import type {RecapWallItem} from '@/lib/subscription/recap-wall-types'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import {useRouter} from 'next/navigation'
 import {useCallback, useEffect, useRef, useState} from 'react'
+import {CheckoutPhoneVerifyModal} from './CheckoutPhoneVerifyModal'
 import {RecapPiecesWall} from './RecapPiecesWall'
 import styles from './subscriptionRecap.module.css'
 
@@ -19,7 +20,7 @@ const BENEFITS = [
   'Pressing inclus',
   'Assurance incluse',
   '1 échange inclus par mois',
-  '30% de réduction sur l’achat des pièces',
+  '10% de réduction sur l’achat des pièces',
 ] as const
 
 type Props = {
@@ -34,6 +35,7 @@ export function SubscriptionRecapClient({wallItems}: Props) {
   const [activateError, setActivateError] = useState<string | null>(null)
   const [onboardingEmail, setOnboardingEmail] = useState<string | null>(null)
   const [onboardingInitialStep, setOnboardingInitialStep] = useState<CheckoutOnboardingStep>(1)
+  const [phoneVerifyE164, setPhoneVerifyE164] = useState<string | null>(null)
   const [platform, setPlatform] = useState<ClientPlatform>('desktop')
 
   useEffect(() => {
@@ -76,6 +78,41 @@ export function SubscriptionRecapClient({wallItems}: Props) {
     return `${SEGNA_APP_BASE_URL}/auth/login?from=member`
   }, [])
 
+  const startStripeCheckout = useCallback(async () => {
+    const supabase = createSupabaseBrowserClient()
+    const {data} = await supabase.auth.getSession()
+    const accessToken = data.session?.access_token
+    if (!accessToken) {
+      router.replace(`/signup?next=${encodeURIComponent(WEBSITE_SUBSCRIPTION_RECAP_PATH)}`)
+      return
+    }
+
+    const response = await fetch('/api/subscription/checkout', {
+      method: 'POST',
+      credentials: 'omit',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    })
+    const payload = (await response.json().catch(() => null)) as {
+      url?: string
+      message?: string
+      code?: string
+    } | null
+
+    if (response.status === 401) {
+      setActivateError('Session expirée. Reconnecte-toi pour activer ton mois offert.')
+      return
+    }
+
+    if (!response.ok || !payload?.url) {
+      throw new Error(payload?.message ?? 'Impossible de lancer le checkout Stripe.')
+    }
+
+    window.location.assign(payload.url)
+  }, [router])
+
   const handleActivate = useCallback(async () => {
     if (pending) return
     setPending(true)
@@ -93,52 +130,33 @@ export function SubscriptionRecapClient({wallItems}: Props) {
         setOnboardingEmail(resume.email)
         return
       }
-
-      const {data} = await supabase.auth.getSession()
-      const accessToken = data.session?.access_token
-      if (!accessToken) {
-        router.replace(`/signup?next=${encodeURIComponent(WEBSITE_SUBSCRIPTION_RECAP_PATH)}`)
+      if (resume.status === 'need_phone_verify') {
+        setPhoneVerifyE164(resume.phoneE164)
         return
       }
 
-      // Checkout Stripe direct (proxy website → app), sans passer par l’UI app.
-      const response = await fetch('/api/subscription/checkout', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-      })
-      const payload = (await response.json().catch(() => null)) as {
-        url?: string
-        message?: string
-        code?: string
-      } | null
-
-      if (response.status === 401) {
-        setActivateError('Session expirée. Reconnecte-toi pour activer ton mois offert.')
-        return
-      }
-
-      if (response.status === 403 && payload?.code === 'kyc_required') {
-        setActivateError(
-          'La vérification d’identité est requise avant d’activer SegnaX. Continuer dans l’app pour la finaliser.',
-        )
-        return
-      }
-
-      if (!response.ok || !payload?.url) {
-        throw new Error(payload?.message ?? 'Impossible de lancer le checkout Stripe.')
-      }
-
-      window.location.assign(payload.url)
+      await startStripeCheckout()
     } catch (error) {
       setActivateError(error instanceof Error ? error.message : 'Impossible de lancer le checkout Stripe.')
       setActivatedNote(true)
     } finally {
       setPending(false)
     }
-  }, [pending, router])
+  }, [pending, router, startStripeCheckout])
+
+  const handlePhoneVerified = useCallback(async () => {
+    setPhoneVerifyE164(null)
+    setPending(true)
+    setActivateError(null)
+    try {
+      await startStripeCheckout()
+    } catch (error) {
+      setActivateError(error instanceof Error ? error.message : 'Impossible de lancer le checkout Stripe.')
+      setActivatedNote(true)
+    } finally {
+      setPending(false)
+    }
+  }, [startStripeCheckout])
 
   const handleSecondaryCta = useCallback(async () => {
     if (pending) return
@@ -149,7 +167,6 @@ export function SubscriptionRecapClient({wallItems}: Props) {
         openIosAppOrAppStore(appUrl)
         return
       }
-      // Desktop + Android : continuer sur le web app.
       window.location.assign(appUrl)
     } catch {
       if (platform === 'ios') {
@@ -208,7 +225,7 @@ export function SubscriptionRecapClient({wallItems}: Props) {
               ))}
             </ul>
 
-            <button type="button" className={styles.cta} disabled={pending} onClick={handleActivate}>
+            <button type="button" className={styles.cta} disabled={pending} onClick={() => void handleActivate()}>
               {pending ? 'Préparation…' : 'Activer mon mois offert'}
             </button>
 
@@ -232,7 +249,7 @@ export function SubscriptionRecapClient({wallItems}: Props) {
 
         {wallItems.length > 0 ? (
           <aside className={styles.wallSlot}>
-            <RecapPiecesWall items={wallItems} fade="top" />
+            <RecapPiecesWall items={wallItems} fade="none" />
           </aside>
         ) : null}
       </div>
@@ -249,7 +266,16 @@ export function SubscriptionRecapClient({wallItems}: Props) {
         onComplete={() => {
           setOnboardingEmail(null)
           setOnboardingInitialStep(1)
+          // Après tunnel → confirmation tél puis Stripe.
+          void handleActivate()
         }}
+      />
+
+      <CheckoutPhoneVerifyModal
+        open={Boolean(phoneVerifyE164)}
+        initialPhoneE164={phoneVerifyE164 ?? ''}
+        onClose={() => setPhoneVerifyE164(null)}
+        onVerified={() => void handlePhoneVerified()}
       />
     </div>
   )

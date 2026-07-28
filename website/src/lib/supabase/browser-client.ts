@@ -16,9 +16,9 @@ let browserClient: SupabaseClient | undefined
  */
 export function createSupabaseBrowserClient(): SupabaseClient {
   const env = getSupabaseAuthPublicEnv()
-  if (!env) {
+  if (!env?.url || !env.anonKey) {
     throw new Error(
-      'Supabase auth env missing (NEXT_PUBLIC_SEGNA_AUTH_SUPABASE_URL / ANON_KEY ou NEXT_PUBLIC_SUPABASE_*)',
+      'Supabase auth env missing (NEXT_PUBLIC_SUPABASE_URL + NEXT_PUBLIC_SUPABASE_ANON_KEY sur Vercel)',
     )
   }
   if (typeof window === 'undefined') {

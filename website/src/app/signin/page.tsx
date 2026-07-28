@@ -1,6 +1,8 @@
 import type {Metadata} from 'next'
 import {Suspense} from 'react'
 import {AuthPageClient} from '@/components/auth/AuthPageClient'
+import {RecapWallImagePreloads} from '@/components/subscription/RecapWallImagePreloads'
+import {WarmRecapWallImages} from '@/components/subscription/WarmRecapWallImages'
 
 export const metadata: Metadata = {
   title: 'Se connecter | Segna',
@@ -9,8 +11,12 @@ export const metadata: Metadata = {
 
 export default function SigninPage() {
   return (
-    <Suspense fallback={<div style={{minHeight: '100dvh', background: '#fef8ef'}} />}>
-      <AuthPageClient mode="signin" />
-    </Suspense>
+    <>
+      <RecapWallImagePreloads />
+      <WarmRecapWallImages />
+      <Suspense fallback={<div style={{minHeight: '100dvh', background: '#fef8ef'}} />}>
+        <AuthPageClient mode="signin" />
+      </Suspense>
+    </>
   )
 }

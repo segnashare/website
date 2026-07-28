@@ -1,19 +1,22 @@
 import type {SupabaseClient} from '@supabase/supabase-js'
 
+import {getCheckoutPhoneState} from '@/lib/auth/checkout-phone'
+
 export type CheckoutOnboardingStep = 1 | 2 | 3 | 4
 
 export type CheckoutOnboardingResume =
   | {status: 'need_auth'}
   | {status: 'ready'; email: string}
+  /** Tunnel OK mais téléphone pas encore validé par OTP — avant Stripe. */
+  | {status: 'need_phone_verify'; email: string; phoneE164: string}
   | {status: 'resume'; email: string; step: CheckoutOnboardingStep}
 
-/** Étapes app au-delà du tunnel website (nom → naissance → tailles). */
+/** Étapes app au-delà du tunnel website (identité → adresse → tailles). */
 function isPastWebsiteCheckoutOnboarding(currentStep: string | null | undefined): boolean {
   if (!currentStep) return false
   const past = [
     '/onboarding/3',
     '/onboarding/work',
-    '/onboarding/location',
     '/onboarding/style',
     '/onboarding/brands',
     '/onboarding/budget',
@@ -21,6 +24,7 @@ function isPastWebsiteCheckoutOnboarding(currentStep: string | null | undefined)
     '/onboarding/privacy',
     '/onboarding/end',
     '/onboarding/phone',
+    '/onboarding/profile',
   ]
   return past.some((p) => currentStep === p || currentStep.startsWith(`${p}/`))
 }
@@ -41,8 +45,8 @@ async function hasCheckoutSizes(supabase: SupabaseClient, userId: string): Promi
 }
 
 /**
- * Après validation e-mail : reprendre le tunnel checkout (nom / naissance / tailles)
- * ou considérer le membre prêt pour Stripe.
+ * Après validation e-mail : reprendre le tunnel checkout (identité / adresse / tailles),
+ * puis OTP téléphone, ou Stripe.
  */
 export async function resolveCheckoutOnboardingResume(
   supabase: SupabaseClient,
@@ -57,9 +61,10 @@ export async function resolveCheckoutOnboardingResume(
     return {status: 'resume', email, step: 1}
   }
 
-  const [{data: member}, {data: onboarding}] = await Promise.all([
+  const [{data: member}, {data: onboarding}, phoneState] = await Promise.all([
     supabase.from('users').select('first_name, birth_date, adress').eq('id', user.id).maybeSingle(),
     supabase.from('onboarding_sessions').select('current_step, status').eq('user_id', user.id).maybeSingle(),
+    getCheckoutPhoneState(supabase, user.id),
   ])
 
   const row = member as {
@@ -69,25 +74,41 @@ export async function resolveCheckoutOnboardingResume(
   } | null
   const progress = onboarding as {current_step?: string | null; status?: string | null} | null
 
+  const hasName = (row?.first_name ?? '').trim().length >= 2
+  const hasBirth = Boolean(row?.birth_date)
+  const hasAddress = (row?.adress ?? '').trim().length > 0
+  const hasPendingPhone = Boolean(phoneState.pendingE164)
+  const hasIdentity = hasName && hasPendingPhone && hasBirth
+
+  // Tunnel website considéré terminé côté app, mais téléphone peut encore manquer pour Stripe.
   if (progress?.status === 'completed' || isPastWebsiteCheckoutOnboarding(progress?.current_step)) {
+    if (!phoneState.verified) {
+      if (!phoneState.pendingE164) {
+        return {status: 'resume', email, step: 2}
+      }
+      return {status: 'need_phone_verify', email, phoneE164: phoneState.pendingE164}
+    }
     return {status: 'ready', email}
   }
 
-  const hasName = (row?.first_name ?? '').trim().length >= 2
-  const hasAddress = (row?.adress ?? '').trim().length > 0
-  const hasIdentity = hasName && hasAddress
-  const hasBirth = Boolean(row?.birth_date)
-  const sized = hasIdentity && hasBirth ? await hasCheckoutSizes(supabase, user.id) : false
+  const sized = hasIdentity && hasAddress ? await hasCheckoutSizes(supabase, user.id) : false
 
-  if (hasIdentity && hasBirth && sized) {
+  if (hasIdentity && hasAddress && sized) {
+    if (!phoneState.verified) {
+      return {
+        status: 'need_phone_verify',
+        email,
+        phoneE164: phoneState.pendingE164!,
+      }
+    }
     return {status: 'ready', email}
   }
 
   const path = progress?.current_step ?? ''
-  if (path === '/onboarding/size' || (hasIdentity && hasBirth)) {
+  if (path === '/onboarding/size' || (hasIdentity && hasAddress)) {
     return {status: 'resume', email, step: 4}
   }
-  if (path === '/onboarding/birth' || hasIdentity) {
+  if (hasIdentity) {
     return {status: 'resume', email, step: 3}
   }
 

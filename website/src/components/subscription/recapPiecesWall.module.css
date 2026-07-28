@@ -7,6 +7,20 @@
   min-height: inherit;
 }
 
+.wallLoading .wallStage {
+  opacity: 0;
+}
+
+.wallReady .wallStage {
+  opacity: 1;
+  transition: opacity 180ms ease-out;
+}
+
+.columnTrack[data-ready='false'] {
+  animation-play-state: paused;
+}
+
+/* Fades conservés pour usage optionnel — désactivés sur les pages actuelles. */
 .wallFadeTop {
   position: absolute;
   left: 0;
@@ -25,35 +39,48 @@
 }
 
 .wallFadeLeft {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 2;
-  width: 1.75rem;
-  pointer-events: none;
-  background: linear-gradient(
-    to right,
-    #fff 0%,
-    #fff 35%,
-    rgba(255, 255, 255, 0.45) 70%,
-    transparent 100%
-  );
+  display: none;
 }
 
 .wallStage {
   position: absolute;
-  inset: 0 -4% 0 0;
+  /* Oversized so perspective rotateY still fills the clipped .wall (avoids white diagonal). */
+  inset: -8% -6% -14% -10%;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.65rem;
   padding: 0 0.85rem 0 0.35rem;
-  transform: perspective(1400px) rotateY(-12deg) scale(1.04);
-  transform-origin: 65% 0%;
+  transform: perspective(1400px) rotateY(-12deg) scale(1.08);
+  transform-origin: 100% 50%;
 }
 
-.column {
+.wallRows {
+  container-type: size;
+  container-name: recap-wall-rows;
+  --row-gap: 0.45rem;
+  --portrait-h: calc((100cqh - var(--row-gap)) / 2);
+  --portrait-w: calc(var(--portrait-h) * 3 / 4);
+}
+
+.wallStageRows {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--row-gap);
+  padding: 0;
+  transform: none;
+}
+
+.column,
+.row {
   overflow: hidden;
+}
+
+.row {
+  flex: 0 0 var(--portrait-h);
+  height: var(--portrait-h);
+  min-height: 0;
 }
 
 .columnTrack {
@@ -62,6 +89,21 @@
   gap: 0.65rem;
   will-change: transform;
   animation: wall-scroll-down var(--wall-duration, 42s) linear infinite;
+}
+
+.rowTrack {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0.45rem;
+  height: 100%;
+  width: max-content;
+  will-change: transform;
+  animation: wall-scroll-left 38s linear infinite;
+}
+
+.rowTrack[data-ready='false'] {
+  animation-play-state: paused;
 }
 
 .column:nth-child(2) .columnTrack {
@@ -74,13 +116,30 @@
   animation-delay: -22s;
 }
 
+.row:nth-child(2) .rowTrack {
+  animation-duration: 46s;
+  animation-delay: -16s;
+  animation-name: wall-scroll-right;
+}
+
 .card {
   display: block;
   flex: 0 0 auto;
   aspect-ratio: 3 / 4;
   border-radius: 0.35rem;
   overflow: hidden;
-  background: #fff;
+  background: #f4f4f5;
+}
+
+/* Portraits fixes (évite l’écrasement flex + aspect-ratio). */
+.rowCard {
+  display: block;
+  flex: 0 0 var(--portrait-w);
+  width: var(--portrait-w);
+  height: 100%;
+  border-radius: 0.35rem;
+  overflow: hidden;
+  background: #f4f4f5;
 }
 
 .cardImg {
@@ -99,8 +158,26 @@
   }
 }
 
+@keyframes wall-scroll-left {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes wall-scroll-right {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
 @media (max-width: 959px) {
-  .wallStage {
+  .wallColumns .wallStage {
     transform: none;
     inset: 0;
     padding: 0 0.75rem;
@@ -117,7 +194,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .columnTrack {
+  .columnTrack,
+  .rowTrack {
     animation: none;
     transform: none;
   }

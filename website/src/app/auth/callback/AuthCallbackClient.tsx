@@ -7,11 +7,14 @@ import {useRouter} from 'next/navigation'
 import {useEffect, useState} from 'react'
 
 function safeNextPath(raw: string | null): string {
-  const fallback = '/abonnement'
+  const fallback = '/location'
   if (!raw?.trim()) return fallback
   try {
     const decoded = decodeURIComponent(raw.trim())
     if (!decoded.startsWith('/') || decoded.startsWith('//')) return fallback
+    if (decoded === '/abonnement' || decoded.startsWith('/abonnement/') || decoded.startsWith('/abonnement?')) {
+      return fallback
+    }
     return decoded
   } catch {
     return fallback
@@ -102,7 +105,12 @@ export function AuthCallbackClient() {
 
         if (cancelled) return
         const target = new URL(nextPath, window.location.origin)
-        if (!target.searchParams.has('checkout') && !target.pathname.startsWith('/signin') && !target.pathname.startsWith('/signup')) {
+        const skipCheckoutFlag =
+          target.pathname.startsWith('/signin') ||
+          target.pathname.startsWith('/signup') ||
+          target.pathname.startsWith('/reset-password') ||
+          target.pathname.startsWith('/forgot-password')
+        if (!target.searchParams.has('checkout') && !skipCheckoutFlag) {
           target.searchParams.set('checkout', '1')
         }
         window.history.replaceState(null, '', `${target.pathname}${target.search}`)
