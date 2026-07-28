@@ -312,35 +312,6 @@ export function CartPageClient() {
               >
                 {checkoutPending ? 'Chargement…' : 'Finaliser mon achat'}
               </button>
-
-              <div className={styles.paymentMethods} aria-label="Moyens de paiement">
-                <p className={styles.paymentMethodsTitle}>Moyens de paiement</p>
-                <ul className={styles.paymentMethodsList}>
-                  <li className={styles.paymentBadge} title="American Express">
-                    <span className={styles.paymentAmex}>
-                      AMERICAN
-                      <br />
-                      EXPRESS
-                    </span>
-                  </li>
-                  <li className={styles.paymentBadge} title="Mastercard">
-                    <span className={styles.paymentMc} aria-hidden>
-                      <span className={styles.paymentMcRed} />
-                      <span className={styles.paymentMcOrange} />
-                    </span>
-                    <span className={styles.paymentMcLabel}>mastercard</span>
-                  </li>
-                  <li className={styles.paymentBadge} title="Visa">
-                    <span className={styles.paymentVisa}>VISA</span>
-                  </li>
-                  <li className={styles.paymentBadge} title="PayPal">
-                    <span className={styles.paymentPaypal}>
-                      <strong>P</strong>
-                      <span>PayPal</span>
-                    </span>
-                  </li>
-                </ul>
-              </div>
             </section>
 
             <section className={styles.card} aria-label="Livraison et emballage">
