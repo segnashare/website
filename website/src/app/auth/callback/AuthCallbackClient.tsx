@@ -7,11 +7,13 @@ import {useRouter} from 'next/navigation'
 import {useEffect, useState} from 'react'
 
 function safeNextPath(raw: string | null): string {
-  const fallback = '/location'
+  const fallback = '/abonnement/recap'
   if (!raw?.trim()) return fallback
   try {
     const decoded = decodeURIComponent(raw.trim())
     if (!decoded.startsWith('/') || decoded.startsWith('//')) return fallback
+    if (decoded === '/abonnement/recap' || decoded.startsWith('/abonnement/recap?')) return decoded
+    if (decoded === '/abonnement/succes' || decoded.startsWith('/abonnement/succes?')) return decoded
     if (decoded === '/abonnement' || decoded.startsWith('/abonnement/') || decoded.startsWith('/abonnement?')) {
       return fallback
     }

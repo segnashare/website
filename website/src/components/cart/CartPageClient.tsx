@@ -22,10 +22,11 @@ import {
   websitePurchaseFreeShippingMissingCents,
   websitePurchaseFreeShippingProgressRatio,
 } from '@/lib/cart/website-cart-shipping'
+import {CartPaymentMethodsRow} from '@/components/cart/CartPaymentMethodsRow'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import Link from 'next/link'
 import {useRouter} from 'next/navigation'
-import {FormEvent, useCallback, useEffect, useMemo, useRef, useState} from 'react'
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import styles from './cartPage.module.css'
 
 const PURCHASE_CHECKOUT_HREF = `${WEBSITE_CHECKOUT_PATH}?mode=purchase`
@@ -41,14 +42,22 @@ function formatEuroSummary(cents: number): string {
 export function CartPageClient() {
   const router = useRouter()
   const {items, count, removeItem} = useWebsiteCart()
-  const [promoCode, setPromoCode] = useState('')
-  const [promoNote, setPromoNote] = useState<string | null>(null)
+  const [cartHydrated, setCartHydrated] = useState(false)
   const [authOpen, setAuthOpen] = useState(false)
   const [onboardingEmail, setOnboardingEmail] = useState<string | null>(null)
   const [onboardingIntent, setOnboardingIntent] = useState<'signup' | 'signin'>('signup')
   const [checkoutPending, setCheckoutPending] = useState(false)
   const [authError, setAuthError] = useState<string | null>(null)
   const checkoutHandledRef = useRef(false)
+
+  useEffect(() => {
+    setCartHydrated(true)
+  }, [])
+
+  useEffect(() => {
+    if (!cartHydrated || count > 0) return
+    router.replace('/catalogue')
+  }, [cartHydrated, count, router])
 
   const goToPurchaseCheckout = useCallback(() => {
     setAuthOpen(false)
@@ -143,35 +152,19 @@ export function CartPageClient() {
   )
   const freeShippingMissingCents = websitePurchaseFreeShippingMissingCents(subtotalCents)
 
-  function onPromoSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const code = promoCode.trim()
-    if (!code) {
-      setPromoNote(null)
-      return
-    }
-    setPromoNote('Les codes promo seront disponibles à l’étape suivante.')
+  if (!cartHydrated || count === 0) {
+    return (
+      <main className={styles.main}>
+        <div className={styles.emptyState}>
+          <p className={styles.emptyLead}>Redirection…</p>
+        </div>
+      </main>
+    )
   }
 
   return (
     <>
     <main className={styles.main}>
-      {count === 0 ? (
-        <div className={styles.emptyState}>
-          <h1 className={styles.emptyTitle}>Ton panier est vide</h1>
-          <p className={styles.emptyLead}>
-            Parcours le catalogue et ajoute les pièces qui te plaisent.
-          </p>
-          <div className={styles.emptyActions}>
-            <Link href="/catalogue" className={styles.primaryBtn}>
-              Voir le catalogue
-            </Link>
-            <Link href={WEBSITE_LOCATION_PATH} className={styles.secondaryBtn}>
-              Découvrir SegnaX
-            </Link>
-          </div>
-        </div>
-      ) : (
         <div className={styles.layout}>
           <div className={styles.leftCol}>
             <section className={styles.card} aria-labelledby="cart-items-heading">
@@ -194,23 +187,24 @@ export function CartPageClient() {
                         )}
                       </Link>
                       <div className={styles.meta}>
-                        {item.brand_label ? <p className={styles.brand}>{item.brand_label}</p> : null}
                         <Link href={catalogItemPagePath(item.id)} className={styles.itemTitle}>
                           {item.title}
                         </Link>
                         {sizeLine ? <p className={styles.size}>{sizeLine}</p> : null}
-                        <button
-                          type="button"
-                          className={styles.remove}
-                          onClick={() => removeItem(item.id)}
-                          aria-label={`Retirer ${item.title}`}
-                        >
-                          Retirer
-                        </button>
+                        <div className={styles.metaFooter}>
+                          <button
+                            type="button"
+                            className={styles.remove}
+                            onClick={() => removeItem(item.id)}
+                            aria-label={`Retirer ${item.title}`}
+                          >
+                            Retirer
+                          </button>
+                          <p className={styles.rowPrice}>
+                            {formatCatalogPurchasePriceLabel(item.price_points)}
+                          </p>
+                        </div>
                       </div>
-                      <p className={styles.rowPrice}>
-                        {formatCatalogPurchasePriceLabel(item.price_points)}
-                      </p>
                     </li>
                   )
                 })}
@@ -255,7 +249,10 @@ export function CartPageClient() {
               <dl className={styles.summaryRows}>
                 <div className={styles.summaryRow}>
                   <dt>
-                    Sous-total ({count} pièce{count > 1 ? 's' : ''})
+                    Sous-total{' '}
+                    <span className={styles.summaryDetail}>
+                      ({count} pièce{count > 1 ? 's' : ''})
+                    </span>
                   </dt>
                   <dd>{formatEuroSummary(subtotalCents)}</dd>
                 </div>
@@ -270,25 +267,6 @@ export function CartPageClient() {
                   <dd>{formatEuroSummary(totalCents)}</dd>
                 </div>
               </dl>
-              <form className={styles.promoForm} onSubmit={onPromoSubmit}>
-                <input
-                  type="text"
-                  name="promo"
-                  className={styles.promoInput}
-                  placeholder="Saisir code Promo"
-                  aria-label="Code promo"
-                  value={promoCode}
-                  onChange={(event) => {
-                    setPromoCode(event.target.value)
-                    if (promoNote) setPromoNote(null)
-                  }}
-                  autoComplete="off"
-                />
-                <button type="submit" className={styles.promoApply}>
-                  Appliquer
-                </button>
-              </form>
-              {promoNote ? <p className={styles.promoHint}>{promoNote}</p> : null}
               <button
                 type="button"
                 className={styles.primaryBtn}
@@ -297,6 +275,7 @@ export function CartPageClient() {
               >
                 {checkoutPending ? 'Chargement…' : 'Finaliser mon achat'}
               </button>
+              <CartPaymentMethodsRow />
             </section>
 
             <section className={styles.card} aria-label="Livraison et emballage">
@@ -361,15 +340,23 @@ export function CartPageClient() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <p className={styles.appPromoTitle}>
-                Louer la pièce une semaine pour 10&nbsp;% de son prix depuis l’application
+              <p className={styles.appPromoTitle}>Découvrir Segna sur l’app</p>
+              <p className={styles.appPromoSubtitle}>
+                Louez vos pièces, renouvelez quand vous voulez, et profitez d’avantages à l’achat.
               </p>
-              <span className={styles.appPromoCta}>Téléchargez l’APP</span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/brand/app-store-badge.png"
+                alt="Download on the App Store"
+                className={styles.appPromoBadge}
+                width={180}
+                height={52}
+                decoding="async"
+              />
             </a>
           </aside>
 
         </div>
-      )}
     </main>
 
     <CheckoutAuthModal

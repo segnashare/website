@@ -1,0 +1,249 @@
+.metaRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding-bottom: 1.15rem;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.metaLabel {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #18181b;
+}
+
+.metaValue {
+  margin: 0.25rem 0 0;
+  font-size: 0.92rem;
+  font-weight: 400;
+  color: #3f3f46;
+}
+
+.shipBox {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  margin: 1.15rem 0;
+  padding: 0.95rem 1rem;
+  border-radius: 0.35rem;
+  background: #f5f5f5;
+}
+
+.shipIcon {
+  flex-shrink: 0;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin-top: 0.1rem;
+  color: #52525b;
+}
+
+.shipText {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: #27272a;
+}
+
+.shipText strong {
+  font-weight: 700;
+}
+
+.statusBlock {
+  display: grid;
+  justify-items: center;
+  gap: 0.55rem;
+  padding: 1.75rem 0.5rem;
+  border-bottom: 1px solid #e5e5e5;
+  text-align: center;
+}
+
+.statusIcon {
+  width: 2rem;
+  height: 2rem;
+  color: #18181b;
+}
+
+.statusLabel {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #18181b;
+}
+
+.line {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  gap: 0.9rem;
+  padding: 1.15rem 0;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.linePhoto {
+  width: 5.5rem;
+  height: 5.5rem;
+  border-radius: 0.2rem;
+  object-fit: cover;
+  background: #f4f4f5;
+}
+
+.lineBrand {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #18181b;
+}
+
+.lineTitle {
+  margin: 0.2rem 0 0;
+  font-size: 0.9rem;
+  color: #3f3f46;
+  line-height: 1.35;
+}
+
+.lineMeta {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: #52525b;
+}
+
+.linePrice {
+  margin: 0.55rem 0 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #18181b;
+}
+
+.section {
+  padding: 1.25rem 0;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.sectionTitle {
+  margin: 0 0 0.55rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #18181b;
+}
+
+.sectionHint {
+  margin: 0 0 0.85rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #71717a;
+}
+
+.addressBlock {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: #27272a;
+  font-style: normal;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 0.55rem;
+  font-size: 0.92rem;
+  color: #3f3f46;
+}
+
+.summaryRow:last-child {
+  margin-bottom: 0;
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 1rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #18181b;
+}
+
+.invoiceLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 1.15rem;
+  color: #1d4ed8;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.locationCard {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 0.5rem;
+  padding: 1.35rem 1.1rem;
+  border: 1px solid #e5e5e5;
+  border-radius: 0.85rem;
+}
+
+.locationLead {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: #3f3f46;
+}
+
+.primaryBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 3rem;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid #18181b;
+  border-radius: 999px;
+  background: #18181b;
+  color: #fff;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primaryBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.secondaryLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 0;
+  padding: 0.35rem;
+  border: 0;
+  background: transparent;
+  color: #71717a;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  cursor: pointer;
+}
+
+.secondaryLink:hover {
+  color: #18181b;
+}
+
+.secondaryLink:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.error {
+  margin: 0;
+  color: #8a3a3a;
+  font-size: 0.95rem;
+}

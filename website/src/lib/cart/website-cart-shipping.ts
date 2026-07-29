@@ -2,7 +2,7 @@
 export const WEBSITE_PURCHASE_FREE_SHIPPING_THRESHOLD_CENTS = 20_000
 
 /** Libellé livraison par défaut panier website (achat). */
-export const WEBSITE_DEFAULT_SHIPPING_LABEL = 'Chronopost domicile (18h)'
+export const WEBSITE_DEFAULT_SHIPPING_LABEL = 'Livraison'
 
 /** Bases domicile HT (centimes) — mêmes paliers que l’app `HOME_BASE_CENTS`. */
 const HOME_BASE_HT_CENTS = [790, 913, 1362, 1362] as const

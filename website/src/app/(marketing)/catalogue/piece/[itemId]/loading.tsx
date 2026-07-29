@@ -1,10 +1,5 @@
-import {CatalogRingDotSpinner} from '@/components/catalog/CatalogRingDotSpinner'
-import styles from './piecePage.module.css'
+import {WebsitePageLoading} from '@/components/ui/WebsitePageLoading'
 
 export default function CataloguePieceLoading() {
-  return (
-    <div className={styles.routeLoading} role="status" aria-live="polite">
-      <CatalogRingDotSpinner aria-label="Chargement de la pièce" />
-    </div>
-  )
+  return <WebsitePageLoading as="div" label="Chargement de la pièce" />
 }

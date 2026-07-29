@@ -184,7 +184,7 @@
 }
 
 .navCartLink:hover {
-  background: rgb(255 255 255 / 0.12);
+  background: transparent;
 }
 
 .mobileHeaderActions {
@@ -192,6 +192,12 @@
   align-items: center;
   justify-self: end;
   gap: 0.15rem;
+}
+
+/* Header mobile toujours sur fond clair → icônes foncées (évite panier/profil blancs invisibles). */
+.mobileHeaderActions .navCartLink,
+.mobileHeaderActions .navCartLink button {
+  color: #111;
 }
 
 .mobileHeaderActions .mobileHeaderCta {
@@ -711,7 +717,7 @@
   }
 
   .navChromeRootScrolled .navCartLink:hover {
-    background: rgb(0 0 0 / 0.06);
+    background: transparent;
   }
 
   .navChromeRootScrolled .navDivider {
@@ -771,7 +777,7 @@
 }
 
 .surfaceLight .navCartLink:hover {
-  background: rgb(0 0 0 / 0.06);
+  background: transparent;
 }
 
 .surfaceLight .navDivider {
@@ -823,5 +829,10 @@
 
   .mobileHeaderBrand .brandLogo {
     filter: brightness(0);
+  }
+
+  .mobileHeaderActions .navCartLink,
+  .mobileHeaderActions .navCartLink button {
+    color: #111;
   }
 }

@@ -6,7 +6,7 @@ import type {CheckoutOnboardingStep} from '@/lib/auth/checkout-onboarding-resume
 import {resolveCheckoutOnboardingResume} from '@/lib/auth/checkout-onboarding-resume'
 import {hasActivePaidSubscription} from '@/lib/auth/has-active-subscription'
 import {SEGNA_APP_BASE_URL} from '@/lib/catalog/catalog-app-links'
-import {WEBSITE_LOCATION_PATH} from '@/lib/cart/paths'
+import {WEBSITE_SUBSCRIPTION_RECAP_PATH} from '@/lib/cart/paths'
 import {RECAP_WALL_ITEMS} from '@/lib/subscription/recap-wall-items'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import {RecapPiecesWall} from '@/components/subscription/RecapPiecesWall'
@@ -31,12 +31,15 @@ export function AuthPageClient({mode}: Props) {
   const nextPath = useMemo(() => {
     const raw = searchParams.get('next')?.trim()
     if (raw && raw.startsWith('/') && !raw.startsWith('//')) {
-      if (raw === '/abonnement' || raw.startsWith('/abonnement?') || raw.startsWith('/abonnement/')) {
-        return WEBSITE_LOCATION_PATH
+      if (raw === '/abonnement' || raw.startsWith('/abonnement?')) {
+        return WEBSITE_SUBSCRIPTION_RECAP_PATH
+      }
+      if (raw.startsWith('/abonnement/') && !raw.startsWith('/abonnement/recap') && !raw.startsWith('/abonnement/succes')) {
+        return WEBSITE_SUBSCRIPTION_RECAP_PATH
       }
       return raw
     }
-    return WEBSITE_LOCATION_PATH
+    return WEBSITE_SUBSCRIPTION_RECAP_PATH
   }, [searchParams])
 
   const nextQuery = useMemo(() => {
@@ -143,11 +146,29 @@ export function AuthPageClient({mode}: Props) {
         return
       }
 
-      router.replace(WEBSITE_LOCATION_PATH)
+      router.replace(WEBSITE_SUBSCRIPTION_RECAP_PATH)
     } catch {
-      router.replace(WEBSITE_LOCATION_PATH)
+      router.replace(WEBSITE_SUBSCRIPTION_RECAP_PATH)
     }
   }, [openOnboardingResume, redirectToApp, router])
+
+  // Déjà connecté sur /signup (ou /signin) → ne pas rester sur le formulaire.
+  useEffect(() => {
+    if (resumeHandledRef.current) return
+    void (async () => {
+      try {
+        const supabase = createSupabaseBrowserClient()
+        const {
+          data: {user},
+        } = await supabase.auth.getUser()
+        if (!user) return
+        resumeHandledRef.current = true
+        await goNext()
+      } catch {
+        // rester sur le formulaire
+      }
+    })()
+  }, [goNext])
 
   useEffect(() => {
     if (typeof window === 'undefined') return

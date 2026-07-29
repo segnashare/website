@@ -1,7 +1,17 @@
-/** Chiffres locaux FR sans indicatif (9 chiffres après suppression du 0 initial). */
+/**
+ * Chiffres locaux FR sans indicatif (9 chiffres après le 0 national).
+ * Retire aussi `+33` / `33` / `0033` pour éviter un affichage du type « 033… »
+ * quand le préfixe +33 est déjà à côté du champ.
+ */
 export function normalizeFrenchLocalNumber(value: string) {
-  const digits = value.replace(/\D/g, '')
-  return digits.startsWith('0') ? digits.slice(1) : digits
+  let digits = value.replace(/\D/g, '')
+  if (!digits) return ''
+  if (digits.startsWith('00')) digits = digits.slice(2)
+  while (digits.startsWith('33') && digits.length > 9) {
+    digits = digits.slice(2)
+  }
+  if (digits.startsWith('0')) digits = digits.slice(1)
+  return digits
 }
 
 /**

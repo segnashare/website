@@ -2,14 +2,31 @@
 
 export type BanAddressSuggestion = {
   id: string
+  /** Libellé complet BAN (rue, CP ville). */
   label: string
+  /** Numéro + voie uniquement (ex. « 9 Villa Compoint »). */
+  street: string
   secondary: string
   hasStreet: boolean
   city: string | null
+  postcode: string | null
+  /** Région (ex. « Île-de-France »), depuis le context BAN. */
+  region: string | null
   relativeCity: string | null
   timezone: string
   lat: number
   lon: number
+}
+
+/** Context BAN : « 75, Paris, Île-de-France » → région = dernier segment. */
+function regionFromBanContext(context: string | undefined): string | null {
+  if (!context?.trim()) return null
+  const parts = context.split(',').map((p) => p.trim()).filter(Boolean)
+  if (parts.length === 0) return null
+  const last = parts[parts.length - 1]!
+  // Évite de renvoyer un code département seul
+  if (/^\d{2,3}$/.test(last)) return null
+  return last
 }
 
 type AdresseApiFeature = {
@@ -62,9 +79,12 @@ export function toBanAddressSuggestion(feature: AdresseApiFeature): BanAddressSu
   return {
     id: feature.properties.id,
     label,
+    street: primaryLabel || feature.properties.label,
     secondary,
     hasStreet,
     city,
+    postcode: postcode || null,
+    region: regionFromBanContext(feature.properties.context),
     relativeCity,
     timezone: 'Europe/Paris',
     lat,

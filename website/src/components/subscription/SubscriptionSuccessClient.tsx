@@ -10,6 +10,7 @@ import type {RecapWallItem} from '@/lib/subscription/recap-wall-types'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import {useSearchParams} from 'next/navigation'
 import {useCallback, useEffect, useRef, useState} from 'react'
+import {WebsitePageLoading} from '@/components/ui/WebsitePageLoading'
 import {RecapPiecesWall} from './RecapPiecesWall'
 import styles from './subscriptionRecap.module.css'
 
@@ -142,51 +143,55 @@ export function SubscriptionSuccessClient({wallItems}: Props) {
       <div className={styles.shell}>
         <main className={styles.main}>
           <div className={styles.panel}>
-            <h1 className={styles.title}>
-              {confirmState === 'error' ? 'Paiement reçu' : 'Abonnement lancé'}
-            </h1>
-            <p className={styles.lead}>
-              {confirmState === 'loading'
-                ? 'Activation de ton abonnement SegnaX en cours…'
-                : confirmState === 'error'
-                  ? 'Ton paiement Stripe est passé, mais l’activation Segna n’a pas pu être confirmée automatiquement. Réessaie ou ouvre l’app — ton abonnement peut déjà être actif.'
-                  : 'Ton abonnement SegnaX est bien actif. Tu peux commencer à emprunter des pièces et profiter de tous les avantages de l’abonnement depuis l’app.'}
-            </p>
-
-            {confirmState === 'error' && errorMessage ? (
-              <p className={styles.status} role="alert">
-                {errorMessage}
-              </p>
-            ) : null}
-
-            {confirmState === 'error' ? (
-              <button
-                type="button"
-                className={styles.cta}
-                disabled={pending}
-                onClick={() => window.location.reload()}
-              >
-                Réessayer l’activation
-              </button>
+            {confirmState === 'loading' ? (
+              <WebsitePageLoading as="div" compact label="Activation de l’abonnement" />
             ) : (
-              <button
-                type="button"
-                className={styles.cta}
-                disabled={pending || confirmState === 'loading'}
-                onClick={() => void handleDownloadApp()}
-              >
-                {pending ? 'Redirection…' : 'Télécharger l’app'}
-              </button>
-            )}
+              <>
+                <h1 className={styles.title}>
+                  {confirmState === 'error' ? 'Paiement reçu' : 'Abonnement lancé'}
+                </h1>
+                <p className={styles.lead}>
+                  {confirmState === 'error'
+                    ? 'Ton paiement Stripe est passé, mais l’activation Segna n’a pas pu être confirmée automatiquement. Réessaie ou ouvre l’app — ton abonnement peut déjà être actif.'
+                    : 'Ton abonnement SegnaX est bien actif. Tu peux commencer à emprunter des pièces et profiter de tous les avantages de l’abonnement depuis l’app.'}
+                </p>
 
-            <button
-              type="button"
-              className={styles.secondaryCta}
-              disabled={pending || confirmState === 'loading'}
-              onClick={() => void handleContinueWeb()}
-            >
-              Continuer sur le web
-            </button>
+                {confirmState === 'error' && errorMessage ? (
+                  <p className={styles.status} role="alert">
+                    {errorMessage}
+                  </p>
+                ) : null}
+
+                {confirmState === 'error' ? (
+                  <button
+                    type="button"
+                    className={styles.cta}
+                    disabled={pending}
+                    onClick={() => window.location.reload()}
+                  >
+                    Réessayer l’activation
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className={styles.cta}
+                    disabled={pending}
+                    onClick={() => void handleDownloadApp()}
+                  >
+                    {pending ? 'Redirection…' : 'Télécharger l’app'}
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  className={styles.secondaryCta}
+                  disabled={pending}
+                  onClick={() => void handleContinueWeb()}
+                >
+                  Continuer sur le web
+                </button>
+              </>
+            )}
           </div>
         </main>
 

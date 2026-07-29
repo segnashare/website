@@ -77,7 +77,7 @@
 
 .row {
   display: grid;
-  grid-template-columns: 5.5rem minmax(0, 1fr) auto;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
   gap: 0.9rem;
   align-items: start;
   padding: 1rem 0;
@@ -148,8 +148,17 @@
   color: #52525b;
 }
 
+.metaFooter {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.55rem;
+}
+
 .rowPrice {
   margin: 0;
+  margin-left: auto;
   font-size: 0.95rem;
   font-weight: 600;
   color: #14110f;
@@ -159,7 +168,7 @@
 
 .remove {
   display: inline-block;
-  margin: 0.55rem 0 0;
+  margin: 0;
   padding: 0;
   border: none;
   background: none;
@@ -173,60 +182,6 @@
 
 .remove:hover {
   color: #14110f;
-}
-
-.promoForm {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.4rem;
-  margin: 0 0 0.75rem;
-}
-
-.promoInput {
-  width: 100%;
-  min-height: 2.35rem;
-  padding: 0.4rem 0.7rem;
-  border: 1px solid #e4e4e7;
-  border-radius: 0.55rem;
-  background: #fafafa;
-  color: #14110f;
-  font: inherit;
-  font-size: 0.85rem;
-  box-sizing: border-box;
-}
-
-.promoInput::placeholder {
-  color: #a1a1aa;
-}
-
-.promoInput:focus {
-  outline: 2px solid #14110f;
-  outline-offset: 1px;
-  background: #fff;
-}
-
-.promoApply {
-  min-height: 2.35rem;
-  padding: 0.4rem 0.8rem;
-  border: 1px solid #e4e4e7;
-  border-radius: 0.55rem;
-  background: #f4f4f5;
-  color: #3f3f46;
-  font: inherit;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.promoApply:hover {
-  background: #e4e4e7;
-}
-
-.promoHint {
-  margin: -0.35rem 0 0.75rem;
-  font-size: 0.78rem;
-  line-height: 1.4;
-  color: #71717a;
 }
 
 .summaryRows {
@@ -261,6 +216,11 @@
 .summaryMuted {
   font-weight: 500 !important;
   color: #71717a !important;
+}
+
+.summaryDetail {
+  font-weight: 400;
+  color: #a1a1aa;
 }
 
 .summaryTotal {
@@ -309,6 +269,76 @@
 .primaryBtn:disabled {
   opacity: 0.7;
   cursor: wait;
+}
+
+.payMethods {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.payMethod {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.35rem;
+  padding: 0.4rem 0.35rem;
+  border-radius: 0.45rem;
+  box-sizing: border-box;
+}
+
+.payMethodSr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.payMethodSvg {
+  display: block;
+  width: 100%;
+  max-width: 4.25rem;
+  height: 1.1rem;
+}
+
+.payMethodImg {
+  display: block;
+  width: auto;
+  max-width: 4.5rem;
+  height: 1.15rem;
+  object-fit: contain;
+}
+
+.payMethodImgInvert {
+  filter: invert(1);
+}
+
+.payMethodApple {
+  background: #000;
+}
+
+.payMethodLight {
+  background: #fff;
+  border: 1px solid #e4e4e7;
+}
+
+.payMethodKlarna {
+  background: #ffb3c7;
+}
+
+@media (max-width: 420px) {
+  .payMethods {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .secondaryBtn {
@@ -438,38 +468,78 @@
 
 @media (max-width: 560px) {
   .segnaCard {
+    position: relative;
+    display: block;
     min-height: 0;
-    grid-template-columns: 1fr;
-  }
-
-  .segnaCardMedia {
-    min-height: 8.5rem;
+    grid-template-columns: none;
+    border-radius: 1.25rem; /* ~20px, frames app */
+    background: #1c1917;
   }
 
   .segnaCardCopy {
-    padding: 0.95rem 1rem 1.05rem;
-    gap: 0.55rem;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    z-index: 2;
+    justify-content: flex-start;
+    gap: 0.2rem;
+    padding: 0.75rem 0.9rem;
+    background: none;
+    pointer-events: none;
+  }
+
+  .segnaCardBullets {
+    display: none;
   }
 
   .segnaCardTitle {
-    font-size: 1.2rem;
+    font-size: 1.55rem;
+    line-height: 1.12;
+    letter-spacing: -0.03em;
+    text-shadow: none;
   }
 
   .segnaCardPrice {
-    font-size: 0.98rem;
+    font-size: 1.12rem;
+    font-weight: 600;
     white-space: normal;
+    text-shadow: none;
   }
 
-  .segnaCardBullets li {
-    font-size: 0.92rem;
-    line-height: 1.35;
+  .segnaCardMedia {
+    display: block;
+    position: relative;
+    min-height: 0;
+    /* Même ratio que les frames hub app (`aspect-[2.32]`). */
+    aspect-ratio: 2.32 / 1;
+  }
+
+  .segnaCardMedia::after {
+    /* Voile app Nos offres : `bg-black/35`. */
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: rgb(0 0 0 / 0.35);
+    pointer-events: none;
+  }
+
+  .segnaCardBg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
   }
 
   .segnaCardCta {
-    right: 0.8rem;
-    bottom: 0.8rem;
-    padding: 0.6rem 1.1rem;
-    font-size: 0.92rem;
+    z-index: 2;
+    right: 0.7rem;
+    bottom: 0.65rem;
+    padding: 0.5rem 0.95rem;
+    font-size: 0.86rem;
   }
 }
 
@@ -534,13 +604,16 @@
 }
 
 .appPromo {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   padding: 1.25rem 1.15rem 1.3rem;
   border-radius: 1rem;
   background: #14110f;
   color: #fff;
   text-decoration: none;
   box-sizing: border-box;
+  text-align: center;
 }
 
 .appPromo:hover {
@@ -548,25 +621,31 @@
 }
 
 .appPromoTitle {
-  margin: 0 0 0.85rem;
-  font-size: 1.05rem;
-  font-weight: 600;
-  line-height: 1.35;
+  margin: 0 0 0.4rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.3;
   letter-spacing: -0.01em;
   color: #fff;
+  text-align: center;
 }
 
-.appPromoCta {
-  display: inline-block;
+.appPromoSubtitle {
+  margin: 0 0 0.95rem;
   font-size: 0.88rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.88);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.78);
+  text-align: center;
 }
 
-.appPromo:hover .appPromoCta {
-  color: #fff;
+.appPromoBadge {
+  display: block;
+  width: auto;
+  height: 2.5rem;
+  max-width: 100%;
+  object-fit: contain;
+  margin-inline: auto;
 }
 
 @media (min-width: 800px) {
@@ -592,7 +671,7 @@
   }
 
   .row {
-    grid-template-columns: 6rem minmax(0, 1fr) auto;
+    grid-template-columns: 6rem minmax(0, 1fr);
   }
 }
 
@@ -601,17 +680,7 @@
     grid-template-columns: 4.75rem minmax(0, 1fr);
   }
 
-  .rowPrice {
-    grid-column: 2;
-    justify-self: start;
-    text-align: left;
-  }
-
   .thumbLink {
     width: 4.75rem;
-  }
-
-  .promoForm {
-    grid-template-columns: 1fr;
   }
 }

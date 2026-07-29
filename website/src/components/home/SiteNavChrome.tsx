@@ -7,6 +7,7 @@ import {motion} from 'framer-motion'
 import type {WebsiteHeaderNavData} from '@/lib/sanity'
 import {normalizeHref} from '@/lib/normalize-href'
 import {visibleMobileMainNavItems} from '@/lib/mobileMainNav'
+import {AccountNavButton} from '@/components/auth/AccountNavButton'
 import {CartNavLink} from '@/components/cart/CartNavLink'
 import {CtaHrefLink} from './heroShared'
 import {JoinClubCtaLink} from './JoinClubCtaLink'
@@ -124,6 +125,7 @@ export function SiteNavChrome({
               {secondaryLabel}
             </CtaHrefLink>
           ) : null}
+          <AccountNavButton className={styles.navCartLink} />
           <CartNavLink className={styles.navCartLink} />
           <JoinClubCtaLink href={primaryHref} className={styles.downloadButton}>
             {primaryLabel}

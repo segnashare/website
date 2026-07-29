@@ -76,6 +76,28 @@ export async function savePendingCheckoutPhone(
     return {ok: false, message: 'Ce numéro de téléphone est déjà utilisé par un autre compte.'}
   }
 
+  const {data: memberRow} = await supabase.from('users').select('phone').eq('id', user.id).maybeSingle()
+  const existingVerified = normalizeFrenchPhoneToE164(
+    ((memberRow as {phone?: string | null} | null)?.phone ?? '').trim() || null,
+  )
+
+  // Même numéro déjà validé : ne pas l’effacer (sinon le gate paiement Stripe bloque).
+  if (existingVerified === e164) {
+    const profileResult = await rpc('update_user_profile_public', {
+      p_profile_json: {
+        profile_data: {
+          phone_e164: e164,
+          phone_code_verified: true,
+        },
+      },
+      p_request_id: crypto.randomUUID(),
+    })
+    if (profileResult.error) {
+      return {ok: false, message: profileResult.error.message ?? "Impossible d'enregistrer ton téléphone."}
+    }
+    return {ok: true, e164}
+  }
+
   const profileResult = await rpc('update_user_profile_public', {
     p_profile_json: {
       profile_data: {

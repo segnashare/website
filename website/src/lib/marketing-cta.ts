@@ -1,10 +1,14 @@
-/** Normalise les CTA marketing website (post-suppression `/abonnement`). */
+import {WEBSITE_LOCATION_PATH, WEBSITE_SUBSCRIPTION_RECAP_PATH} from '@/lib/cart/paths'
+
+/** Normalise les CTA marketing website (`/abonnement` landing → location). */
 
 export function resolveMarketingCtaHref(href: string | null | undefined): string | null {
   const h = href?.trim()
   if (!h) return null
+  if (h === '/abonnement/recap' || h.startsWith('/abonnement/recap?')) return h
+  if (h === '/abonnement/succes' || h.startsWith('/abonnement/succes?')) return h
   if (h === '/abonnement' || h.startsWith('/abonnement/') || h.startsWith('/abonnement?')) {
-    return '/location'
+    return WEBSITE_LOCATION_PATH
   }
   return h
 }
@@ -28,11 +32,14 @@ export function resolveThreeStepPrimaryCtaHref(href: string | null | undefined):
     if (/^https?:\/\//i.test(mappedLabelHref)) {
       const u = new URL(mappedLabelHref)
       if (/(^|\.)segnashare\.com$/i.test(u.hostname) && u.pathname.startsWith('/auth')) {
-        return '/signup'
+        return `/signup?next=${encodeURIComponent(WEBSITE_SUBSCRIPTION_RECAP_PATH)}`
       }
     }
   } catch {
     // keep mapped
+  }
+  if (mappedLabelHref === '/signup' || mappedLabelHref.startsWith('/signup?')) {
+    return `/signup?next=${encodeURIComponent(WEBSITE_SUBSCRIPTION_RECAP_PATH)}`
   }
   return mappedLabelHref
 }

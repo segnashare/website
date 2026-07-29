@@ -1,6 +1,7 @@
 'use client'
 
 import {RecapPiecesWall} from '@/components/subscription/RecapPiecesWall'
+import {WebsitePageLoading} from '@/components/ui/WebsitePageLoading'
 import {getSignUpPasswordError, isSignUpPasswordValid} from '@/lib/auth/password'
 import {RECAP_WALL_ITEMS} from '@/lib/subscription/recap-wall-items'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
@@ -156,7 +157,7 @@ export function ResetPasswordClient() {
                 </p>
 
                 {checkingSession ? (
-                  <p className={styles.status}>Vérification du lien…</p>
+                  <WebsitePageLoading as="div" compact label="Vérification du lien" />
                 ) : (
                   <form className={styles.form} onSubmit={(e) => void handleSubmit(e)} noValidate>
                     <div className={styles.field}>

@@ -89,6 +89,214 @@
   font-size: 1rem;
 }
 
+/* —— Barre mobile : Filtres | Trier (réf. boutique) —— */
+.mobileToolbar {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: clamp(1.15rem, 2.2vw, 1.65rem);
+  padding: 0.85rem 0;
+  border-bottom: 1px solid #ebe6df;
+}
+
+.mobileToolbarBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0.25rem 0;
+  border: 0;
+  background: none;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: #14110f;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.mobileToolbarBtnActive {
+  font-weight: 700;
+}
+
+.mobileToolbarIcon {
+  display: block;
+  width: 1.05rem;
+  height: 1.05rem;
+  flex-shrink: 0;
+}
+
+.mobileToolbarChevron {
+  width: 0.85rem;
+  height: 0.85rem;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.mobileToolbarChevronOpen {
+  transform: rotate(180deg);
+}
+
+.desktopToolbar {
+  display: block;
+}
+
+/* Volet filtres */
+.filterDrawerRoot {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+}
+
+.filterDrawerBackdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+
+.filterDrawerPanel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(100%, 22.5rem);
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  box-shadow: -8px 0 40px rgba(0, 0, 0, 0.16);
+  animation: newsroomDrawerIn 0.22s ease-out;
+}
+
+@keyframes newsroomDrawerIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.filterDrawerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid #ece8e2;
+}
+
+.filterDrawerTitle {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #14110f;
+}
+
+.filterDrawerClose {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #f4f1ec;
+  color: #14110f;
+  cursor: pointer;
+}
+
+.filterDrawerBody {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 0.35rem 0 1rem;
+}
+
+.filterDrawerSectionLabel {
+  margin: 0.85rem 1.1rem 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8a847e;
+}
+
+.filterDrawerOption {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.9rem 1.1rem;
+  border: 0;
+  border-bottom: 1px solid #f3efe9;
+  background: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #14110f;
+  text-align: left;
+  cursor: pointer;
+}
+
+.filterDrawerOptionActive {
+  font-weight: 700;
+}
+
+.filterDrawerCheck {
+  color: #14110f;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.filterDrawerFooter {
+  padding: 0.85rem 1.1rem max(1rem, env(safe-area-inset-bottom));
+  border-top: 1px solid #ece8e2;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.filterDrawerApply {
+  width: 100%;
+  margin: 0;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.9rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  background: #14110f;
+  color: #fff;
+  cursor: pointer;
+}
+
+.filterDrawerReset {
+  width: 100%;
+  margin: 0;
+  border: 0;
+  background: none;
+  padding: 0.45rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #6b6560;
+  cursor: pointer;
+}
+
+@media (max-width: 39.99rem) {
+  .desktopToolbar {
+    display: none;
+  }
+
+  .mobileToolbar {
+    display: flex;
+  }
+}
+
 @media (min-width: 40rem) {
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

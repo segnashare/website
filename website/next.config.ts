@@ -46,12 +46,8 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        // Landing marketing → /location ; garder /abonnement/recap et /abonnement/succes.
         source: '/abonnement',
-        destination: '/location',
-        permanent: true,
-      },
-      {
-        source: '/abonnement/:path*',
         destination: '/location',
         permanent: true,
       },

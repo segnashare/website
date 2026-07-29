@@ -11,6 +11,7 @@ import type {HomePageData} from '@/lib/sanity'
 import {HomeHeroActionBlock} from './HomeHeroActionBlock'
 import {homeHeroActionFromPage} from '@/lib/home-hero-action'
 import {visibleMobileMainNavItems} from '@/lib/mobileMainNav'
+import {AccountNavButton} from '@/components/auth/AccountNavButton'
 import {CartNavLink} from '@/components/cart/CartNavLink'
 import {CtaHrefLink} from './heroShared'
 import {JoinClubCtaLink} from './JoinClubCtaLink'
@@ -185,6 +186,7 @@ export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeH
                   {secondaryLabel}
                 </CtaHrefLink>
               ) : null}
+              <AccountNavButton className={styles.navCartLink} />
               <CartNavLink className={styles.navCartLink} />
               <JoinClubCtaLink href={primaryHref} className={styles.downloadButton}>
                 {primaryLabel}

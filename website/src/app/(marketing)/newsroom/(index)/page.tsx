@@ -2,6 +2,7 @@ import type {Metadata} from 'next'
 import {Suspense} from 'react'
 import {PageSections} from '@/components/cms/PageSections'
 import {NewsroomBrowse} from '@/components/newsroom/NewsroomBrowse'
+import {WebsitePageLoading} from '@/components/ui/WebsitePageLoading'
 import {getNewsroomMarketingShell} from '@/lib/newsroom-marketing-shell'
 import {getPosts, urlFor} from '@/lib/sanity'
 import styles from '../newsroom.module.css'
@@ -48,7 +49,7 @@ export default async function NewsroomPage() {
         </div>
       ) : null}
 
-      <Suspense fallback={<p className={styles.empty}>Chargement…</p>}>
+      <Suspense fallback={<WebsitePageLoading as="div" compact label="Chargement de la newsroom" />}>
         <NewsroomBrowse posts={posts} />
       </Suspense>
     </div>

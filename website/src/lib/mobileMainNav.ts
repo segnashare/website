@@ -1,7 +1,5 @@
-import {catalogBrowseNewHref, catalogBrowsePath} from '@/lib/catalog/catalog-browse-href'
-
 /**
- * Liens du menu mobile plein écran : ordre fixe, toutes les pages principales
+ * Liens du menu mobile plein écran : ordre fixe, pages principales
  * (le header desktop continue d’utiliser les entrées Sanity).
  */
 export type MobileMainNavItem = {
@@ -11,13 +9,11 @@ export type MobileMainNavItem = {
 }
 
 export const MOBILE_MAIN_NAV_ITEMS: MobileMainNavItem[] = [
-  {_key: 'location', label: 'Location', href: '/catalogue'},
-  {_key: 'vetements', label: 'Vêtements', href: catalogBrowsePath(null, 'vetements')},
-  {_key: 'accessoires', label: 'Accessoires', href: catalogBrowsePath(null, 'accessoires')},
-  {_key: 'chaussures', label: 'Chaussures', href: catalogBrowsePath(null, 'chaussures')},
-  {_key: 'sacs', label: 'Sacs', href: catalogBrowsePath(null, 'sacs')},
-  {_key: 'nouveautes', label: 'Nouveautés', href: catalogBrowseNewHref()},
+  {_key: 'location', label: 'Location', href: '/location'},
+  {_key: 'catalogue', label: 'Catalogue', href: '/catalogue'},
+  {_key: 'panier', label: 'Panier', href: '/panier'},
   {_key: 'newsroom', label: 'Newsroom', href: '/newsroom'},
+  {_key: 'profil', label: 'Profil', href: '/profil'},
 ]
 
 function hrefPathname(href: string): string {
@@ -28,8 +24,7 @@ function hrefPathname(href: string): string {
 
 /**
  * Indique si `pathname` correspond à la section du lien (page exacte ou sous-route).
- * Les liens catalogue avec query (`?segment=…`) restent visibles sur `/catalogue`.
- * La page courante est exclue du menu mobile pour les entrées « section » sans query.
+ * La page courante est exclue du menu mobile.
  */
 export function isMobileNavSectionActive(pathname: string, href: string): boolean {
   const p = hrefPathname(pathname)
@@ -41,5 +36,8 @@ export function isMobileNavSectionActive(pathname: string, href: string): boolea
 }
 
 export function visibleMobileMainNavItems(pathname: string): MobileMainNavItem[] {
-  return MOBILE_MAIN_NAV_ITEMS.filter((item) => !isMobileNavSectionActive(pathname, item.href))
+  const items = MOBILE_MAIN_NAV_ITEMS.filter((item) => !isMobileNavSectionActive(pathname, item.href))
+  const onHome = hrefPathname(pathname) === '/'
+  if (onHome) return items
+  return [{_key: 'accueil', label: 'Accueil', href: '/'}, ...items]
 }

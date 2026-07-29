@@ -13,7 +13,9 @@ type Props = {
 
 export function CartNavLink({className, tone = 'auto'}: Props) {
   const {count} = useWebsiteCart()
-  const label = count > 0 ? `Panier, ${count} article${count > 1 ? 's' : ''}` : 'Panier'
+  if (count <= 0) return null
+
+  const label = `Panier, ${count} article${count > 1 ? 's' : ''}`
 
   return (
     <Link
@@ -24,11 +26,9 @@ export function CartNavLink({className, tone = 'auto'}: Props) {
       aria-label={label}
     >
       <span className={styles.icon} aria-hidden />
-      {count > 0 ? (
-        <span className={styles.badge} aria-hidden>
-          {count > 99 ? '99+' : count}
-        </span>
-      ) : null}
+      <span className={styles.badge} aria-hidden>
+        {count > 99 ? '99+' : count}
+      </span>
     </Link>
   )
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import {hasActivePaidSubscription} from '@/lib/auth/has-active-subscription'
-import {WEBSITE_LOCATION_PATH} from '@/lib/cart/paths'
+import {WEBSITE_LOCATION_PATH, WEBSITE_SUBSCRIPTION_RECAP_PATH} from '@/lib/cart/paths'
 import {SEGNA_APP_BASE_URL} from '@/lib/catalog/catalog-app-links'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import Link from 'next/link'
@@ -17,12 +17,20 @@ type Props = {
   tabIndex?: number
 }
 
+function isSignupHref(href: string): boolean {
+  const h = href.trim()
+  return h === '/signup' || h.startsWith('/signup?')
+}
+
 function guestDestination(href: string): string {
   const h = href.trim() || WEBSITE_LOCATION_PATH
-  if (h === '/signup' || h.startsWith('/signup?')) {
-    return `/signup?next=${encodeURIComponent(WEBSITE_LOCATION_PATH)}`
+  if (isSignupHref(h)) {
+    return `/signup?next=${encodeURIComponent(WEBSITE_SUBSCRIPTION_RECAP_PATH)}`
   }
   if (h === '/abonnement' || h.startsWith('/abonnement/') || h.startsWith('/abonnement?')) {
+    // Landing marketing redirigée ; funnel activation = récap.
+    if (h === '/abonnement/recap' || h.startsWith('/abonnement/recap?')) return h
+    if (h === '/abonnement/succes' || h.startsWith('/abonnement/succes?')) return h
     return WEBSITE_LOCATION_PATH
   }
   return h
@@ -52,9 +60,9 @@ async function redirectSubscribedToApp(): Promise<void> {
 }
 
 /**
- * CTA nav « Rejoindre le club » :
- * - non connecté → href CMS (souvent `/location` ou signup)
- * - connecté sans abo → `/location`
+ * CTA nav « Rejoindre le club » / liens signup marketing :
+ * - non connecté → href CMS (souvent `/location` ou signup → récap)
+ * - connecté sans abo → `/abonnement/recap`
  * - déjà abonné → app
  */
 export function JoinClubCtaLink({href, className, children, onClick, ariaLabel, tabIndex}: Props) {
@@ -81,7 +89,7 @@ export function JoinClubCtaLink({href, className, children, onClick, ariaLabel, 
           return
         }
 
-        router.push(WEBSITE_LOCATION_PATH)
+        router.push(WEBSITE_SUBSCRIPTION_RECAP_PATH)
       } catch {
         router.push(fallbackHref)
       }

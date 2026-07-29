@@ -39,7 +39,9 @@ import type {
   MarketingCatalogFacetsNav,
   MarketingCatalogGridItem,
 } from '@/lib/catalog/marketing-catalog-items'
+import {useSearchParams} from 'next/navigation'
 import {
+  Suspense,
   useCallback,
   useEffect,
   useMemo,
@@ -48,6 +50,16 @@ import {
   type ReactNode,
 } from 'react'
 import styles from './websiteCatalogBrowse.module.css'
+
+/** Signale les navigations Next (menu, liens) sans forcer le CSR de toute la grille. */
+function CatalogBrowseRouteSync({onRouteSearch}: {onRouteSearch: () => void}) {
+  const searchParams = useSearchParams()
+  const key = searchParams.toString()
+  useEffect(() => {
+    onRouteSearch()
+  }, [key, onRouteSearch])
+  return null
+}
 
 const SORT_OPTIONS: {id: CatalogSortMode; label: string}[] = [
   {id: 'recent', label: 'Nouveautés'},
@@ -340,9 +352,10 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
   const [openItemId, setOpenItemId] = useState<string | null>(null)
   const [openMenu, setOpenMenu] = useState<FilterMenuId | null>(null)
   const [brandSearch, setBrandSearch] = useState('')
-  const urlSynced = useRef(false)
   const filterBarRef = useRef<HTMLDivElement | null>(null)
   const fetchGenRef = useRef(0)
+  const queryRef = useRef(query)
+  queryRef.current = query
   /** Facettes complètes pour résoudre marque/catégorie côté client (évite les facettes scopées). */
   const resolveFacetsRef = useRef(initialPayload.facets)
 
@@ -354,6 +367,7 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
     // UI immédiate : checks / URL / resolved — la grille reste affichée (fond gris soft + spinner).
     setLoading(true)
     setQuery(nextQuery)
+    queryRef.current = nextQuery
     setResolved(optimisticResolved)
     syncCatalogBrowseUrl(nextQuery)
     try {
@@ -372,9 +386,11 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
       }
       setItems(data.items)
       setTotal(data.total)
-      setQuery(normalizeCatalogBrowseQuery(data.query))
+      const settled = normalizeCatalogBrowseQuery(data.query)
+      setQuery(settled)
+      queryRef.current = settled
       if (data.resolved) setResolved(data.resolved)
-      syncCatalogBrowseUrl(normalizeCatalogBrowseQuery(data.query))
+      syncCatalogBrowseUrl(settled)
     } catch {
       // Garde l’état optimiste + ancienne grille.
     } finally {
@@ -382,16 +398,18 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
     }
   }, [])
 
-  useEffect(() => {
-    if (urlSynced.current) return
-    urlSynced.current = true
+  const syncFromBrowserUrl = useCallback(() => {
     const urlQuery = normalizeCatalogBrowseQuery(
       parseCatalogBrowseQuery(new URLSearchParams(window.location.search)),
     )
-    if (!catalogBrowseQueriesEqual(urlQuery, normalizeCatalogBrowseQuery(initialPayload.query))) {
-      void applyQuery(urlQuery)
-    }
-  }, [applyQuery, initialPayload.query])
+    if (catalogBrowseQueriesEqual(urlQuery, queryRef.current)) return
+    void applyQuery(urlQuery)
+  }, [applyQuery])
+
+  // Premier paint : SSR envoie toujours la query par défaut — rattrapage depuis l’URL réelle.
+  useEffect(() => {
+    syncFromBrowserUrl()
+  }, [syncFromBrowserUrl])
 
   useEffect(() => {
     if (!openMenu) return
@@ -454,6 +472,9 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
 
   return (
     <div className={styles.catalogPageRoot} aria-busy={loading || undefined}>
+      <Suspense fallback={null}>
+        <CatalogBrowseRouteSync onRouteSearch={syncFromBrowserUrl} />
+      </Suspense>
       <div className={styles.filterBar} ref={filterBarRef}>
         <div className={styles.filterBarLeft}>
           <FilterDropdown
@@ -622,9 +643,12 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
         </div>
 
         <div className={styles.filterBarRight}>
-          <span className={`${styles.filterCount} ${loading ? styles.filterCountPending : ''}`}>
-            {loading ? <CatalogRingDotSpinner aria-label="Chargement du catalogue" /> : null}
-            <span>{itemCountLabel}</span>
+          <span
+            className={`${styles.filterCount} ${loading ? styles.filterCountPending : ''}`}
+            aria-live="polite"
+            aria-busy={loading || undefined}
+          >
+            {itemCountLabel}
           </span>
           <FilterDropdown
             id="sort"

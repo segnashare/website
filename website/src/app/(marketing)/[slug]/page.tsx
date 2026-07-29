@@ -14,7 +14,7 @@ type PageProps = {
 export async function generateStaticParams() {
   const slugs = await getMarketingPageSlugs()
   /** Routes app dédiées (hors CMS dynamique). */
-  const reserved = new Set(['catalogue', 'panier', 'signup', 'signin'])
+  const reserved = new Set(['catalogue', 'panier', 'signup', 'signin', 'abonnement', 'profil'])
   return slugs.filter((slug) => !reserved.has(slug)).map((slug) => ({slug}))
 }
 

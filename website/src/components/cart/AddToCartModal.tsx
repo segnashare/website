@@ -108,7 +108,6 @@ export function AddToCartModal({open, onClose, onContinueShopping: _onContinueSh
                       )}
                     </Link>
                     <div className={styles.meta}>
-                      {item.brand_label ? <p className={styles.brand}>{item.brand_label}</p> : null}
                       <Link
                         href={catalogItemPagePath(item.id)}
                         className={styles.itemTitle}

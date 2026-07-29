@@ -1,0 +1,145 @@
+.wrap {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.trigger:hover {
+  background: transparent;
+}
+
+.trigger:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.icon {
+  display: block;
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+/* Spécificité > `.navCartLink { color: #fff }` du chrome. */
+.trigger.toneLight {
+  color: #fff;
+}
+
+.trigger.toneLight:hover {
+  background: transparent;
+}
+
+.trigger.toneDark {
+  color: #111;
+}
+
+.trigger.toneDark:hover {
+  background: transparent;
+}
+
+.panel {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  right: 0;
+  z-index: 80;
+  width: min(17.5rem, calc(100vw - 1.5rem));
+  padding: 0.85rem 0.85rem 0.9rem;
+  border-radius: 0.85rem;
+  background: #fff;
+  color: #14110f;
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.06),
+    0 16px 40px rgb(0 0 0 / 0.16);
+  box-sizing: border-box;
+}
+
+.panelTitle {
+  margin: 0 0 0.75rem;
+  padding: 0 0.15rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #14110f;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+.actions {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.55rem;
+  width: 100%;
+  min-height: 2.65rem;
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #e4e4e7;
+  border-radius: 0.65rem;
+  background: #fff;
+  color: #14110f;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.actionBtn:hover:not(:disabled) {
+  background: #fafafa;
+  border-color: #d4d4d8;
+}
+
+.actionBtn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.actionBtnDanger {
+  justify-content: center;
+  text-align: center;
+  background: #c62828;
+  border-color: #c62828;
+  color: #fff;
+}
+
+.actionBtnDanger:hover:not(:disabled) {
+  background: #a81f1f;
+  border-color: #a81f1f;
+}
+
+.actionIcon {
+  display: inline-flex;
+  width: 1.15rem;
+  height: 1.15rem;
+  flex-shrink: 0;
+  color: currentColor;
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: transparent;
+}
