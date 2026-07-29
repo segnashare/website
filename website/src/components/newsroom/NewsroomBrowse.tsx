@@ -119,6 +119,26 @@ function FilterDropdown({
   )
 }
 
+function FilterCheck({checked}: {checked: boolean}) {
+  return (
+    <span className={`${catalogStyles.filterCheck} ${checked ? catalogStyles.filterCheckOn : ''}`} aria-hidden>
+      {checked ? (
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3">
+          <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ) : null}
+    </span>
+  )
+}
+
+function CloseIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M18 6 6 18M6 6l12 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 function FilterOption({
   checked,
   onSelect,
@@ -136,6 +156,7 @@ function FilterOption({
       className={`${catalogStyles.filterOption} ${checked ? catalogStyles.filterOptionChecked : ''}`}
       onClick={onSelect}
     >
+      <FilterCheck checked={checked} />
       <span className={catalogStyles.filterOptionLabel}>{children}</span>
     </button>
   )
@@ -403,7 +424,7 @@ export function NewsroomBrowse({posts}: Props) {
                   aria-label="Fermer"
                   onClick={() => setFilterDrawerOpen(false)}
                 >
-                  ✕
+                  <CloseIcon />
                 </button>
               </header>
               <div className={styles.filterDrawerBody}>
@@ -413,8 +434,8 @@ export function NewsroomBrowse({posts}: Props) {
                   className={`${styles.filterDrawerOption} ${!draftType ? styles.filterDrawerOptionActive : ''}`}
                   onClick={() => setDraftType(null)}
                 >
+                  <FilterCheck checked={!draftType} />
                   <span>Tous les types</span>
-                  {!draftType ? <span className={styles.filterDrawerCheck}>✓</span> : null}
                 </button>
                 {NEWSROOM_ARTICLE_TYPES.map((t) => (
                   <button
@@ -423,8 +444,8 @@ export function NewsroomBrowse({posts}: Props) {
                     className={`${styles.filterDrawerOption} ${draftType === t.id ? styles.filterDrawerOptionActive : ''}`}
                     onClick={() => setDraftType(t.id)}
                   >
+                    <FilterCheck checked={draftType === t.id} />
                     <span>{t.label}</span>
-                    {draftType === t.id ? <span className={styles.filterDrawerCheck}>✓</span> : null}
                   </button>
                 ))}
               </div>

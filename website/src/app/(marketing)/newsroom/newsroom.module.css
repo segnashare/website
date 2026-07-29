@@ -207,9 +207,19 @@
   padding: 0;
   border: 0;
   border-radius: 999px;
-  background: #f4f1ec;
+  background: #f4f4f5;
   color: #14110f;
   cursor: pointer;
+  appearance: none;
+}
+
+.filterDrawerClose:hover {
+  background: #ece8e2;
+}
+
+.filterDrawerClose:focus-visible {
+  outline: 1px solid #14110f;
+  outline-offset: 2px;
 }
 
 .filterDrawerBody {
@@ -231,7 +241,6 @@
   display: flex;
   width: 100%;
   align-items: center;
-  justify-content: space-between;
   gap: 0.75rem;
   margin: 0;
   padding: 0.9rem 1.1rem;
@@ -247,12 +256,6 @@
 
 .filterDrawerOptionActive {
   font-weight: 700;
-}
-
-.filterDrawerCheck {
-  color: #14110f;
-  font-size: 1rem;
-  line-height: 1;
 }
 
 .filterDrawerFooter {

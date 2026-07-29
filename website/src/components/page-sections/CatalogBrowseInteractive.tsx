@@ -5,7 +5,10 @@ import {CatalogItemDetailModal} from '@/components/catalog/CatalogItemDetailModa
 import {CatalogRingDotSpinner} from '@/components/catalog/CatalogRingDotSpinner'
 import {prefetchCatalogItemDetailClient} from '@/lib/catalog/catalog-item-detail-client-fetch'
 import {fetchCatalogBrowseClient, syncCatalogBrowseUrl} from '@/lib/catalog/catalog-browse-client-fetch'
-import {catalogBrowseQueriesEqual} from '@/lib/catalog/catalog-browse-defaults'
+import {
+  catalogBrowseQueriesEqual,
+  DEFAULT_CATALOG_BROWSE_QUERY,
+} from '@/lib/catalog/catalog-browse-defaults'
 import {
   brandItemHref,
   categoriesAllHref,
@@ -49,7 +52,13 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import {createPortal} from 'react-dom'
 import styles from './websiteCatalogBrowse.module.css'
+
+function queryFromHref(href: string): CatalogBrowseQuery {
+  const u = new URL(href, 'https://local.segna')
+  return normalizeCatalogBrowseQuery(parseCatalogBrowseQuery(u.searchParams))
+}
 
 /** Signale les navigations Next (menu, liens) sans forcer le CSR de toute la grille. */
 function CatalogBrowseRouteSync({onRouteSearch}: {onRouteSearch: () => void}) {
@@ -235,6 +244,7 @@ function FilterDropdown({
   onToggle,
   children,
   panelClassName,
+  plain,
 }: {
   id: FilterMenuId
   label: string
@@ -243,22 +253,32 @@ function FilterDropdown({
   onToggle: (id: FilterMenuId) => void
   children: ReactNode
   panelClassName?: string
+  /** Style texte (barre mobile newsroom) plutôt que pill. */
+  plain?: boolean
 }) {
+  const triggerClass = plain
+    ? `${styles.mobileToolbarBtn} ${active ? styles.mobileToolbarBtnActive : ''}`
+    : `${styles.filterTrigger} ${active ? styles.filterTriggerActive : ''} ${open ? styles.filterTriggerOpen : ''}`
+
   return (
     <div className={styles.filterDropdown}>
       <button
         type="button"
-        className={`${styles.filterTrigger} ${active ? styles.filterTriggerActive : ''} ${open ? styles.filterTriggerOpen : ''}`}
+        className={triggerClass}
         aria-expanded={open}
         aria-haspopup="listbox"
         onClick={() => onToggle(id)}
       >
         <span>{label}</span>
         <svg
-          className={`${styles.filterChevron} ${open ? styles.filterChevronOpen : ''}`}
+          className={
+            plain
+              ? `${styles.mobileToolbarChevron} ${open ? styles.mobileToolbarChevronOpen : ''}`
+              : `${styles.filterChevron} ${open ? styles.filterChevronOpen : ''}`
+          }
           viewBox="0 0 24 24"
-          width="16"
-          height="16"
+          width={plain ? 14 : 16}
+          height={plain ? 14 : 16}
           fill="none"
           stroke="currentColor"
           strokeWidth="2"
@@ -275,6 +295,92 @@ function FilterDropdown({
         </div>
       ) : null}
     </div>
+  )
+}
+
+function FilterIcon() {
+  return (
+    <svg className={styles.mobileToolbarIcon} viewBox="0 0 16 16" aria-hidden>
+      <path
+        fill="currentColor"
+        d="M1.5 3.25a.75.75 0 0 1 .75-.75h11.5a.75.75 0 0 1 0 1.5H2.25a.75.75 0 0 1-.75-.75Zm2 4.5a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5a.75.75 0 0 1-.75-.75Zm2 4.5a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 0 1.5h-3.5a.75.75 0 0 1-.75-.75Z"
+      />
+    </svg>
+  )
+}
+
+function CloseIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M18 6 6 18M6 6l12 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+const FILTER_SHOW_MORE_LIMIT = 10
+
+type DrawerSectionId = 'category' | 'brands' | 'colors' | 'sizes' | 'availability'
+
+function FilterAccordion({
+  id,
+  title,
+  open,
+  onToggle,
+  children,
+}: {
+  id: DrawerSectionId
+  title: string
+  open: boolean
+  onToggle: (id: DrawerSectionId) => void
+  children: ReactNode
+}) {
+  return (
+    <div className={styles.filterAccordion}>
+      <button
+        type="button"
+        className={styles.filterAccordionTrigger}
+        aria-expanded={open}
+        onClick={() => onToggle(id)}
+      >
+        <span className={styles.filterAccordionTitle}>{title}</span>
+        <svg
+          className={`${styles.filterAccordionChevron} ${open ? styles.filterAccordionChevronOpen : ''}`}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+        >
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </button>
+      {open ? <div className={styles.filterAccordionPanel}>{children}</div> : null}
+    </div>
+  )
+}
+
+function ShowMoreList({
+  items,
+  expanded,
+  onExpand,
+}: {
+  items: ReactNode[]
+  expanded: boolean
+  onExpand: () => void
+}) {
+  const visible = expanded ? items : items.slice(0, FILTER_SHOW_MORE_LIMIT)
+  const hasMore = items.length > FILTER_SHOW_MORE_LIMIT
+  return (
+    <>
+      {visible}
+      {hasMore && !expanded ? (
+        <button type="button" className={styles.filterShowMore} onClick={onExpand}>
+          + Afficher plus
+        </button>
+      ) : null}
+    </>
   )
 }
 
@@ -352,7 +458,15 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
   const [openItemId, setOpenItemId] = useState<string | null>(null)
   const [openMenu, setOpenMenu] = useState<FilterMenuId | null>(null)
   const [brandSearch, setBrandSearch] = useState('')
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
+  const [draftQuery, setDraftQuery] = useState<CatalogBrowseQuery>(() =>
+    normalizeCatalogBrowseQuery(initialPayload.query),
+  )
+  const [drawerSections, setDrawerSections] = useState<Set<DrawerSectionId>>(new Set())
+  const [showMoreKeys, setShowMoreKeys] = useState<Record<string, boolean>>({})
+  const [portalReady, setPortalReady] = useState(false)
   const filterBarRef = useRef<HTMLDivElement | null>(null)
+  const mobileToolbarRef = useRef<HTMLDivElement | null>(null)
   const fetchGenRef = useRef(0)
   const queryRef = useRef(query)
   queryRef.current = query
@@ -412,10 +526,16 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
   }, [syncFromBrowserUrl])
 
   useEffect(() => {
+    setPortalReady(true)
+  }, [])
+
+  useEffect(() => {
     if (!openMenu) return
     const onPointerDown = (e: PointerEvent) => {
-      const root = filterBarRef.current
-      if (root && !root.contains(e.target as Node)) setOpenMenu(null)
+      const target = e.target as Node
+      const inDesktop = filterBarRef.current?.contains(target)
+      const inMobile = mobileToolbarRef.current?.contains(target)
+      if (!inDesktop && !inMobile) setOpenMenu(null)
     }
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpenMenu(null)
@@ -428,6 +548,20 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
     }
   }, [openMenu])
 
+  useEffect(() => {
+    if (!filterDrawerOpen) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setFilterDrawerOpen(false)
+    }
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = prev
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [filterDrawerOpen])
+
   const navigateQuery = useCallback(
     (href: string) => {
       const u = new URL(href, window.location.origin)
@@ -439,6 +573,58 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
 
   const toggleMenu = useCallback((id: FilterMenuId) => {
     setOpenMenu((prev) => (prev === id ? null : id))
+  }, [])
+
+  const openFilterDrawer = useCallback(() => {
+    const q = normalizeCatalogBrowseQuery(queryRef.current)
+    setDraftQuery(q)
+    setBrandSearch('')
+    setShowMoreKeys({})
+    const next = new Set<DrawerSectionId>()
+    const brandLike =
+      Boolean(q.segmentSlug) &&
+      (queryLooksLikeBrandFilter(resolved, q) || facets.brands.some((b) => b.slug === q.segmentSlug))
+    if (q.subSlug || (q.segmentSlug && !brandLike)) next.add('category')
+    if (brandLike) next.add('brands')
+    if (q.colorSlugs.length > 0) next.add('colors')
+    if (q.sizeSlugs.length > 0) next.add('sizes')
+    if (q.availabilitySlugs.length > 0) next.add('availability')
+    if (next.size === 0) next.add('category')
+    setDrawerSections(next)
+    setOpenMenu(null)
+    setFilterDrawerOpen(true)
+  }, [facets.brands, resolved])
+
+  const toggleDrawerSection = useCallback((id: DrawerSectionId) => {
+    setDrawerSections((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+
+  const expandShowMore = useCallback((key: string) => {
+    setShowMoreKeys((prev) => ({...prev, [key]: true}))
+  }, [])
+
+  const applyFilterDrawer = useCallback(() => {
+    void applyQuery({...draftQuery, page: 1})
+    setFilterDrawerOpen(false)
+  }, [applyQuery, draftQuery])
+
+  const resetFilterDrawer = useCallback(() => {
+    const cleared: CatalogBrowseQuery = {
+      ...DEFAULT_CATALOG_BROWSE_QUERY,
+      sort: queryRef.current.sort,
+    }
+    setDraftQuery(cleared)
+    void applyQuery(cleared)
+    setFilterDrawerOpen(false)
+  }, [applyQuery])
+
+  const patchDraftFromHref = useCallback((href: string) => {
+    setDraftQuery(queryFromHref(href))
   }, [])
 
   const {shoeSizes, apparelSizes} = splitMarketingCatalogSizeFacets(facets.sizes)
@@ -458,6 +644,16 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
   const sizesActive = query.sizeSlugs.length > 0
   const availabilityActive = query.availabilitySlugs.length > 0
   const sortActive = query.sort !== 'recent'
+  const filtersActive =
+    categoryActive || brandActive || colorsActive || sizesActive || availabilityActive || query.newOnly
+
+  const draftBrandActive =
+    Boolean(draftQuery.segmentSlug) &&
+    (queryLooksLikeBrandFilter(resolved, draftQuery) ||
+      facets.brands.some((b) => b.slug === draftQuery.segmentSlug))
+  const draftCategoryActive = Boolean(
+    draftQuery.subSlug || (draftQuery.segmentSlug && !draftBrandActive),
+  )
 
   const filteredBrands = useMemo(() => {
     const needle = normalizeForSearch(brandSearch)
@@ -470,11 +666,287 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
     ? '…'
     : `${total.toLocaleString('fr-FR')} pièce${total === 1 ? '' : 's'}`
 
+  const filterDrawer =
+    portalReady && filterDrawerOpen
+      ? createPortal(
+          <div className={styles.filterDrawerRoot}>
+            <button
+              type="button"
+              className={styles.filterDrawerBackdrop}
+              aria-label="Fermer les filtres"
+              onClick={() => setFilterDrawerOpen(false)}
+            />
+            <aside
+              className={styles.filterDrawerPanel}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="catalog-filter-drawer-title"
+            >
+              <header className={styles.filterDrawerHeader}>
+                <h2 id="catalog-filter-drawer-title" className={styles.filterDrawerTitle}>
+                  Filtres
+                </h2>
+                <button
+                  type="button"
+                  className={styles.filterDrawerClose}
+                  aria-label="Fermer"
+                  onClick={() => setFilterDrawerOpen(false)}
+                >
+                  <CloseIcon />
+                </button>
+              </header>
+              <div className={styles.filterDrawerBody}>
+                <FilterAccordion
+                  id="category"
+                  title="Catégorie"
+                  open={drawerSections.has('category')}
+                  onToggle={toggleDrawerSection}
+                >
+                  <ShowMoreList
+                    expanded={Boolean(showMoreKeys.category)}
+                    onExpand={() => expandShowMore('category')}
+                    items={[
+                      <FilterCheckOption
+                        key="all-cats"
+                        checked={!draftCategoryActive}
+                        onClick={() => patchDraftFromHref(categoriesAllHref(resolved, draftQuery))}
+                      >
+                        Toutes les catégories
+                      </FilterCheckOption>,
+                      ...categoryRoots(facets.categories).map((root) => {
+                        const subs = childrenOf(root.id, facets.categories)
+                        return (
+                          <div key={root.id} className={styles.filterOptionGroup}>
+                            <FilterCheckOption
+                              checked={categoryRootChecked(
+                                resolved,
+                                root,
+                                facets.categories,
+                                draftQuery,
+                              )}
+                              className={styles.filterOptionParent}
+                              onClick={() =>
+                                patchDraftFromHref(
+                                  categoryItemHref(resolved, root, facets.categories, draftQuery),
+                                )
+                              }
+                            >
+                              {root.label}
+                            </FilterCheckOption>
+                            {subs.length > 0 ? (
+                              <div className={styles.filterOptionSub}>
+                                {subs.map((c) => (
+                                  <FilterCheckOption
+                                    key={c.id}
+                                    checked={categoryChildChecked(resolved, c, draftQuery)}
+                                    onClick={() =>
+                                      patchDraftFromHref(
+                                        categoryItemHref(resolved, c, facets.categories, draftQuery),
+                                      )
+                                    }
+                                  >
+                                    {c.label}
+                                  </FilterCheckOption>
+                                ))}
+                              </div>
+                            ) : null}
+                          </div>
+                        )
+                      }),
+                    ]}
+                  />
+                </FilterAccordion>
+
+                <FilterAccordion
+                  id="brands"
+                  title="Marques"
+                  open={drawerSections.has('brands')}
+                  onToggle={toggleDrawerSection}
+                >
+                  <div className={styles.filterSearchWrap}>
+                    <input
+                      type="search"
+                      value={brandSearch}
+                      onChange={(e) => setBrandSearch(e.target.value)}
+                      placeholder="Rechercher une marque"
+                      className={styles.filterSearch}
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                  </div>
+                  <FilterCheckOption
+                    checked={!draftBrandActive}
+                    onClick={() => patchDraftFromHref(marquesResetHref(resolved, draftQuery))}
+                  >
+                    Toutes les marques
+                  </FilterCheckOption>
+                  {filteredBrands.length === 0 ? (
+                    <p className={styles.filterEmpty}>Aucune marque ne correspond.</p>
+                  ) : (
+                    <ShowMoreList
+                      expanded={Boolean(showMoreKeys.brands) || Boolean(brandSearch.trim())}
+                      onExpand={() => expandShowMore('brands')}
+                      items={filteredBrands.map((b) => (
+                        <FilterCheckOption
+                          key={b.id}
+                          checked={brandLinkActive(resolved, b, draftQuery)}
+                          onClick={() =>
+                            patchDraftFromHref(brandItemHref(resolved, b.slug, draftQuery))
+                          }
+                        >
+                          {b.label}
+                        </FilterCheckOption>
+                      ))}
+                    />
+                  )}
+                </FilterAccordion>
+
+                <FilterAccordion
+                  id="colors"
+                  title="Couleur"
+                  open={drawerSections.has('colors')}
+                  onToggle={toggleDrawerSection}
+                >
+                  <ShowMoreList
+                    expanded={Boolean(showMoreKeys.colors)}
+                    onExpand={() => expandShowMore('colors')}
+                    items={facets.colors.map((c) => (
+                      <FilterCheckOption
+                        key={c.id}
+                        checked={draftQuery.colorSlugs.includes(c.slug)}
+                        onClick={() =>
+                          patchDraftFromHref(toggleColorHref({...draftQuery, page: 1}, c.slug))
+                        }
+                      >
+                        {c.label}
+                      </FilterCheckOption>
+                    ))}
+                  />
+                </FilterAccordion>
+
+                <FilterAccordion
+                  id="sizes"
+                  title="Taille"
+                  open={drawerSections.has('sizes')}
+                  onToggle={toggleDrawerSection}
+                >
+                  {shoeSizes.length > 0 ? (
+                    <>
+                      <p className={styles.filterSectionLabel}>Pointures</p>
+                      <ShowMoreList
+                        expanded={Boolean(showMoreKeys.shoeSizes)}
+                        onExpand={() => expandShowMore('shoeSizes')}
+                        items={shoeSizes.map((s) => (
+                          <FilterCheckOption
+                            key={s.id}
+                            checked={draftQuery.sizeSlugs.includes(s.slug)}
+                            onClick={() =>
+                              patchDraftFromHref(toggleSizeHref({...draftQuery, page: 1}, s.slug))
+                            }
+                          >
+                            {s.label}
+                          </FilterCheckOption>
+                        ))}
+                      />
+                    </>
+                  ) : null}
+                  {apparelSizes.length > 0 ? (
+                    <>
+                      <p className={styles.filterSectionLabel}>Vêtements</p>
+                      <ShowMoreList
+                        expanded={Boolean(showMoreKeys.apparelSizes)}
+                        onExpand={() => expandShowMore('apparelSizes')}
+                        items={apparelSizes.map((s) => (
+                          <FilterCheckOption
+                            key={s.id}
+                            checked={draftQuery.sizeSlugs.includes(s.slug)}
+                            onClick={() =>
+                              patchDraftFromHref(toggleSizeHref({...draftQuery, page: 1}, s.slug))
+                            }
+                          >
+                            {s.label}
+                          </FilterCheckOption>
+                        ))}
+                      />
+                    </>
+                  ) : null}
+                  {shoeSizes.length === 0 && apparelSizes.length === 0 ? (
+                    <p className={styles.filterEmpty}>Aucune taille disponible.</p>
+                  ) : null}
+                </FilterAccordion>
+
+                <FilterAccordion
+                  id="availability"
+                  title="Disponibilité"
+                  open={drawerSections.has('availability')}
+                  onToggle={toggleDrawerSection}
+                >
+                  {CATALOG_AVAILABILITY_OPTIONS.map((o) => (
+                    <FilterCheckOption
+                      key={o.id}
+                      checked={draftQuery.availabilitySlugs.includes(o.id)}
+                      onClick={() =>
+                        patchDraftFromHref(toggleAvailabilityHref({...draftQuery, page: 1}, o.id))
+                      }
+                    >
+                      {o.label}
+                    </FilterCheckOption>
+                  ))}
+                </FilterAccordion>
+              </div>
+              <footer className={styles.filterDrawerFooter}>
+                <button type="button" className={styles.filterDrawerApply} onClick={applyFilterDrawer}>
+                  Voir les résultats
+                </button>
+                <button type="button" className={styles.filterDrawerReset} onClick={resetFilterDrawer}>
+                  Réinitialiser
+                </button>
+              </footer>
+            </aside>
+          </div>,
+          document.body,
+        )
+      : null
+
   return (
     <div className={styles.catalogPageRoot} aria-busy={loading || undefined}>
       <Suspense fallback={null}>
         <CatalogBrowseRouteSync onRouteSearch={syncFromBrowserUrl} />
       </Suspense>
+
+      <div className={styles.mobileToolbar} ref={mobileToolbarRef}>
+        <button
+          type="button"
+          className={`${styles.mobileToolbarBtn} ${filtersActive ? styles.mobileToolbarBtnActive : ''}`}
+          onClick={openFilterDrawer}
+        >
+          <FilterIcon />
+          Filtres
+        </button>
+        <FilterDropdown
+          id="sort"
+          label={sortLabel}
+          active={sortActive}
+          open={openMenu === 'sort'}
+          onToggle={toggleMenu}
+          panelClassName={styles.filterPanelAlignEnd}
+          plain
+        >
+          {SORT_OPTIONS.map((o) => (
+            <FilterCheckOption
+              key={o.id}
+              checked={sortLinkActive(query, o.id)}
+              onClick={() => {
+                navigateQuery(withSort({...query, page: 1}, o.id))
+                setOpenMenu(null)
+              }}
+            >
+              {o.label}
+            </FilterCheckOption>
+          ))}
+        </FilterDropdown>
+      </div>
+
       <div className={styles.filterBar} ref={filterBarRef}>
         <div className={styles.filterBarLeft}>
           <FilterDropdown
@@ -696,6 +1168,7 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
       ) : null}
 
       <CatalogItemDetailModal itemId={openItemId} onClose={() => setOpenItemId(null)} />
+      {filterDrawer}
     </div>
   )
 }
