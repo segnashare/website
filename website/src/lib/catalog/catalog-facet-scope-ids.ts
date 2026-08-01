@@ -36,9 +36,16 @@ export function idsForCatalogRpc(
     .map((slug) => slugSrc.colors.find((c) => c.slug === slug)?.id)
     .filter((x): x is string => Boolean(x))
 
-  const sizeIds = (query.sizeSlugs ?? [])
-    .map((slug) => slugSrc.sizes.find((s) => s.slug === slug)?.id)
-    .filter((x): x is string => Boolean(x))
+  const sizeIds = [
+    ...new Set(
+      (query.sizeSlugs ?? []).flatMap((slug) => {
+        const facet = slugSrc.sizes.find((s) => s.slug === slug)
+        if (!facet) return []
+        if (Array.isArray(facet.memberIds) && facet.memberIds.length > 0) return facet.memberIds
+        return facet.id ? [facet.id] : []
+      }),
+    ),
+  ]
 
   return {categoryIds, brandIds, colorIds, sizeIds}
 }

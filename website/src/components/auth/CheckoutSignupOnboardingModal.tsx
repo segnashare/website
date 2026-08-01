@@ -14,6 +14,7 @@ import {
 } from '@/lib/auth/checkout-onboarding-persist'
 import {resolveCheckoutOnboardingResume} from '@/lib/auth/checkout-onboarding-resume'
 import type {CheckoutOnboardingStep} from '@/lib/auth/checkout-onboarding-resume'
+import {APPAREL_SIZE_BANDS} from '@/lib/catalog/apparel-size-referential'
 import {buildMapEmbedSrc, getDefaultMapCenter} from '@/lib/maps/google-maps-embed'
 import {normalizeFrenchLocalNumber} from '@/lib/phone/fr-mobile'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
@@ -36,8 +37,17 @@ function parseBirthDigits(value: string): {day: string; month: string; year: str
 
 const OTP_LENGTH = 6
 const RESEND_SECONDS = 30
-const TOP_OPTIONS = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL'] as const
-const BOTTOM_OPTIONS = ['32', '34', '36', '38', '40', '42', '44', '46', '48'] as const
+
+const TOP_OPTIONS = APPAREL_SIZE_BANDS.map((b) => b.letter)
+const BOTTOM_OPTIONS = APPAREL_SIZE_BANDS.map((b) => b.fr)
+const TOP_LABEL_BY_CODE = Object.fromEntries(APPAREL_SIZE_BANDS.map((b) => [b.letter, b.label])) as Record<
+  string,
+  string
+>
+const BOTTOM_LABEL_BY_CODE = Object.fromEntries(APPAREL_SIZE_BANDS.map((b) => [b.fr, b.label])) as Record<
+  string,
+  string
+>
 const SHOES_OPTIONS = Array.from({length: 12}, (_, i) => String(33 + i))
 
 type Step = CheckoutOnboardingStep
@@ -984,7 +994,7 @@ export function CheckoutSignupOnboardingModal({
                   {TOP_OPTIONS.map((opt) => (
                     <SizePill
                       key={opt}
-                      label={opt}
+                      label={TOP_LABEL_BY_CODE[opt] ?? opt}
                       selected={topSelected.has(opt)}
                       onToggle={() => toggleSize('top', opt)}
                     />
@@ -997,7 +1007,7 @@ export function CheckoutSignupOnboardingModal({
                   {BOTTOM_OPTIONS.map((opt) => (
                     <SizePill
                       key={opt}
-                      label={opt}
+                      label={BOTTOM_LABEL_BY_CODE[opt] ?? opt}
                       selected={bottomSelected.has(opt)}
                       onToggle={() => toggleSize('bottom', opt)}
                     />

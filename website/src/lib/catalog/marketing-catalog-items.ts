@@ -4,6 +4,10 @@ import {mergeCategoriesNavWithScopedPresence} from '@/lib/catalog/catalog-scoped
 import {catalogPerfDetail, catalogPerfLog, catalogPerfNow} from '@/lib/catalog/catalog-perf'
 import type {CatalogPathResolved} from '@/lib/catalog/catalog-path-types'
 import type {CatalogBrowseQuery} from '@/lib/catalog/catalog-search-params'
+import {
+  aggregateApparelSizeFacets,
+  isMarketingCatalogShoeSizeFacetCode,
+} from '@/lib/catalog/catalog-size-facet-section'
 import {slugifyFr, withUniqueSlugs} from '@/lib/catalog/catalog-slugs'
 import {
   collectPhotoPathsFromItemPhotos,
@@ -29,6 +33,8 @@ export type MarketingCatalogFacetOption = {
   label: string
   /** `public.sizes.code` (ex. `shoes:38`, `bottom:38`) — absent si RPC ancienne. */
   code?: string
+  /** Ids top+bottom agrégés sur le référentiel lettre/FR/US. */
+  memberIds?: string[]
 }
 
 export type MarketingCatalogFacets = {
@@ -200,6 +206,33 @@ function navOptionsFromBase(
   return withUniqueSlugs(raw)
 }
 
+/** Agrège top/bottom sur le référentiel ; conserve les pointures séparées. */
+function navSizeOptionsFromBase(sizes: MarketingCatalogFacetOption[]): MarketingCatalogFacetNavOption[] {
+  const shoes: MarketingCatalogFacetOption[] = []
+  const apparel: MarketingCatalogFacetOption[] = []
+  for (const s of sizes) {
+    if (isMarketingCatalogShoeSizeFacetCode(s.code)) {
+      shoes.push({...s, memberIds: s.memberIds ?? [s.id]})
+    } else {
+      apparel.push(s)
+    }
+  }
+  const aggregatedApparel = aggregateApparelSizeFacets(apparel).map((row) => ({
+    id: row.id,
+    label: row.label,
+    code: row.code,
+    memberIds: row.memberIds,
+  }))
+  const labelSlug = (_id: string, label: string) => slugifyFr(label)
+  return [
+    ...navOptionsFromBase(aggregatedApparel, labelSlug),
+    ...navOptionsFromBase(
+      shoes.sort((a, b) => a.label.localeCompare(b.label, 'fr', {numeric: true})),
+      labelSlug,
+    ),
+  ]
+}
+
 function parseFacetsRpcPayload(data: unknown): MarketingCatalogFacets | null {
   if (!data || typeof data !== 'object' || Array.isArray(data)) return null
   const root = data as Record<string, unknown>
@@ -276,7 +309,7 @@ async function fetchMarketingCatalogPathResolveNavUncached(): Promise<MarketingC
     categories: withUniqueSlugs(categoryNavRaw),
     brands: navOptionsFromBase(base.brands, brandSlug),
     colors: navOptionsFromBase(base.colors, labelSlug),
-    sizes: navOptionsFromBase(base.sizes, labelSlug),
+    sizes: navSizeOptionsFromBase(base.sizes),
   }
   if (catalogPerfDetail()) {
     catalogPerfLog('fetchMarketingCatalogPathResolveNav', {
@@ -293,7 +326,7 @@ async function fetchMarketingCatalogPathResolveNavUncached(): Promise<MarketingC
 
 const fetchMarketingCatalogPathResolveNavCrossRequest = withDataCache(
   fetchMarketingCatalogPathResolveNavUncached,
-  ['marketing_catalog_path_nav_v2'],
+  ['marketing_catalog_path_nav_v3'],
   {revalidate: catalogDataRevalidateSec()},
 )
 
@@ -359,7 +392,7 @@ const getMarketingCatalogFacetsScopedPayload = withDataCache(
       sizes: await enrichFacetSizesWithCodesFromSizesTable(supabase, parsed.sizes),
     }
   },
-  ['marketing_catalog_facets_scoped_payload_v2'],
+  ['marketing_catalog_facets_scoped_payload_v3'],
   {revalidate: catalogDataRevalidateSec()},
 )
 
@@ -394,7 +427,7 @@ async function fetchMarketingCatalogBrowseFacetsNavUncached(
     categories: mergedCats,
     brands: navOptionsFromBase(scoped.brands, brandSlug),
     colors: navOptionsFromBase(scoped.colors, labelSlug),
-    sizes: navOptionsFromBase(scoped.sizes, labelSlug),
+    sizes: navSizeOptionsFromBase(scoped.sizes),
   }
 }
 

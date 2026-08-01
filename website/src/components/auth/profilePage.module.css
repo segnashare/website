@@ -22,7 +22,7 @@
   font-size: clamp(1.55rem, 4.2vw, 1.85rem);
   font-weight: 700;
   letter-spacing: -0.025em;
-  color: #14110f;
+  color: #18181b;
   line-height: 1.2;
 }
 
@@ -47,7 +47,7 @@
   padding: 0.85rem 0;
   border: 0;
   background: transparent;
-  color: #14110f;
+  color: #18181b;
   font: inherit;
   font-size: 1.02rem;
   font-weight: 500;
@@ -64,7 +64,7 @@
 }
 
 .row:hover:not(:disabled) {
-  color: #3a3734;
+  color: #3f3f46;
 }
 
 .rowLabel {
@@ -76,29 +76,280 @@
   flex-shrink: 0;
   width: 1.05rem;
   height: 1.05rem;
-  color: #c4bfb8;
+  color: #d4d4d8;
 }
 
-.footer {
+/* —— Parrainage (frame app) —— */
+@keyframes referralSilverShift {
+  0%,
+  100% {
+    background-position: 8% 45%;
+  }
+  50% {
+    background-position: 92% 55%;
+  }
+}
+
+.referralBlock {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0.35rem 0 1.35rem;
+}
+
+.referralOuter {
+  margin: 0;
+  padding: 1px;
+  border-radius: 1.5rem;
+  background-image: linear-gradient(
+    105deg,
+    #b9b9c2 0%,
+    #e4e4e9 18%,
+    #fafafa 32%,
+    #ffffff 42%,
+    #d4d4da 52%,
+    #f4f4f6 68%,
+    #c4c4ce 82%,
+    #a8a8b5 100%
+  );
+  background-size: 280% 280%;
+  background-repeat: no-repeat;
+  animation: referralSilverShift 4.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .referralOuter {
+    animation: none;
+  }
+}
+
+.referralInner {
+  overflow: hidden;
+  border-radius: calc(1.5rem - 1px);
+  background: #fff;
+  box-shadow:
+    0 1px 2px rgb(24 24 27 / 0.04),
+    inset 0 0 0 1px rgb(228 228 231 / 0.5);
+}
+
+.referralBannerWrap {
+  padding: 1.15rem 1.15rem 0.9rem;
+}
+
+.referralBanner,
+.referralBannerImg {
+  display: block;
+  width: 100%;
+  min-height: 6.75rem;
+  aspect-ratio: 2.35 / 1;
+  border-radius: 1.35rem;
+  object-fit: cover;
+  box-shadow: 0 1px 2px rgb(24 24 27 / 0.06);
+}
+
+.referralBanner {
+  background: linear-gradient(135deg, #7dd3fc 0%, #c4b5fd 55%, #ddd6fe 100%);
+}
+
+.referralBody {
+  display: grid;
+  gap: 1rem;
+  padding: 0 1.15rem 1.35rem;
+}
+
+.referralHeader {
   display: grid;
   gap: 0.35rem;
-  margin-top: 0.5rem;
-  padding-top: 0.75rem;
+}
+
+.referralTitle {
+  margin: 0;
+  font-family: var(--font-playfair-display), Georgia, 'Times New Roman', serif;
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #18181b;
+  line-height: 1.25;
+}
+
+.referralLead {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #52525b;
+}
+
+.referralSteps {
+  margin: 0;
+  padding: 0 0 0 1.15rem;
+  display: grid;
+  gap: 0.55rem;
+  color: #27272a;
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.referralLinkBlock {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.referralLinkLabel {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #71717a;
+}
+
+.referralLinkRow {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 2.75rem;
+  padding: 0.2rem 0.2rem 0.2rem 0.4rem;
+  border-radius: 999px;
+  background: #e4e4e7;
+  box-shadow: inset 0 0 0 1px rgb(212 212 216 / 0.8);
+}
+
+.referralIconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #27272a;
+  cursor: pointer;
+}
+
+.referralIconBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.referralIconBtn:hover:not(:disabled) {
+  background: rgb(255 255 255 / 0.85);
+}
+
+.referralLinkText {
+  margin: 0;
+  min-width: 0;
+  flex: 1;
+  padding: 0 0.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #27272a;
+}
+
+.referralShareBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0.5rem 0.9rem;
+  border: 0;
+  border-radius: 999px;
+  background: #18181b;
+  color: #fff;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.referralShareBtn:hover {
+  background: #000;
+}
+
+/* —— Avis Trustpilot / Google —— */
+.reviewRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.reviewCard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: 0;
+  height: 3.5rem;
+  padding: 0 0.65rem;
+  border: 1px solid #e4e4e7;
+  border-radius: 0.75rem;
+  background: #fff;
+  color: #18181b;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgb(24 24 27 / 0.06);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+}
+
+.reviewCard:hover {
+  border-color: #d4d4d8;
+  background: #fafafa;
+  box-shadow: 0 2px 8px rgb(24 24 27 / 0.08);
+}
+
+.reviewIcon {
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  object-fit: contain;
+}
+
+.reviewLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+/* —— Actions bas de page —— */
+.footer {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.35rem;
+  padding-top: 0.5rem;
 }
 
 .signOut {
   display: inline-flex;
   align-items: center;
-  justify-content: flex-start;
-  width: fit-content;
+  justify-content: center;
+  width: 100%;
+  min-height: 3rem;
   margin: 0;
-  padding: 0.65rem 0;
-  border: 0;
-  background: transparent;
-  color: #8a3a3a;
+  padding: 0.75rem 1.15rem;
+  border: 1px solid #18181b;
+  border-radius: 999px;
+  background: #fff;
+  color: #18181b;
   font: inherit;
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
 }
 
@@ -108,5 +359,55 @@
 }
 
 .signOut:hover:not(:disabled) {
-  color: #a81f1f;
+  background: #fafafa;
+}
+
+.appDownload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin: 0;
+  padding: 1.15rem 1.1rem 1.2rem;
+  border: 0;
+  border-radius: 1rem;
+  background: #18181b;
+  color: #fff;
+  text-decoration: none;
+  text-align: center;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.appDownload:hover {
+  background: #000;
+}
+
+.appDownload:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.appDownloadTitle {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #fff;
+}
+
+.appDownloadSubtitle {
+  margin: 0 0 0.85rem;
+  font-size: 0.86rem;
+  font-weight: 400;
+  line-height: 1.4;
+  color: rgb(255 255 255 / 0.78);
+}
+
+.appDownloadBadge {
+  display: block;
+  width: auto;
+  height: 2.5rem;
+  max-width: 100%;
+  object-fit: contain;
 }

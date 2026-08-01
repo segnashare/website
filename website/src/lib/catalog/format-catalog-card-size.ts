@@ -1,3 +1,5 @@
+import {apparelDisplayLabelForCode} from '@/lib/catalog/apparel-size-referential'
+
 /** Libellé affiché quand la pièce n’a pas de taille numérique / lettre (bijoux, etc.). */
 export const CATALOG_UNIQUE_SIZE_LABEL = 'Taille Unique'
 
@@ -13,7 +15,7 @@ export function isUniqueSizeToken(raw: string): boolean {
 
 /**
  * Taille pour cartes catalogue marketing.
- * Absent / TU / « taille unique » → « Taille Unique » ; sinon label, sinon code.
+ * Absent / TU / « taille unique » → « Taille Unique » ; sinon référentiel agrégé, sinon label/code.
  */
 export function formatCatalogCardSizeLabel(
   sizeLabel: string | null | undefined,
@@ -24,5 +26,9 @@ export function formatCatalogCardSizeLabel(
   if (!label && !code) return CATALOG_UNIQUE_SIZE_LABEL
   if (label && isUniqueSizeToken(label)) return CATALOG_UNIQUE_SIZE_LABEL
   if (!label && code && isUniqueSizeToken(code)) return CATALOG_UNIQUE_SIZE_LABEL
+  if (code) {
+    const fromReferential = apparelDisplayLabelForCode(code, label)
+    if (fromReferential) return fromReferential
+  }
   return label || code
 }

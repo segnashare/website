@@ -1,7 +1,15 @@
 'use client'
 
-import {redirectToAppWithSession} from '@/lib/auth/app-handoff'
+import {ProfileReferralCard} from '@/components/auth/ProfileReferralCard'
 import {WebsitePageLoading} from '@/components/ui/WebsitePageLoading'
+import {redirectToAppWithSession} from '@/lib/auth/app-handoff'
+import {buildAppHandoffUrl} from '@/lib/auth/build-app-handoff-url'
+import {
+  openIosAppOrAppStore,
+  SEGNA_APP_BASE_URL,
+  SEGNA_APP_STORE_URL,
+} from '@/lib/catalog/catalog-app-links'
+import {detectClientPlatform} from '@/lib/platform/client-platform'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import Link from 'next/link'
 import {useRouter} from 'next/navigation'
@@ -11,6 +19,7 @@ import styles from './profilePage.module.css'
 type ProfileState = {
   firstName: string
   lastName: string
+  referralCode: string | null
 }
 
 function formatMemberName(firstName: string, lastName: string): string {
@@ -78,18 +87,23 @@ export function ProfilePageClient() {
           return
         }
 
-        const {data: member} = await supabase
-          .from('users')
-          .select('first_name, last_name')
-          .eq('id', user.id)
-          .maybeSingle()
+        const [{data: member}, {data: referral}] = await Promise.all([
+          supabase.from('users').select('first_name, last_name').eq('id', user.id).maybeSingle(),
+          supabase.from('referrals_codes').select('code').eq('user_id', user.id).maybeSingle(),
+        ])
 
         if (cancelled) return
 
         const m = member as {first_name?: string | null; last_name?: string | null} | null
+        const code =
+          typeof (referral as {code?: string | null} | null)?.code === 'string'
+            ? (referral as {code: string}).code.trim()
+            : ''
+
         setProfile({
           firstName: typeof m?.first_name === 'string' ? m.first_name.trim() : '',
           lastName: typeof m?.last_name === 'string' ? m.last_name.trim() : '',
+          referralCode: code || null,
         })
       } catch {
         if (!cancelled) router.replace(`/signin?next=${encodeURIComponent('/profil')}`)
@@ -110,6 +124,27 @@ export function ProfilePageClient() {
       setPending(false)
     }
   }, [])
+
+  const downloadApp = useCallback(async () => {
+    if (pending) return
+    setPending(true)
+    try {
+      const appUrl = await buildAppHandoffUrl('/profile?tab=plus')
+      if (detectClientPlatform() === 'ios' && SEGNA_APP_STORE_URL) {
+        openIosAppOrAppStore(appUrl, SEGNA_APP_STORE_URL)
+        return
+      }
+      if (SEGNA_APP_STORE_URL) {
+        window.open(SEGNA_APP_STORE_URL, '_blank', 'noopener,noreferrer')
+        return
+      }
+      window.location.assign(appUrl || `${SEGNA_APP_BASE_URL}/profile?tab=plus`)
+    } catch {
+      window.location.assign(SEGNA_APP_STORE_URL || SEGNA_APP_BASE_URL)
+    } finally {
+      setPending(false)
+    }
+  }, [pending])
 
   const signOut = useCallback(async () => {
     setPending(true)
@@ -149,19 +184,35 @@ export function ProfilePageClient() {
           <li>
             <NavRow label="Préférences et communications" href="/profil/preferences" />
           </li>
-          <li>
-            <NavRow
-              label="Parrainer un ami"
-              disabled={pending}
-              onClick={() => void goApp('/profile?tab=plus')}
-            />
-          </li>
         </ul>
       </section>
+
+      <ProfileReferralCard referralCode={profile.referralCode} />
 
       <div className={styles.footer}>
         <button type="button" className={styles.signOut} disabled={pending} onClick={() => void signOut()}>
           Se déconnecter
+        </button>
+
+        <button
+          type="button"
+          className={styles.appDownload}
+          disabled={pending}
+          onClick={() => void downloadApp()}
+        >
+          <span className={styles.appDownloadTitle}>Télécharger l’app</span>
+          <span className={styles.appDownloadSubtitle}>
+            Louez vos pièces, renouvelez quand vous voulez, et profitez d’avantages à l’achat.
+          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/app-store-badge.png"
+            alt="Download on the App Store"
+            className={styles.appDownloadBadge}
+            width={180}
+            height={52}
+            decoding="async"
+          />
         </button>
       </div>
     </main>

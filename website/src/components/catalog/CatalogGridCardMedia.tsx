@@ -25,6 +25,18 @@ export function CatalogGridCardMedia({item, mediaClassName}: CatalogGridCardMedi
           className={mediaClassName}
         />
       ) : null}
+      {item.isSold ? (
+        <div
+          aria-hidden
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 1,
+            background: 'rgba(0,0,0,0.45)',
+            pointerEvents: 'none',
+          }}
+        />
+      ) : null}
       <CatalogCardBadges isNew={item.isNew} isSold={item.isSold} />
     </>
   )
