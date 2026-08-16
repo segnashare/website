@@ -1,9 +1,15 @@
-/** Consent Mode v2 — valeurs par défaut « denied » avant Cookiebot et gtag (data-cookieconsent="ignore"). */
+import Script from 'next/script'
+
+/**
+ * Consent Mode v2 — defaults « denied » avant Cookiebot / gtag.
+ * `data-cookieconsent="ignore"` : ne pas laisser l’autoblocker bloquer ce script.
+ * `beforeInteractive` : doit tourner avant tout tag Google.
+ */
 export function GoogleConsentModeDefault() {
   return (
-    <script
-      // Cookiebot peut muter / retirer data-cookieconsent avant l’hydratation React.
-      suppressHydrationWarning
+    <Script
+      id="google-consent-default"
+      strategy="beforeInteractive"
       data-cookieconsent="ignore"
       dangerouslySetInnerHTML={{
         __html: `

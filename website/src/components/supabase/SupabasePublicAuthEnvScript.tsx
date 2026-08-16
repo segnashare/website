@@ -6,6 +6,7 @@ export function SupabasePublicAuthEnvScript() {
   const json = JSON.stringify(env).replace(/</g, '\\u003c')
   return (
     <script
+      data-cookieconsent="ignore"
       dangerouslySetInnerHTML={{
         __html: `window.__SEGNA_PUBLIC_AUTH__=${json};`,
       }}

@@ -61,6 +61,7 @@ export function SplitPaneVideoLazy({pane, rounded = false}: Props) {
             title="Vidéo"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
+            data-cookieconsent="marketing"
           />
         </div>
       )

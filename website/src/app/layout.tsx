@@ -38,12 +38,11 @@ export const revalidate = 3600
 export default function RootLayout({children}: Readonly<{children: React.ReactNode}>) {
   return (
     <html lang="fr" className={`${playfairDisplay.variable} ${montserrat.variable}`}>
-      <head>
+      <body>
+        {/* Consent stack : pas dans <head> manuel — Next hoist beforeInteractive correctement. */}
         <GoogleConsentModeDefault />
         <CookiebotScript />
         <GoogleAnalyticsHeadScripts />
-      </head>
-      <body>
         <SupabasePublicAuthEnvScript />
         <PostHogProvider>
           <ItemChatShell>{children}</ItemChatShell>
