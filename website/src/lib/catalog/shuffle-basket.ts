@@ -8,6 +8,8 @@ export const SHUFFLE_BASKET_MIN_ITEMS = 1
 export const SHUFFLE_BASKET_MAX_ITEMS = 5
 /** Sur téléphone : 4 pièces max (grille 2×2). */
 export const SHUFFLE_BASKET_MAX_ITEMS_MOBILE = 4
+/** Une pièce déjà tirée ne peut pas revenir avant autant de shuffles. */
+export const SHUFFLE_ITEM_COOLDOWN_SHUFFLES = 20
 
 export type ShuffleBasketItem = MarketingCatalogGridItem & {
   price_points: number
@@ -81,6 +83,13 @@ function pickBiasedToValue(candidates: ShuffleBasketItem[], remaining: number): 
   return fit[fit.length - 1]!
 }
 
+export type DrawShuffleBasketOpts = {
+  previousCount?: number | null
+  maxItems?: number
+  /** Pièces déjà vues récemment — à éviter pendant le cooldown. */
+  excludeIds?: ReadonlySet<string>
+}
+
 /**
  * Construit un panier aléatoire :
  * - 1 à maxItems pièces (5 desktop, 4 mobile)
@@ -88,12 +97,29 @@ function pickBiasedToValue(candidates: ShuffleBasketItem[], remaining: number): 
  * - somme des prix d’achat ≤ 400 €
  * - poussée souple vers ~300 €+
  * - le nombre de pièces varie d’un tirage à l’autre quand c’est possible
+ * - évite les pièces dans `excludeIds` (fallback sans exclusion si trop restrictif)
  */
 export function drawShuffleBasket(
   pool: MarketingCatalogGridItem[],
-  opts?: {previousCount?: number | null; maxItems?: number},
+  opts?: DrawShuffleBasketOpts,
 ): ShuffleBasketItem[] {
-  const eligible = pool.filter(isEligible)
+  const drawn = drawShuffleBasketOnce(pool, opts)
+  if (drawn.length > 0) return drawn
+  // Si le cooldown vide trop le pool, on retente sans exclusion.
+  if (opts?.excludeIds?.size) {
+    return drawShuffleBasketOnce(pool, {...opts, excludeIds: undefined})
+  }
+  return []
+}
+
+function drawShuffleBasketOnce(
+  pool: MarketingCatalogGridItem[],
+  opts?: DrawShuffleBasketOpts,
+): ShuffleBasketItem[] {
+  const excludeIds = opts?.excludeIds
+  const eligible = pool.filter(
+    (item): item is ShuffleBasketItem => isEligible(item) && !excludeIds?.has(item.id),
+  )
   if (eligible.length === 0) return []
 
   const byCategory = new Map<string, ShuffleBasketItem[]>()
@@ -190,7 +216,7 @@ function tryDrawCount(
 
   if (picked.length !== targetCount) return null
 
-  // Upgrade ok, mais ne remplace pas une pièce « accent » par du non-accent.
+  // Upgrade ok, mais uniquement vers des pièces encore dans le pool (déjà hors cooldown).
   upgradeInPlace(picked, byCategory)
 
   const total = shuffleBasketTotalEuro(picked)

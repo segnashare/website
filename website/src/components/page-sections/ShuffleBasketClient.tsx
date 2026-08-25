@@ -1,6 +1,6 @@
 'use client'
 
-import {useEffect, useMemo, useState, useTransition} from 'react'
+import {useEffect, useMemo, useRef, useState, useTransition} from 'react'
 import Link from 'next/link'
 import {CatalogGridCardMedia} from '@/components/catalog/CatalogGridCardMedia'
 import {catalogItemPagePath} from '@/lib/catalog/catalog-app-links'
@@ -12,6 +12,7 @@ import {
   SHUFFLE_BASKET_BUDGET_EURO,
   SHUFFLE_BASKET_MAX_ITEMS,
   SHUFFLE_BASKET_MAX_ITEMS_MOBILE,
+  SHUFFLE_ITEM_COOLDOWN_SHUFFLES,
   type ShuffleBasketItem,
 } from '@/lib/catalog/shuffle-basket'
 import styles from './shuffleBasket.module.css'
@@ -45,6 +46,15 @@ function MediaSkeleton() {
   return <div className={styles.mediaSkeleton} aria-hidden />
 }
 
+/** Historique des IDs par shuffle — une pièce ne revient pas avant N tirages. */
+function rememberBasketIds(history: string[][], items: ShuffleBasketItem[]): void {
+  if (items.length === 0) return
+  history.push(items.map((item) => item.id))
+  if (history.length > SHUFFLE_ITEM_COOLDOWN_SHUFFLES) {
+    history.splice(0, history.length - SHUFFLE_ITEM_COOLDOWN_SHUFFLES)
+  }
+}
+
 export function ShuffleBasketClient({heading, intro, ctaLabel}: Props) {
   const maxItems = useShuffleMaxItems()
   const [pool, setPool] = useState<MarketingCatalogGridItem[]>([])
@@ -52,6 +62,7 @@ export function ShuffleBasketClient({heading, intro, ctaLabel}: Props) {
   const [previousCount, setPreviousCount] = useState<number | null>(null)
   const [ready, setReady] = useState(false)
   const [pending, startTransition] = useTransition()
+  const recentItemIdsByShuffleRef = useRef<string[][]>([])
 
   useEffect(() => {
     let cancelled = false
@@ -86,10 +97,13 @@ export function ShuffleBasketClient({heading, intro, ctaLabel}: Props) {
 
   useEffect(() => {
     if (!ready || pool.length === 0) return
+    const excludeIds = new Set(recentItemIdsByShuffleRef.current.flat())
     const next = drawShuffleBasket(pool, {
       previousCount,
       maxItems,
+      excludeIds,
     })
+    rememberBasketIds(recentItemIdsByShuffleRef.current, next)
     setBasket(next)
     setPreviousCount(next.length || null)
     // previousCount volontairement omis : on ne redessine que quand le plafond change / pool prêt
@@ -103,10 +117,13 @@ export function ShuffleBasketClient({heading, intro, ctaLabel}: Props) {
   const reshuffle = () => {
     if (!ready || pool.length === 0) return
     startTransition(() => {
+      const excludeIds = new Set(recentItemIdsByShuffleRef.current.flat())
       const next = drawShuffleBasket(pool, {
         previousCount: basket.length || previousCount,
         maxItems,
+        excludeIds,
       })
+      rememberBasketIds(recentItemIdsByShuffleRef.current, next)
       setPreviousCount(next.length || basket.length)
       setBasket(next)
     })
