@@ -23,6 +23,29 @@ function safeNextPath(raw: string | null): string {
   }
 }
 
+function isPasswordRecoveryRedirect(): boolean {
+  if (typeof window === 'undefined') return false
+  const hash = window.location.hash.startsWith('#')
+    ? window.location.hash.slice(1)
+    : window.location.hash
+  const hashParams = new URLSearchParams(hash)
+  const query = new URLSearchParams(window.location.search)
+  if (hashParams.get('type') === 'recovery' || query.get('type') === 'recovery') return true
+  try {
+    return window.sessionStorage.getItem('segna_password_recovery') === '1'
+  } catch {
+    return false
+  }
+}
+
+function markPasswordRecovery(): void {
+  try {
+    window.sessionStorage.setItem('segna_password_recovery', '1')
+  } catch {
+    // ignore
+  }
+}
+
 function readStoredNext(): string | null {
   try {
     return window.sessionStorage.getItem(WEBSITE_AUTH_NEXT_STORAGE_KEY)
@@ -52,7 +75,12 @@ export function AuthCallbackClient() {
 
     const run = async () => {
       const params = new URLSearchParams(window.location.search)
-      const nextPath = safeNextPath(params.get('next') || readStoredNext())
+      const recoveryRedirect = isPasswordRecoveryRedirect()
+      if (recoveryRedirect) markPasswordRecovery()
+      // Recovery : ignorer un `next` checkout / sessionStorage (sinon « Qui es-tu ? »).
+      const nextPath = recoveryRedirect
+        ? '/reset-password'
+        : safeNextPath(params.get('next') || readStoredNext())
       clearStoredNext()
       const authError = params.get('auth_error') || params.get('error')
 
@@ -101,6 +129,13 @@ export function AuthCallbackClient() {
             router.replace(nextPath.startsWith('/signin') || nextPath.startsWith('/signup') ? nextPath : '/signin')
             return
           }
+        }
+
+        if (recoveryRedirect || hashParams.get('type') === 'recovery') {
+          if (cancelled) return
+          window.history.replaceState(null, '', '/reset-password')
+          router.replace('/reset-password')
+          return
         }
 
         await bootstrapUserAfterSignup(supabase)

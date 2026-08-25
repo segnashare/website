@@ -126,6 +126,32 @@ export function AuthPageClient({mode}: Props) {
   const goNext = useCallback(async () => {
     try {
       const supabase = createSupabaseBrowserClient()
+
+      // Lien « mot de passe oublié » : ne pas ouvrir l’onboarding « Qui es-tu ? ».
+      const hash = typeof window !== 'undefined' && window.location.hash.startsWith('#')
+        ? window.location.hash.slice(1)
+        : typeof window !== 'undefined'
+          ? window.location.hash
+          : ''
+      const hashType = new URLSearchParams(hash).get('type')
+      const queryType =
+        typeof window !== 'undefined'
+          ? new URLSearchParams(window.location.search).get('type')
+          : null
+      if (hashType === 'recovery' || queryType === 'recovery') {
+        router.replace('/reset-password')
+        return
+      }
+      try {
+        if (sessionStorage.getItem('segna_password_recovery') === '1') {
+          sessionStorage.removeItem('segna_password_recovery')
+          router.replace('/reset-password')
+          return
+        }
+      } catch {
+        // ignore
+      }
+
       const resume = await resolveCheckoutOnboardingResume(supabase)
 
       // Tunnel website incomplet → reprendre la modale (nom / adresse / …).
@@ -152,23 +178,75 @@ export function AuthPageClient({mode}: Props) {
     }
   }, [openOnboardingResume, redirectToApp, router])
 
+  // Flag recovery (hash consommé) pour éviter l’onboarding sur /signin|/signup.
+  useEffect(() => {
+    const supabase = createSupabaseBrowserClient()
+    const {data: sub} = supabase.auth.onAuthStateChange((event) => {
+      if (event !== 'PASSWORD_RECOVERY') return
+      try {
+        sessionStorage.setItem('segna_password_recovery', '1')
+      } catch {
+        // ignore
+      }
+      if (!window.location.pathname.startsWith('/reset-password')) {
+        router.replace('/reset-password')
+      }
+    })
+    return () => sub.subscription.unsubscribe()
+  }, [router])
+
   // Déjà connecté sur /signup (ou /signin) → ne pas rester sur le formulaire.
   useEffect(() => {
     if (resumeHandledRef.current) return
     void (async () => {
       try {
+        // Recovery avant getUser : évite la course avec « Qui es-tu ? ».
+        try {
+          if (sessionStorage.getItem('segna_password_recovery') === '1') {
+            resumeHandledRef.current = true
+            sessionStorage.removeItem('segna_password_recovery')
+            router.replace('/reset-password')
+            return
+          }
+        } catch {
+          // ignore
+        }
+        const hash = window.location.hash.startsWith('#')
+          ? window.location.hash.slice(1)
+          : window.location.hash
+        if (
+          new URLSearchParams(hash).get('type') === 'recovery' ||
+          new URLSearchParams(window.location.search).get('type') === 'recovery'
+        ) {
+          resumeHandledRef.current = true
+          router.replace('/reset-password')
+          return
+        }
+
         const supabase = createSupabaseBrowserClient()
         const {
           data: {user},
         } = await supabase.auth.getUser()
         if (!user) return
+
+        try {
+          if (sessionStorage.getItem('segna_password_recovery') === '1') {
+            resumeHandledRef.current = true
+            sessionStorage.removeItem('segna_password_recovery')
+            router.replace('/reset-password')
+            return
+          }
+        } catch {
+          // ignore
+        }
+
         resumeHandledRef.current = true
         await goNext()
       } catch {
         // rester sur le formulaire
       }
     })()
-  }, [goNext])
+  }, [goNext, router])
 
   useEffect(() => {
     if (typeof window === 'undefined') return

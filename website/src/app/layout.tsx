@@ -5,6 +5,7 @@ import {PostHogProvider} from '@/components/analytics/PostHogProvider'
 import {CookiebotScript} from '@/components/consent/Cookiebot'
 import {GoogleConsentModeDefault} from '@/components/consent/GoogleConsentModeDefault'
 import {ItemChatShell} from '@/components/item-chat/ItemChatShell'
+import {PasswordRecoveryBridge} from '@/components/auth/PasswordRecoveryBridge'
 import {SupabasePublicAuthEnvScript} from '@/components/supabase/SupabasePublicAuthEnvScript'
 import './globals.css'
 
@@ -45,6 +46,7 @@ export default function RootLayout({children}: Readonly<{children: React.ReactNo
         <GoogleAnalyticsHeadScripts />
         <SupabasePublicAuthEnvScript />
         <PostHogProvider>
+          <PasswordRecoveryBridge />
           <ItemChatShell>{children}</ItemChatShell>
         </PostHogProvider>
       </body>

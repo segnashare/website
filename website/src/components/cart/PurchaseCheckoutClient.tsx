@@ -618,7 +618,7 @@ export function PurchaseCheckoutClient() {
     billingReady
 
   const expressAppHref = `${SEGNA_APP_BASE_URL}/cart`
-  const expressCtaLabel = 'Livraison Express (coursier) sur l’app'
+  const expressCtaLabel = 'Livraison express (Télécharge Segna)'
 
   return (
     <main className={styles.page}>
@@ -1201,7 +1201,7 @@ export function PurchaseCheckoutClient() {
             onClick={() => {
               const href = catalogItemAppHref(items[0]?.id)
               trackWebsiteEvent('cta_clicked', {
-                cta_label: 'Segna X −20 % sur l’app',
+                cta_label: 'Profite de −20 %',
                 cta_href: href,
                 placement: 'purchase_checkout_member_discount_promo',
               })
@@ -1212,9 +1212,9 @@ export function PurchaseCheckoutClient() {
               })
             }}
           >
-            <p className={styles.appDiscountPromoTitle}>Membre Segna X ?</p>
+            <p className={styles.appDiscountPromoTitle}>Profite de −20 %</p>
             <p className={styles.appDiscountPromoSubtitle}>
-              Ta réduction de −20 % à l’achat est disponible uniquement sur l’app.
+              Vas sur l’app pour profiter des −20 % avec l’abonnement.
             </p>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img

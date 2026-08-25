@@ -49,6 +49,24 @@ export function SubscriptionRecapClient({wallItems}: Props) {
 
     void (async () => {
       try {
+        try {
+          if (sessionStorage.getItem('segna_password_recovery') === '1') {
+            sessionStorage.removeItem('segna_password_recovery')
+            router.replace('/reset-password')
+            return
+          }
+        } catch {
+          // ignore
+        }
+
+        const hash = window.location.hash.startsWith('#')
+          ? window.location.hash.slice(1)
+          : window.location.hash
+        if (new URLSearchParams(hash).get('type') === 'recovery') {
+          router.replace('/reset-password')
+          return
+        }
+
         const supabase = createSupabaseBrowserClient()
         const resume = await resolveCheckoutOnboardingResume(supabase)
         if (resume.status === 'resume') {
@@ -59,7 +77,7 @@ export function SubscriptionRecapClient({wallItems}: Props) {
         // rester sur le récap
       }
     })()
-  }, [])
+  }, [router])
 
   const buildAppHandoffUrl = useCallback(async (type: string): Promise<string> => {
     const supabase = createSupabaseBrowserClient()

@@ -78,6 +78,12 @@ export function ResetPasswordClient() {
           window.history.replaceState(null, '', window.location.pathname)
         }
 
+        try {
+          sessionStorage.removeItem('segna_password_recovery')
+        } catch {
+          // ignore
+        }
+
         const {data} = await supabase.auth.getSession()
         if (cancelled) return
         setSessionOk(Boolean(data.session))
