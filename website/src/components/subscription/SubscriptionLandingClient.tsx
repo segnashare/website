@@ -113,6 +113,15 @@ export function SubscriptionLandingClient() {
 
     void (async () => {
       try {
+        try {
+          if (sessionStorage.getItem('segna_password_recovery') === '1') {
+            sessionStorage.removeItem('segna_password_recovery')
+            router.replace('/reset-password')
+            return
+          }
+        } catch {
+          // ignore
+        }
         if (wantsCheckout && !oauthError) {
           const supabase = createSupabaseBrowserClient()
           const resume = await resolveCheckoutOnboardingResume(supabase)
@@ -126,7 +135,7 @@ export function SubscriptionLandingClient() {
         cleanUrl()
       }
     })()
-  }, [beginReady, openOnboardingResume])
+  }, [beginReady, openOnboardingResume, router])
 
   return (
     <div className={styles.main}>
