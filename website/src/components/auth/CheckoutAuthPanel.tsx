@@ -249,11 +249,10 @@ export function CheckoutAuthPanel({
         return
       }
 
-      // Website (panier / checkout / signup) : callback direct sur le site.
-      // Évite le détour app qui perd souvent `return_to` → atterrissage Site URL (homepage).
+      // Website (panier / checkout / signup) : callback direct, URL courte (allowlist Supabase).
+      // `next` est en sessionStorage + cookie (www / non-www) — pas dans redirectTo.
       storeWebsiteAuthNext(returnPath)
       const websiteCallback = new URL('/auth/callback', window.location.origin)
-      websiteCallback.searchParams.set('next', returnPath)
       const {error: oauthError} = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
