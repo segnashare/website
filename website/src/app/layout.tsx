@@ -39,7 +39,7 @@ export default function RootLayout({children}: Readonly<{children: React.ReactNo
   return (
     <html lang="fr" className={`${playfairDisplay.variable} ${montserrat.variable}`}>
       <body>
-        {/* Consent stack : pas dans <head> manuel — Next hoist beforeInteractive correctement. */}
+        {/* Consent : Consent Mode → Cookiebot (beforeInteractive). GA/PostHog gated côté client. */}
         <GoogleConsentModeDefault />
         <CookiebotScript />
         <GoogleAnalyticsHeadScripts />
