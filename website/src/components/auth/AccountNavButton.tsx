@@ -1,6 +1,5 @@
 'use client'
 
-import {redirectToAppWithSession} from '@/lib/auth/app-handoff'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import {useRouter} from 'next/navigation'
 import {useCallback, useEffect, useId, useRef, useState} from 'react'
@@ -146,16 +145,6 @@ export function AccountNavButton({className, tone = 'auto'}: Props) {
     }
   }, [open])
 
-  const goApp = useCallback(async (path: string) => {
-    setPending(true)
-    try {
-      await redirectToAppWithSession(path)
-    } finally {
-      setPending(false)
-      setOpen(false)
-    }
-  }, [])
-
   const signOut = useCallback(async () => {
     setPending(true)
     try {
@@ -240,7 +229,10 @@ export function AccountNavButton({className, tone = 'auto'}: Props) {
                 type="button"
                 className={styles.actionBtn}
                 disabled={pending}
-                onClick={() => void goApp('/exchange')}
+                onClick={() => {
+                  setOpen(false)
+                  router.push('/profil/commandes')
+                }}
               >
                 <OrdersIcon />
                 Mes commandes

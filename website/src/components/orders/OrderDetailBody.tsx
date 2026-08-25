@@ -6,6 +6,10 @@ import {
   SEGNA_APP_STORE_URL,
 } from '@/lib/catalog/catalog-app-links'
 import type {WebsiteOrderDetail} from '@/lib/orders/fetch-member-order-detail'
+import {
+  shipmentProgressActiveStepIndex,
+  shipmentProgressSteps,
+} from '@/lib/orders/shipment-progress'
 import {detectClientPlatform} from '@/lib/platform/client-platform'
 import {useCallback, useState} from 'react'
 import styles from './orderDetailPage.module.css'
@@ -55,8 +59,69 @@ function PackageIcon() {
   )
 }
 
+function ShipmentProgressBlock({order}: {order: WebsiteOrderDetail}) {
+  const progress = order.shipmentProgress
+  if (!progress) return null
+
+  const steps = shipmentProgressSteps(progress.deliveryKind)
+  const activeIndex = shipmentProgressActiveStepIndex(progress.status, progress.deliveryKind)
+  const completedCount = activeIndex == null ? steps.length : activeIndex
+
+  return (
+    <section className={styles.progressBlock} aria-label="Suivi de livraison">
+      <h2 className={styles.progressTitle}>{progress.title}</h2>
+      <p className={styles.progressEstimate}>{progress.scheduleLabel}</p>
+      {progress.showProgress ? (
+        <div
+          className={styles.progressBars}
+          aria-label={
+            activeIndex == null
+              ? 'Progression terminée'
+              : `Étape ${activeIndex + 1} sur ${steps.length}`
+          }
+        >
+          {steps.map((step, index) => {
+            const done = index < completedCount
+            const active = activeIndex != null && index === activeIndex
+            return (
+              <div
+                key={step.key}
+                className={`${styles.progressBar} ${done ? styles.progressBarDone : ''} ${
+                  active ? styles.progressBarActive : ''
+                }`}
+                style={{flex: step.weight}}
+              />
+            )
+          })}
+        </div>
+      ) : null}
+      <p className={styles.progressDetail}>{progress.detailLine}</p>
+      {progress.trackingNumber && !progress.trackingHref ? (
+        <p className={styles.trackingRef}>N° {progress.trackingNumber}</p>
+      ) : null}
+      {progress.trackingHref ? (
+        <a
+          className={styles.trackBtn}
+          href={progress.trackingHref}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {progress.trackingLabel}
+        </a>
+      ) : null}
+    </section>
+  )
+}
+
 function PurchaseDetail({order}: {order: WebsiteOrderDetail}) {
   const articleCount = order.lines.length
+  const addressTitle =
+    order.address?.kind === 'relay'
+      ? 'Point de livraison'
+      : order.address?.kind === 'home'
+        ? 'Adresse de livraison'
+        : 'Adresse de livraison'
+
   return (
     <>
       <div className={styles.metaRow}>
@@ -70,18 +135,28 @@ function PurchaseDetail({order}: {order: WebsiteOrderDetail}) {
         </div>
       </div>
 
+      <ShipmentProgressBlock order={order} />
+
+      {!order.shipmentProgress ? (
+        <div className={styles.statusBlock}>
+          <StatusCheckIcon />
+          <p className={styles.statusLabel}>{order.statusLabel}</p>
+        </div>
+      ) : null}
+
       <div className={styles.shipBox}>
         <PackageIcon />
         <p className={styles.shipText}>
           <strong>{order.orderTypeLabel}</strong>
           {' — '}
           {articleCount} article{articleCount > 1 ? 's' : ''}
+          {order.address?.methodTitle ? (
+            <>
+              <br />
+              <span className={styles.shipMethod}>{order.address.methodTitle}</span>
+            </>
+          ) : null}
         </p>
-      </div>
-
-      <div className={styles.statusBlock}>
-        <StatusCheckIcon />
-        <p className={styles.statusLabel}>{order.statusLabel}</p>
       </div>
 
       {order.lines.map((line) => (
@@ -105,12 +180,14 @@ function PurchaseDetail({order}: {order: WebsiteOrderDetail}) {
       {order.address ? (
         <section className={styles.section} aria-labelledby={`order-address-${order.cartId}`}>
           <h2 id={`order-address-${order.cartId}`} className={styles.sectionTitle}>
-            Adresse de livraison
+            {addressTitle}
           </h2>
-          <p className={styles.sectionHint}>
-            Si besoin, il vous est possible de changer l’adresse de livraison de votre commande avant
-            qu’elle ne soit en cours de préparation.
-          </p>
+          {order.address.kind === 'profile' ? (
+            <p className={styles.sectionHint}>
+              Si besoin, il vous est possible de changer l’adresse de livraison de votre commande avant
+              qu’elle ne soit en cours de préparation.
+            </p>
+          ) : null}
           <address className={styles.addressBlock}>
             {order.address.fullName}
             <br />
@@ -118,10 +195,30 @@ function PurchaseDetail({order}: {order: WebsiteOrderDetail}) {
             <br />
             {order.address.cityLine}
             <br />
-            {order.address.phone}
-            <br />
+            {order.address.phone !== '—' ? (
+              <>
+                {order.address.phone}
+                <br />
+              </>
+            ) : null}
             {order.address.country}
           </address>
+        </section>
+      ) : null}
+
+      {order.timeline.length > 0 ? (
+        <section className={styles.section} aria-labelledby={`order-timeline-${order.cartId}`}>
+          <h2 id={`order-timeline-${order.cartId}`} className={styles.sectionTitle}>
+            Suivi de la commande
+          </h2>
+          <ol className={styles.timeline}>
+            {order.timeline.map((entry, i) => (
+              <li key={`${entry.timeLabel}-${entry.label}-${i}`} className={styles.timelineItem}>
+                <span className={styles.timelineTime}>{entry.timeLabel}</span>
+                <span className={styles.timelineLabel}>{entry.label}</span>
+              </li>
+            ))}
+          </ol>
         </section>
       ) : null}
 
@@ -139,7 +236,9 @@ function PurchaseDetail({order}: {order: WebsiteOrderDetail}) {
         {order.shippingCents != null ? (
           <p className={styles.summaryRow}>
             <span>Livraison</span>
-            <span>{formatEuro(order.shippingCents)}</span>
+            <span>
+              {order.shippingCents === 0 ? 'Offerte' : formatEuro(order.shippingCents)}
+            </span>
           </p>
         ) : null}
         {order.totalCents != null ? (
@@ -152,7 +251,11 @@ function PurchaseDetail({order}: {order: WebsiteOrderDetail}) {
           <a className={styles.invoiceLink} href={order.invoiceUrl} target="_blank" rel="noopener noreferrer">
             Obtenir ma facture
           </a>
-        ) : null}
+        ) : (
+          <p className={styles.sectionHint} style={{marginTop: '1rem', marginBottom: 0}}>
+            La facture sera disponible dès que le paiement aura été finalisé.
+          </p>
+        )}
       </section>
     </>
   )
@@ -194,10 +297,14 @@ function LocationGate({order}: {order: WebsiteOrderDetail}) {
         </div>
       </div>
 
-      <div className={styles.statusBlock}>
-        <StatusCheckIcon />
-        <p className={styles.statusLabel}>{order.statusLabel}</p>
-      </div>
+      <ShipmentProgressBlock order={order} />
+
+      {!order.shipmentProgress ? (
+        <div className={styles.statusBlock}>
+          <StatusCheckIcon />
+          <p className={styles.statusLabel}>{order.statusLabel}</p>
+        </div>
+      ) : null}
 
       <div className={styles.locationCard}>
         <p className={styles.locationLead}>
@@ -220,7 +327,7 @@ function LocationGate({order}: {order: WebsiteOrderDetail}) {
   )
 }
 
-/** Corps détail commande (achat complet ou gate location) — pour accordéon ou page. */
+/** Corps détail commande (achat complet ou gate location) — pour page dédiée. */
 export function OrderDetailBody({order}: {order: WebsiteOrderDetail}) {
   if (order.orderKind === 'achat') {
     return <PurchaseDetail order={order} />

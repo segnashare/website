@@ -7,6 +7,7 @@ import {trackWebsiteEvent} from '@/lib/analytics/track'
 import {WEBSITE_SUBSCRIPTION_RECAP_PATH} from '@/lib/cart/paths'
 import {openIosAppOrAppStore, SEGNA_APP_BASE_URL} from '@/lib/catalog/catalog-app-links'
 import {detectClientPlatform, type ClientPlatform} from '@/lib/platform/client-platform'
+import {SEGNAX_COMPARE_ROWS} from '@/lib/subscription/segnax-compare'
 import type {RecapWallItem} from '@/lib/subscription/recap-wall-types'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import {useRouter} from 'next/navigation'
@@ -211,8 +212,118 @@ export function SubscriptionRecapClient({wallItems}: Props) {
     }
   }, [buildAppHandoffUrl, pending, platform])
 
+  const statusBlock =
+    activateError || activatedNote ? (
+      <p className={styles.status} role="status">
+        {activateError ??
+          'Impossible de lancer le checkout SegnaX. Réessaie dans un instant, ou connecte-toi à nouveau.'}
+      </p>
+    ) : null
+
+  const primaryCtaLabel = pending ? 'Préparation…' : 'Activer — 20 € le 1er mois'
+
   return (
     <div className={styles.page}>
+      {/* —— Mobile : UI/UX alignée page package app —— */}
+      <div className={styles.mobilePackage}>
+        <header className={styles.mobileHeader}>
+          <h1 className={styles.mobileTitle}>Deviens membre SegnaX</h1>
+          <p className={styles.mobileLead}>
+            Votre offre −50&nbsp;% est prête — commencez à louer dès aujourd’hui.
+          </p>
+        </header>
+
+        <div className={styles.mobileBody}>
+          <section className={styles.offerRail} aria-label="Offre SegnaX">
+            <div className={styles.offerRailTrack}>
+              <article className={styles.offerCard} aria-pressed="true">
+                <div className={styles.offerCardBadge}>−50&nbsp;% le 1er mois</div>
+                <div className={styles.offerCardBody}>
+                  <p className={styles.offerCardEyebrow}>SegnaX</p>
+                  <p className={styles.offerCardPrice}>20&nbsp;€</p>
+                  <p className={styles.offerCardDetail}>
+                    <strong>le 1er mois</strong>, puis 40&nbsp;€/mois · sans engagement
+                  </p>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section className={styles.compare} aria-labelledby="recap-compare-heading">
+            <h2 id="recap-compare-heading" className={styles.srOnly}>
+              Comparaison Guest et SegnaX
+            </h2>
+            <div className={styles.compareTable} role="table" aria-label="Comparaison Guest et SegnaX">
+              <div className={styles.compareRow} role="row">
+                <div className={styles.compareCorner} role="columnheader">
+                  <span className={styles.srOnly}>Critère</span>
+                </div>
+                <div className={styles.compareGuestHead} role="columnheader">
+                  Guest
+                </div>
+                <div className={styles.compareMemberHead} role="columnheader">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/brand/segnaX_logo_blanc.png"
+                    alt="SegnaX"
+                    className={styles.compareMemberLogo}
+                    width={120}
+                    height={39}
+                  />
+                </div>
+              </div>
+              {SEGNAX_COMPARE_ROWS.map((row, index) => {
+                const isLast = index === SEGNAX_COMPARE_ROWS.length - 1
+                return (
+                  <div key={row.label} className={styles.compareRow} role="row">
+                    <div
+                      className={`${styles.compareLabel}${isLast ? ` ${styles.compareCellLast}` : ''}`}
+                      role="rowheader"
+                    >
+                      {row.label}
+                    </div>
+                    <div
+                      className={`${styles.compareGuest}${isLast ? ` ${styles.compareCellLast}` : ''}`}
+                      role="cell"
+                    >
+                      {row.guest}
+                    </div>
+                    <div
+                      className={`${styles.compareMember}${isLast ? ` ${styles.compareMemberLast}` : ''}`}
+                      role="cell"
+                    >
+                      {row.member}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </section>
+
+          {statusBlock}
+        </div>
+
+        <footer className={styles.mobileFooter}>
+          <button
+            type="button"
+            className={styles.mobileCta}
+            disabled={pending}
+            onClick={() => void handleActivate()}
+          >
+            {primaryCtaLabel}
+          </button>
+          <button
+            type="button"
+            className={styles.mobileCancel}
+            disabled={pending}
+            onClick={() => void handleSecondaryCta()}
+          >
+            Continuer sans abonnement
+          </button>
+        </footer>
+      </div>
+
+      {/* —— Desktop : layout existant (panneau + mur) —— */}
       <div className={styles.shell}>
         <main className={styles.main}>
           <div className={styles.panel}>
@@ -258,7 +369,7 @@ export function SubscriptionRecapClient({wallItems}: Props) {
             </ul>
 
             <button type="button" className={styles.cta} disabled={pending} onClick={() => void handleActivate()}>
-              {pending ? 'Préparation…' : 'Activer — 20 € le 1er mois'}
+              {primaryCtaLabel}
             </button>
 
             <button
@@ -270,12 +381,7 @@ export function SubscriptionRecapClient({wallItems}: Props) {
               Continuer sans abonnement
             </button>
 
-            {activateError || activatedNote ? (
-              <p className={styles.status} role="status">
-                {activateError ??
-                  'Impossible de lancer le checkout SegnaX. Réessaie dans un instant, ou connecte-toi à nouveau.'}
-              </p>
-            ) : null}
+            {statusBlock}
           </div>
         </main>
 
@@ -298,7 +404,6 @@ export function SubscriptionRecapClient({wallItems}: Props) {
         onComplete={() => {
           setOnboardingEmail(null)
           setOnboardingInitialStep(1)
-          // Après tunnel → confirmation tél puis Stripe.
           void handleActivate()
         }}
       />

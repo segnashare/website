@@ -11,11 +11,25 @@ import styles from './purchaseCheckout.module.css'
 
 type ConfirmState = 'loading' | 'ready' | 'error'
 
+/** Webhook a souvent déjà confirmé avant la page succès — pas une vraie erreur. */
+function isAlreadyConfirmedRace(message: string): boolean {
+  return /requires checkout_pending \(got confirmed\)|already_confirmed|wallet debit/i.test(message)
+}
+
+function clearLocalCartSafely(): void {
+  try {
+    clearWebsiteCart()
+  } catch {
+    // ignore (private mode / quota)
+  }
+}
+
 export function PurchaseSuccessClient() {
   const searchParams = useSearchParams()
   const startedRef = useRef(false)
   const [state, setState] = useState<ConfirmState>('loading')
   const [error, setError] = useState<string | null>(null)
+  const [cartId, setCartId] = useState<string | null>(null)
 
   useEffect(() => {
     if (startedRef.current) return
@@ -23,14 +37,14 @@ export function PurchaseSuccessClient() {
 
     const sessionId = searchParams.get('session_id')?.trim() ?? ''
 
+    // Stripe ne redirige vers /panier/succes qu’après paiement.
+    // Vider le panier local tout de suite (badge + /panier), même si confirm
+    // échoue (race webhook, session expirée, réseau).
+    clearLocalCartSafely()
+
     void (async () => {
       if (!sessionId) {
         setState('ready')
-        try {
-          clearWebsiteCart()
-        } catch {
-          // ignore
-        }
         return
       }
 
@@ -58,22 +72,25 @@ export function PurchaseSuccessClient() {
           cartId?: string
         } | null
         if (!response.ok) {
-          throw new Error(payload?.message ?? 'Impossible de confirmer la commande.')
+          const msg = payload?.message ?? 'Impossible de confirmer la commande.'
+          if (isAlreadyConfirmedRace(msg)) {
+            if (payload?.cartId?.trim()) setCartId(payload.cartId.trim())
+            setState('ready')
+            return
+          }
+          throw new Error(msg)
         }
-        if (payload?.cartId) {
+        if (payload?.cartId?.trim()) {
+          const id = payload.cartId.trim()
+          setCartId(id)
           trackWebsiteEvent(
             'order_confirmed',
             {
-              cart_id: payload.cartId,
+              cart_id: id,
               checkout_mode: 'stripe',
             },
-            {insertId: `order_confirmed:${payload.cartId}`},
+            {insertId: `order_confirmed:${id}`},
           )
-        }
-        try {
-          clearWebsiteCart()
-        } catch {
-          // ignore
         }
         setState('ready')
       } catch (e) {
@@ -87,6 +104,8 @@ export function PurchaseSuccessClient() {
     return <WebsitePageLoading label="Confirmation du paiement" />
   }
 
+  const orderHref = cartId ? `/profil/commandes/${cartId}` : '/profil/commandes'
+
   return (
     <main className={styles.page}>
       <div className={styles.empty}>
@@ -94,7 +113,10 @@ export function PurchaseSuccessClient() {
           <>
             <h1 className={styles.title}>Commande confirmée</h1>
             <p className={styles.subtitle}>Merci ! Ton paiement a bien été enregistré.</p>
-            <Link href="/catalogue" className={styles.payBtn} style={{maxWidth: '16rem', textDecoration: 'none'}}>
+            <Link href={orderHref} className={styles.payBtn} style={{maxWidth: '16rem', textDecoration: 'none'}}>
+              Suivre ma commande
+            </Link>
+            <Link href="/catalogue" className={styles.backLink} style={{marginTop: '0.85rem'}}>
               Continuer vos achats
             </Link>
           </>
@@ -102,11 +124,15 @@ export function PurchaseSuccessClient() {
         {state === 'error' ? (
           <>
             <h1 className={styles.title}>Confirmation en cours</h1>
-            <p className={styles.formError}>{error}</p>
             <p className={styles.subtitle}>
-              Si tu as été débité, ta commande sera finalisée automatiquement sous peu.
+              {error && !/checkout_pending|wallet debit|Cart cannot|Forbidden:/i.test(error)
+                ? error
+                : 'Si tu as été débité, ta commande sera finalisée automatiquement sous peu.'}
             </p>
-            <Link href="/catalogue" className={styles.backLink}>
+            <Link href="/profil/commandes" className={styles.payBtn} style={{maxWidth: '16rem', textDecoration: 'none'}}>
+              Voir mes commandes
+            </Link>
+            <Link href="/catalogue" className={styles.backLink} style={{marginTop: '0.85rem'}}>
               Retour au catalogue
             </Link>
           </>
