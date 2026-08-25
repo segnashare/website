@@ -61,6 +61,23 @@ export function AuthCallbackClient() {
   useEffect(() => {
     let cancelled = false
 
+    // Rattrapage si detectSessionInUrl consomme le hash avant la lecture `type=recovery`.
+    const supabaseForRecovery = createSupabaseBrowserClient()
+    const {data: recoverySub} = supabaseForRecovery.auth.onAuthStateChange((event, session) => {
+      if (cancelled || event !== 'PASSWORD_RECOVERY') return
+      markPasswordRecovery()
+      const target = new URL('/reset-password', window.location.origin)
+      if (session?.access_token && session.refresh_token) {
+        target.hash = new URLSearchParams({
+          access_token: session.access_token,
+          refresh_token: session.refresh_token,
+          token_type: 'bearer',
+          type: 'recovery',
+        }).toString()
+      }
+      window.location.replace(`${target.pathname}${target.search}${target.hash}`)
+    })
+
     const run = async () => {
       const params = new URLSearchParams(window.location.search)
       const recoveryRedirect = isPasswordRecoveryRedirect()
@@ -119,10 +136,25 @@ export function AuthCallbackClient() {
           }
         }
 
-        if (recoveryRedirect || hashParams.get('type') === 'recovery') {
+        if (recoveryRedirect || hashParams.get('type') === 'recovery' || isPasswordRecoveryRedirect()) {
           if (cancelled) return
-          window.history.replaceState(null, '', '/reset-password')
-          router.replace('/reset-password')
+          markPasswordRecovery()
+          // Préserver les tokens dans le hash (router.replace les perd).
+          const target = new URL('/reset-password', window.location.origin)
+          const sessionTokens = await supabase.auth.getSession()
+          const access =
+            accessToken || sessionTokens.data.session?.access_token || null
+          const refresh =
+            refreshToken || sessionTokens.data.session?.refresh_token || null
+          if (access && refresh) {
+            target.hash = new URLSearchParams({
+              access_token: access,
+              refresh_token: refresh,
+              token_type: 'bearer',
+              type: 'recovery',
+            }).toString()
+          }
+          window.location.replace(`${target.pathname}${target.search}${target.hash}`)
           return
         }
 
@@ -158,6 +190,7 @@ export function AuthCallbackClient() {
     void run()
     return () => {
       cancelled = true
+      recoverySub.subscription.unsubscribe()
     }
   }, [router])
 
