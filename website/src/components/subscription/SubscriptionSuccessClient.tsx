@@ -11,6 +11,7 @@ import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import {useSearchParams} from 'next/navigation'
 import {useCallback, useEffect, useRef, useState} from 'react'
 import {WebsitePageLoading} from '@/components/ui/WebsitePageLoading'
+import {WaveDotsLoader} from '@/components/ui/WaveDotsLoader'
 import {trackWebsiteEvent} from '@/lib/analytics/track'
 import {RecapPiecesWall} from './RecapPiecesWall'
 import styles from './subscriptionRecap.module.css'
@@ -189,7 +190,7 @@ export function SubscriptionSuccessClient({wallItems}: Props) {
                     disabled={pending}
                     onClick={() => void handleDownloadApp()}
                   >
-                    {pending ? 'Redirection…' : 'Télécharger l’app'}
+                    {pending ? <WaveDotsLoader /> : 'Télécharger l’app'}
                   </button>
                 )}
 

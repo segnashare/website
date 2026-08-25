@@ -1,6 +1,7 @@
 'use client'
 
 import {RecapPiecesWall} from '@/components/subscription/RecapPiecesWall'
+import {WaveDotsLoader} from '@/components/ui/WaveDotsLoader'
 import {WebsitePageLoading} from '@/components/ui/WebsitePageLoading'
 import {mapAuthErrorMessage} from '@/lib/auth/map-auth-error'
 import {getSignUpPasswordError, isSignUpPasswordValid} from '@/lib/auth/password'
@@ -223,7 +224,7 @@ export function ResetPasswordClient() {
                         disabled={pending || !sessionOk || !passwordOk}
                         data-ready={passwordOk && sessionOk ? 'true' : 'false'}
                       >
-                        {pending ? 'Enregistrement…' : 'Enregistrer'}
+                        {pending ? <WaveDotsLoader /> : 'Enregistrer'}
                       </button>
                     </div>
                   </form>

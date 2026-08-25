@@ -9,6 +9,7 @@ import type {HomeCatalogSearchNav} from '@/lib/catalog/home-catalog-search-nav'
 import {heroTitlePlainText} from '@/lib/hero-title'
 import type {HomePageData} from '@/lib/sanity'
 import {HomeHeroActionBlock} from './HomeHeroActionBlock'
+import {HeroTrustpilotRating} from './HeroTrustpilotRating'
 import {homeHeroActionFromPage} from '@/lib/home-hero-action'
 import {visibleMobileMainNavItems} from '@/lib/mobileMainNav'
 import {AccountNavButton} from '@/components/auth/AccountNavButton'
@@ -231,6 +232,7 @@ export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeH
             </Link>
 
             <div className={styles.mobileHeaderActions}>
+              <AccountNavButton className={styles.navCartLink} tone="dark" />
               <CartNavLink className={styles.navCartLink} tone="dark" />
               <JoinClubCtaLink href={primaryHref} className={styles.mobileHeaderCta}>
                 {primaryLabel}
@@ -281,6 +283,21 @@ export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeH
                 {heroSubtitle}
               </motion.p>
             ) : null}
+            <motion.div
+              initial="hidden"
+              animate={contentAnimationState}
+              variants={{
+                hidden: {opacity: 0, y: 20},
+                visible: {opacity: 1, y: 0},
+              }}
+              transition={{
+                duration: shouldReduceMotion ? 0 : 0.68,
+                ease: [0.16, 1, 0.3, 1],
+                delay: shouldReduceMotion ? 0 : 1.35,
+              }}
+            >
+              <HeroTrustpilotRating />
+            </motion.div>
             <motion.div
               initial="hidden"
               animate={contentAnimationState}
@@ -348,6 +365,21 @@ export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeH
                 {heroSubtitle}
               </motion.p>
             ) : null}
+            <motion.div
+              initial="hidden"
+              animate={contentAnimationState}
+              variants={{
+                hidden: {opacity: 0, y: 20},
+                visible: {opacity: 1, y: 0},
+              }}
+              transition={{
+                duration: shouldReduceMotion ? 0 : 0.68,
+                ease: [0.16, 1, 0.3, 1],
+                delay: shouldReduceMotion ? 0 : 1.35,
+              }}
+            >
+              <HeroTrustpilotRating />
+            </motion.div>
             <motion.div
               initial="hidden"
               animate={contentAnimationState}

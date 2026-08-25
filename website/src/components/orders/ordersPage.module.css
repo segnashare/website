@@ -2,18 +2,52 @@
   width: 100%;
   max-width: 32rem;
   margin: 0 auto;
-  padding: calc(4.75rem + clamp(0.75rem, 2vw, 1.25rem)) clamp(1.15rem, 4vw, 1.5rem) clamp(3rem, 8vw, 5rem);
+  padding: calc(4.75rem + clamp(0.75rem, 2vw, 1.25rem)) clamp(1.15rem, 4vw, 1.5rem)
+    clamp(3rem, 8vw, 5rem);
   box-sizing: border-box;
 }
 
-@media (min-width: 1201px) {
-  .main {
-    padding: clamp(1.35rem, 4vw, 2.25rem) clamp(1.15rem, 4vw, 1.5rem) clamp(3rem, 8vw, 5rem);
-  }
+.layout {
+  display: grid;
+  gap: 1.15rem;
+  align-items: start;
 }
 
-.header {
-  margin-bottom: 1.15rem;
+.leftCol,
+.rightCol {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.panelCard {
+  padding: 1.15rem 1.1rem 1.25rem;
+  border: 1px solid #e4e4e7;
+  border-radius: 1rem;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.panelHeader {
+  margin-bottom: 1rem;
+}
+
+.back {
+  display: inline-flex;
+  margin: 0 0 0.65rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #71717a;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.back:hover {
+  color: #18181b;
 }
 
 .title {
@@ -24,6 +58,13 @@
   letter-spacing: -0.02em;
   color: #14110f;
   line-height: 1.15;
+}
+
+.statusTabsTwo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
 }
 
 .statusTabsThree {
@@ -75,7 +116,7 @@
   border-top: 0;
 }
 
-.card {
+.orderLink {
   display: block;
   width: 100%;
   margin: 0;
@@ -89,16 +130,6 @@
   cursor: pointer;
 }
 
-.expandPanel {
-  padding: 0 0 1.15rem;
-}
-
-.expandLoading {
-  display: flex;
-  justify-content: center;
-  padding: 1.5rem 0;
-}
-
 .cardTop {
   display: flex;
   align-items: flex-start;
@@ -106,7 +137,7 @@
   gap: 0.5rem;
 }
 
-.cardTitle {
+.orderTitle {
   margin: 0;
   font-size: 1.02rem;
   font-weight: 700;
@@ -216,8 +247,8 @@
   display: grid;
   justify-items: center;
   gap: 0.85rem;
-  margin: 1.5rem 0 0;
-  padding: 2.25rem 1rem 1.5rem;
+  margin: 0.5rem 0 0;
+  padding: 1.5rem 0.5rem 0.75rem;
   text-align: center;
 }
 
@@ -261,20 +292,113 @@
   background: #fafafa;
 }
 
-.back {
-  display: inline-flex;
-  margin: 0 0 0.85rem;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #71717a;
-  font: inherit;
-  font-size: 0.88rem;
+.summaryTitle {
+  margin: 0 0 1rem;
+  font-size: 1.05rem;
   font-weight: 600;
-  text-decoration: none;
-  cursor: pointer;
+  color: #14110f;
 }
 
-.back:hover {
-  color: #18181b;
+.summaryRows {
+  margin: 0 0 1rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.summaryRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0;
+  font-size: 0.92rem;
+  color: #3f3f46;
+}
+
+.summaryRow dt {
+  margin: 0;
+  font-weight: 500;
+}
+
+.summaryRow dd {
+  margin: 0;
+  font-weight: 700;
+  color: #14110f;
+}
+
+.summaryLead {
+  margin: 0 0 1.1rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: #71717a;
+}
+
+.catalogueLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 3.1rem;
+  padding: 0.75rem 1.15rem;
+  border-radius: 999px;
+  background: #14110f;
+  color: #fff;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.catalogueLink:hover {
+  background: #000;
+}
+
+/* Mobile : pas de colonne droite ni SegnaX / app promo (vue liste compacte). */
+.desktopOnly {
+  display: none;
+}
+
+@media (min-width: 901px) {
+  .main {
+    width: min(100%, 90rem);
+    max-width: none;
+    margin: 0 auto;
+    padding: clamp(1.25rem, 3vw, 2.5rem) clamp(1rem, 3.5vw, 2.5rem) 4.5rem;
+  }
+
+  .layout {
+    grid-template-columns: minmax(0, 1.55fr) minmax(18rem, 0.78fr);
+    gap: 1.25rem;
+  }
+
+  .desktopOnly {
+    display: contents;
+  }
+
+  .rightCol.desktopOnly {
+    display: block;
+  }
+
+  .rightSticky {
+    position: sticky;
+    top: 1.25rem;
+    display: grid;
+    gap: 1rem;
+  }
+
+  .panelCard {
+    padding: 1.25rem 1.2rem 1.35rem;
+  }
+}
+
+@media (min-width: 1201px) {
+  .main {
+    padding: clamp(1.25rem, 3vw, 2.5rem) clamp(1rem, 3.5vw, 2.5rem) 4.5rem;
+  }
+
+  .layout {
+    grid-template-columns: minmax(0, 1.7fr) minmax(20rem, 0.72fr);
+  }
 }

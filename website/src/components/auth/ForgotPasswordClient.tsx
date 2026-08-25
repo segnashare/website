@@ -1,6 +1,7 @@
 'use client'
 
 import {RecapPiecesWall} from '@/components/subscription/RecapPiecesWall'
+import {WaveDotsLoader} from '@/components/ui/WaveDotsLoader'
 import {RECAP_WALL_ITEMS} from '@/lib/subscription/recap-wall-items'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import Link from 'next/link'
@@ -135,7 +136,7 @@ export function ForgotPasswordClient() {
 
                   <div className={styles.footerPage}>
                     <button type="submit" className={styles.submitBtnPage} disabled={pending}>
-                      {pending ? 'Envoi…' : 'Envoyer le lien'}
+                      {pending ? <WaveDotsLoader /> : 'Envoyer le lien'}
                     </button>
                   </div>
                 </form>

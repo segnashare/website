@@ -222,7 +222,7 @@ export function ProfileReferralCard({referralCode}: Props) {
                       strokeLinecap="round"
                     />
                   </svg>
-                  Share
+                  <span className={styles.referralShareBtnLabel}>Share</span>
                 </button>
               </div>
             </div>

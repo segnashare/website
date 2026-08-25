@@ -9,6 +9,7 @@ import {openIosAppOrAppStore, SEGNA_APP_BASE_URL} from '@/lib/catalog/catalog-ap
 import {detectClientPlatform, type ClientPlatform} from '@/lib/platform/client-platform'
 import {SEGNAX_COMPARE_ROWS} from '@/lib/subscription/segnax-compare'
 import type {RecapWallItem} from '@/lib/subscription/recap-wall-types'
+import {WaveDotsLoader} from '@/components/ui/WaveDotsLoader'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import {useRouter} from 'next/navigation'
 import {useCallback, useEffect, useRef, useState} from 'react'
@@ -220,7 +221,7 @@ export function SubscriptionRecapClient({wallItems}: Props) {
       </p>
     ) : null
 
-  const primaryCtaLabel = pending ? 'Préparation…' : 'Activer — 20 € le 1er mois'
+  const primaryCtaContent = pending ? <WaveDotsLoader /> : 'Activer — 20 € le 1er mois'
 
   return (
     <div className={styles.page}>
@@ -310,7 +311,7 @@ export function SubscriptionRecapClient({wallItems}: Props) {
             disabled={pending}
             onClick={() => void handleActivate()}
           >
-            {primaryCtaLabel}
+            {primaryCtaContent}
           </button>
           <button
             type="button"
@@ -369,7 +370,7 @@ export function SubscriptionRecapClient({wallItems}: Props) {
             </ul>
 
             <button type="button" className={styles.cta} disabled={pending} onClick={() => void handleActivate()}>
-              {primaryCtaLabel}
+              {primaryCtaContent}
             </button>
 
             <button

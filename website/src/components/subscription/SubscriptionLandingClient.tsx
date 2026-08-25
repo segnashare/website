@@ -9,6 +9,7 @@ import {hasActivePaidSubscription} from '@/lib/auth/has-active-subscription'
 import {WEBSITE_SUBSCRIPTION_PATH, WEBSITE_SUBSCRIPTION_RECAP_PATH} from '@/lib/cart/paths'
 import {SEGNA_APP_BASE_URL} from '@/lib/catalog/catalog-app-links'
 import {SEGNAX_COMPARE_ROWS} from '@/lib/subscription/segnax-compare'
+import {WaveDotsLoader} from '@/components/ui/WaveDotsLoader'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import {useRouter} from 'next/navigation'
 import styles from './subscriptionLanding.module.css'
@@ -161,7 +162,7 @@ export function SubscriptionLandingClient() {
             <li>−20&nbsp;% sur l&apos;achat des pièces</li>
           </ul>
           <button type="button" className={styles.primaryCta} disabled={pending} onClick={() => void handleCta()}>
-            {pending ? 'Chargement…' : 'Commencer — 20 € le 1er mois'}
+            {pending ? <WaveDotsLoader /> : 'Commencer — 20 € le 1er mois'}
           </button>
           <p className={styles.offerFine}>
             Puis 40&nbsp;€/mois. Résiliable depuis l&apos;app. Le suivi des locations se fait sur Segna.
@@ -218,7 +219,7 @@ export function SubscriptionLandingClient() {
           </li>
         </ol>
         <button type="button" className={styles.primaryCta} disabled={pending} onClick={() => void handleCta()}>
-          {pending ? 'Chargement…' : 'Activer — −50 % le 1er mois'}
+          {pending ? <WaveDotsLoader /> : 'Activer — −50 % le 1er mois'}
         </button>
       </section>
 

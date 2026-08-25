@@ -7,6 +7,7 @@ import {getSignUpPasswordError, isSignUpPasswordValid} from '@/lib/auth/password
 import {storeWebsiteAuthNext} from '@/lib/auth/website-auth-next'
 import {trackWebsiteEvent, trackWebsiteSignupOnce} from '@/lib/analytics/track'
 import {SEGNA_APP_BASE_URL} from '@/lib/catalog/catalog-app-links'
+import {WaveDotsLoader} from '@/components/ui/WaveDotsLoader'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import Link from 'next/link'
 import {useCallback, useEffect, useId, useState, type FormEvent, type ReactNode} from 'react'
@@ -633,7 +634,7 @@ export function CheckoutAuthPanel({
           </button>
         ) : null}
         <button type="submit" className={isPage ? styles.submitBtnPage : styles.submitBtn} disabled={pending}>
-          {pending ? 'Envoi…' : isPage ? 'Continuer avec mon email' : 'Créer un compte'}
+          {pending ? <WaveDotsLoader /> : isPage ? 'Continuer avec mon email' : 'Créer un compte'}
         </button>
       </div>
     </form>
@@ -707,7 +708,7 @@ export function CheckoutAuthPanel({
           data-ready={passwordOk ? 'true' : 'false'}
           aria-disabled={!passwordOk || pending}
         >
-          {pending ? 'Envoi du code…' : 'Continuer'}
+          {pending ? <WaveDotsLoader /> : 'Continuer'}
         </button>
       </div>
     </form>
@@ -782,7 +783,7 @@ export function CheckoutAuthPanel({
           </button>
         ) : null}
         <button type="submit" className={isPage ? styles.submitBtnPage : styles.submitBtn} disabled={pending}>
-          {pending ? 'Connexion…' : 'Se connecter'}
+          {pending ? <WaveDotsLoader /> : 'Se connecter'}
         </button>
       </div>
 

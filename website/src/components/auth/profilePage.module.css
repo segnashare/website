@@ -5,16 +5,13 @@
   /* Mobile : header fixe ~4.5rem — évite que le titre passe dessous */
   padding: calc(4.75rem + clamp(0.75rem, 2vw, 1.25rem)) clamp(1.15rem, 4vw, 1.5rem) clamp(3rem, 8vw, 5rem);
   box-sizing: border-box;
-}
-
-@media (min-width: 1201px) {
-  .main {
-    padding: clamp(1.35rem, 4vw, 2.25rem) clamp(1.15rem, 4vw, 1.5rem) clamp(3rem, 8vw, 5rem);
-  }
+  overflow-x: clip;
 }
 
 .header {
-  margin-bottom: 1.75rem;
+  margin: 0 0 1.25rem;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .title {
@@ -24,10 +21,35 @@
   letter-spacing: -0.025em;
   color: #18181b;
   line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  gap: 1.25rem;
+  align-items: start;
+  justify-items: stretch;
+  overflow-x: clip;
 }
 
 .section {
-  margin: 0 0 1.65rem;
+  margin: 0;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.rightCol {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  overflow-x: clip;
 }
 
 .list {
@@ -72,6 +94,23 @@
   flex: 1;
 }
 
+.rowBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  margin-right: 0.35rem;
+  padding: 0 0.32rem;
+  border-radius: 999px;
+  background: #111;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1;
+  box-sizing: border-box;
+}
+
 .chevron {
   flex-shrink: 0;
   width: 1.05rem;
@@ -93,13 +132,21 @@
 .referralBlock {
   display: grid;
   gap: 0.65rem;
-  margin: 0.35rem 0 1.35rem;
+  margin: 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .referralOuter {
   margin: 0;
   padding: 1px;
   border-radius: 1.5rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
   background-image: linear-gradient(
     105deg,
     #b9b9c2 0%,
@@ -124,6 +171,8 @@
 
 .referralInner {
   overflow: hidden;
+  max-width: 100%;
+  min-width: 0;
   border-radius: calc(1.5rem - 1px);
   background: #fff;
   box-shadow:
@@ -143,6 +192,7 @@
   aspect-ratio: 2.35 / 1;
   border-radius: 1.35rem;
   object-fit: cover;
+  object-position: top center;
   box-shadow: 0 1px 2px rgb(24 24 27 / 0.06);
 }
 
@@ -154,6 +204,8 @@
   display: grid;
   gap: 1rem;
   padding: 0 1.15rem 1.35rem;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .referralHeader {
@@ -193,6 +245,8 @@
 .referralLinkBlock {
   display: grid;
   gap: 0.35rem;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .referralLinkLabel {
@@ -208,11 +262,15 @@
   display: flex;
   align-items: center;
   gap: 0.25rem;
+  min-width: 0;
+  max-width: 100%;
   min-height: 2.75rem;
   padding: 0.2rem 0.2rem 0.2rem 0.4rem;
   border-radius: 999px;
   background: #e4e4e7;
   box-shadow: inset 0 0 0 1px rgb(212 212 216 / 0.8);
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .referralIconBtn {
@@ -274,13 +332,76 @@
   background: #000;
 }
 
+/* Mobile : la carte desktop (bannière 2.35:1 + gaps généreux) écrase le profil */
+@media (max-width: 640px) {
+  .referralBlock {
+    margin: 0;
+  }
+
+  .referralOuter {
+    border-radius: 1.15rem;
+  }
+
+  .referralInner {
+    border-radius: calc(1.15rem - 1px);
+  }
+
+  .referralBannerWrap {
+    padding: 0.75rem 0.75rem 0.55rem;
+  }
+
+  .referralBanner,
+  .referralBannerImg {
+    min-height: 0;
+    max-height: 5.5rem;
+    aspect-ratio: 3.2 / 1;
+    border-radius: 0.9rem;
+  }
+
+  .referralBody {
+    gap: 0.65rem;
+    padding: 0 0.85rem 0.95rem;
+  }
+
+  .referralTitle {
+    font-size: 1.05rem;
+  }
+
+  .referralLead {
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  .referralSteps {
+    gap: 0.35rem;
+    font-size: 0.76rem;
+    padding-left: 1rem;
+  }
+
+  .referralLinkRow {
+    min-height: 2.4rem;
+  }
+
+  .referralShareBtn {
+    padding: 0.4rem 0.55rem;
+    font-size: 0.76rem;
+    gap: 0;
+  }
+
+  .referralShareBtnLabel {
+    display: none;
+  }
+}
+
 /* —— Avis Trustpilot / Google —— */
 .reviewRow {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 0.65rem;
   width: 100%;
+  max-width: 100%;
   min-width: 0;
+  box-sizing: border-box;
 }
 
 .reviewCard {
@@ -289,6 +410,7 @@
   justify-content: center;
   gap: 0.5rem;
   min-width: 0;
+  max-width: 100%;
   height: 3.5rem;
   padding: 0 0.65rem;
   border: 1px solid #e4e4e7;
@@ -297,6 +419,7 @@
   color: #18181b;
   text-decoration: none;
   box-shadow: 0 1px 2px rgb(24 24 27 / 0.06);
+  box-sizing: border-box;
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease,
@@ -327,19 +450,15 @@
   line-height: 1.2;
 }
 
-/* —— Actions bas de page —— */
-.footer {
-  display: grid;
-  gap: 0.75rem;
-  margin-top: 0.35rem;
-  padding-top: 0.5rem;
-}
-
+/* —— Actions —— */
 .signOut {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
+  justify-self: stretch;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   min-height: 3rem;
   margin: 0;
   padding: 0.75rem 1.15rem;
@@ -351,6 +470,7 @@
   font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
+  box-sizing: border-box;
 }
 
 .signOut:disabled {
@@ -366,7 +486,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-self: stretch;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   margin: 0;
   padding: 1.15rem 1.1rem 1.2rem;
   border: 0;
@@ -398,10 +521,12 @@
 
 .appDownloadSubtitle {
   margin: 0 0 0.85rem;
+  max-width: 100%;
   font-size: 0.86rem;
   font-weight: 400;
   line-height: 1.4;
   color: rgb(255 255 255 / 0.78);
+  overflow-wrap: anywhere;
 }
 
 .appDownloadBadge {
@@ -410,4 +535,52 @@
   height: 2.5rem;
   max-width: 100%;
   object-fit: contain;
+}
+
+@media (min-width: 901px) {
+  .main {
+    width: min(100%, 90rem);
+    max-width: none;
+    padding: clamp(1.25rem, 3vw, 2.5rem) clamp(1rem, 3.5vw, 2.5rem) 4.5rem;
+  }
+
+  .header {
+    margin-bottom: 1.75rem;
+  }
+
+  .layout {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    gap: 1.5rem 2.25rem;
+    align-items: start;
+    overflow: visible;
+  }
+
+  .section {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .signOut {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: start;
+    max-width: 22rem;
+  }
+
+  .rightCol {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    gap: 1rem;
+    position: sticky;
+    top: 1.25rem;
+  }
+}
+
+@media (min-width: 1201px) {
+  .layout {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: 2rem 3rem;
+    max-width: 68rem;
+  }
 }

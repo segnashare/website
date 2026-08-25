@@ -7,6 +7,7 @@ import type {HomeCatalogSearchNav} from '@/lib/catalog/home-catalog-search-nav'
 import type {HomeHeroStagedInfoItem, HomePageData} from '@/lib/sanity'
 import {urlFor} from '@/lib/sanity'
 import {HomeHeroActionBlock} from './HomeHeroActionBlock'
+import {HeroTrustpilotRating} from './HeroTrustpilotRating'
 import {homeHeroActionFromPage} from '@/lib/home-hero-action'
 import {StagedHeroCycle} from './StagedHeroCycle'
 import {SiteNavChrome} from './SiteNavChrome'
@@ -121,6 +122,21 @@ export function HomeStagedHero({homePage, catalogSearchNav}: Props) {
                   {heroSubtitle}
                 </motion.p>
               ) : null}
+              <motion.div
+                initial="hidden"
+                animate={contentAnimationState}
+                variants={{
+                  hidden: {opacity: 0, y: 16},
+                  visible: {opacity: 1, y: 0},
+                }}
+                transition={{
+                  duration: shouldReduceMotion ? 0 : 0.65,
+                  ease: [0.16, 1, 0.3, 1],
+                  delay: shouldReduceMotion ? 0 : 0.11,
+                }}
+              >
+                <HeroTrustpilotRating />
+              </motion.div>
             </div>
 
             <motion.div

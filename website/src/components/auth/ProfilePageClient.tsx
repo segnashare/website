@@ -12,6 +12,12 @@ import {
 } from '@/lib/catalog/catalog-app-links'
 import {detectClientPlatform} from '@/lib/platform/client-platform'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
+import {
+  getWebsiteOrderBadgeCount,
+  setWebsiteOrderBadgeCount,
+  subscribeWebsiteOrderBadge,
+} from '@/lib/orders/website-order-badge'
+import {fetchOngoingPurchaseOrderCount} from '@/lib/orders/fetch-ongoing-purchase-count'
 import Link from 'next/link'
 import {useRouter} from 'next/navigation'
 import {useCallback, useEffect, useState} from 'react'
@@ -46,16 +52,26 @@ function NavRow({
   disabled,
   onClick,
   href,
+  badgeCount,
 }: {
   label: string
   disabled?: boolean
   onClick?: () => void
   href?: string
+  badgeCount?: number
 }) {
+  const badge =
+    badgeCount && badgeCount > 0 ? (
+      <span className={styles.rowBadge} aria-hidden>
+        {badgeCount > 9 ? '9+' : badgeCount}
+      </span>
+    ) : null
+
   if (href) {
     return (
       <Link href={href} className={styles.row}>
         <span className={styles.rowLabel}>{label}</span>
+        {badge}
         <ChevronIcon />
       </Link>
     )
@@ -64,6 +80,7 @@ function NavRow({
   return (
     <button type="button" className={styles.row} disabled={disabled} onClick={onClick}>
       <span className={styles.rowLabel}>{label}</span>
+      {badge}
       <ChevronIcon />
     </button>
   )
@@ -74,6 +91,13 @@ export function ProfilePageClient() {
   const [loading, setLoading] = useState(true)
   const [pending, setPending] = useState(false)
   const [profile, setProfile] = useState<ProfileState | null>(null)
+  const [orderBadge, setOrderBadge] = useState(0)
+
+  useEffect(() => {
+    const sync = () => setOrderBadge(getWebsiteOrderBadgeCount())
+    sync()
+    return subscribeWebsiteOrderBadge(sync)
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -88,12 +112,15 @@ export function ProfilePageClient() {
           return
         }
 
-        const [{data: member}, {data: referral}] = await Promise.all([
+        const [{data: member}, {data: referral}, ongoingCount] = await Promise.all([
           supabase.from('users').select('first_name, last_name').eq('id', user.id).maybeSingle(),
           supabase.from('referrals_codes').select('code').eq('user_id', user.id).maybeSingle(),
+          fetchOngoingPurchaseOrderCount(supabase, user.id),
         ])
 
         if (cancelled) return
+
+        setWebsiteOrderBadgeCount(ongoingCount)
 
         const m = member as {first_name?: string | null; last_name?: string | null} | null
         const code =
@@ -180,50 +207,61 @@ export function ProfilePageClient() {
         <h1 className={styles.title}>{displayName || 'Mon profil'}</h1>
       </header>
 
-      <section className={styles.section} aria-label="Mon compte">
-        <ul className={styles.list}>
-          <li>
-            <NavRow label="Commandes & retours" href="/profil/commandes" />
-          </li>
-          <li>
-            <NavRow
-              label="Détails et sécurité"
-              disabled={pending}
-              onClick={() => void goApp('/profile/settings')}
+      <div className={styles.layout}>
+        <section className={styles.section} aria-label="Mon compte">
+          <ul className={styles.list}>
+            <li>
+              <NavRow
+                label="Commandes"
+                href="/profil/commandes"
+                badgeCount={orderBadge}
+              />
+            </li>
+            <li>
+              <NavRow
+                label="Détails et sécurité"
+                disabled={pending}
+                onClick={() => void goApp('/profile/settings')}
+              />
+            </li>
+            <li>
+              <NavRow label="Préférences et communications" href="/profil/preferences" />
+            </li>
+          </ul>
+        </section>
+
+        <div className={styles.rightCol}>
+          <ProfileReferralCard referralCode={profile.referralCode} />
+
+          <button
+            type="button"
+            className={styles.appDownload}
+            disabled={pending}
+            onClick={() => void downloadApp()}
+          >
+            <span className={styles.appDownloadTitle}>Télécharger l’app</span>
+            <span className={styles.appDownloadSubtitle}>
+              Louez vos pièces, renouvelez quand vous voulez, et profitez d’avantages à l’achat.
+            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/brand/app-store-badge.png"
+              alt="Download on the App Store"
+              className={styles.appDownloadBadge}
+              width={180}
+              height={52}
+              decoding="async"
             />
-          </li>
-          <li>
-            <NavRow label="Préférences et communications" href="/profil/preferences" />
-          </li>
-        </ul>
-      </section>
-
-      <ProfileReferralCard referralCode={profile.referralCode} />
-
-      <div className={styles.footer}>
-        <button type="button" className={styles.signOut} disabled={pending} onClick={() => void signOut()}>
-          Se déconnecter
-        </button>
+          </button>
+        </div>
 
         <button
           type="button"
-          className={styles.appDownload}
+          className={styles.signOut}
           disabled={pending}
-          onClick={() => void downloadApp()}
+          onClick={() => void signOut()}
         >
-          <span className={styles.appDownloadTitle}>Télécharger l’app</span>
-          <span className={styles.appDownloadSubtitle}>
-            Louez vos pièces, renouvelez quand vous voulez, et profitez d’avantages à l’achat.
-          </span>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/brand/app-store-badge.png"
-            alt="Download on the App Store"
-            className={styles.appDownloadBadge}
-            width={180}
-            height={52}
-            decoding="async"
-          />
+          Se déconnecter
         </button>
       </div>
     </main>

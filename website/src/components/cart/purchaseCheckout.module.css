@@ -573,6 +573,13 @@
   .headerRow {
     flex-direction: column;
     align-items: stretch;
+    justify-content: flex-start;
+    /* Keep CTA tight under the subtitle (row flex-basis must not become vertical) */
+    gap: 0.5rem;
+  }
+
+  .headerText {
+    flex: 0 1 auto;
   }
 
   .expressAppCta {

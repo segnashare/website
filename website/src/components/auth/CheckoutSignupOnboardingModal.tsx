@@ -18,6 +18,7 @@ import {APPAREL_SIZE_BANDS} from '@/lib/catalog/apparel-size-referential'
 import {buildMapEmbedSrc, getDefaultMapCenter} from '@/lib/maps/google-maps-embed'
 import {normalizeFrenchLocalNumber} from '@/lib/phone/fr-mobile'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
+import {WaveDotsLoader} from '@/components/ui/WaveDotsLoader'
 import {trackWebsiteEvent} from '@/lib/analytics/track'
 import type {User} from '@supabase/supabase-js'
 import {useCallback, useEffect, useId, useRef, useState, type FormEvent} from 'react'
@@ -1057,7 +1058,7 @@ export function CheckoutSignupOnboardingModal({
             className={styles.nextBtn}
             disabled={!canContinue}
           >
-            {pending ? '…' : step === 4 ? 'Terminer' : 'Suivant'}
+            {pending ? <WaveDotsLoader /> : step === 4 ? 'Terminer' : 'Suivant'}
           </button>
         </div>
       </div>

@@ -3,6 +3,7 @@
 import {useEffect, useMemo, useRef, useState, useTransition} from 'react'
 import Link from 'next/link'
 import {CatalogGridCardMedia} from '@/components/catalog/CatalogGridCardMedia'
+import {WaveDotsLoader} from '@/components/ui/WaveDotsLoader'
 import {catalogItemPagePath} from '@/lib/catalog/catalog-app-links'
 import {formatCatalogPurchasePriceShort} from '@/lib/catalog/catalog-borrow-price-label'
 import type {MarketingCatalogGridItem} from '@/lib/catalog/marketing-catalog-items'
@@ -203,7 +204,7 @@ export function ShuffleBasketClient({heading, intro, ctaLabel}: Props) {
             onClick={reshuffle}
             disabled={!ready || pending || pool.length === 0}
           >
-            {pending ? 'Tirage…' : label}
+            {pending ? <WaveDotsLoader /> : label}
           </button>
           {ready && basket.length > 0 ? (
             <p className={styles.meta} aria-live="polite">

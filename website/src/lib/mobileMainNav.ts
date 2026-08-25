@@ -13,7 +13,6 @@ export const MOBILE_MAIN_NAV_ITEMS: MobileMainNavItem[] = [
   {_key: 'catalogue', label: 'Catalogue', href: '/catalogue'},
   {_key: 'panier', label: 'Panier', href: '/panier'},
   {_key: 'newsroom', label: 'Newsroom', href: '/newsroom'},
-  {_key: 'profil', label: 'Profil', href: '/profil'},
 ]
 
 function hrefPathname(href: string): string {

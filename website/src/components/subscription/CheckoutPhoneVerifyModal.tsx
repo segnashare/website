@@ -8,6 +8,7 @@ import {ANALYTICS_SURFACES} from '@segna/analytics'
 import {trackWebsiteEvent} from '@/lib/analytics/track'
 import {formatFrenchPhoneDisplay, normalizeFrenchLocalNumber, normalizeFrenchPhoneToE164} from '@/lib/phone/fr-mobile'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
+import {WaveDotsLoader} from '@/components/ui/WaveDotsLoader'
 import {useCallback, useEffect, useId, useRef, useState, type FormEvent} from 'react'
 import {createPortal} from 'react-dom'
 import styles from '@/components/auth/checkoutSignupOnboardingModal.module.css'
@@ -285,7 +286,7 @@ export function CheckoutPhoneVerifyModal({open, initialPhoneE164, onClose, onVer
                 : otp.replace(/\D/g, '').length !== OTP_LENGTH)
             }
           >
-            {pending ? '…' : editingPhone ? 'Envoyer le code' : 'Confirmer et continuer'}
+            {pending ? <WaveDotsLoader /> : editingPhone ? 'Envoyer le code' : 'Confirmer et continuer'}
           </button>
         </div>
       </div>

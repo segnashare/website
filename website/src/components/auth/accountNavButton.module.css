@@ -129,6 +129,52 @@
   border-color: #a81f1f;
 }
 
+.badge {
+  position: absolute;
+  top: -0.05rem;
+  right: -0.1rem;
+  z-index: 2;
+  min-width: 1.05rem;
+  height: 1.05rem;
+  padding: 0 0.28rem;
+  border-radius: 999px;
+  background: #111;
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1.05rem;
+  text-align: center;
+  box-sizing: border-box;
+  box-shadow: 0 0 0 1.5px #fff;
+  pointer-events: none;
+}
+
+.badgeOnDark {
+  box-shadow: 0 0 0 1.5px #1c1917;
+}
+
+.actionLabel {
+  flex: 1;
+  text-align: left;
+}
+
+.actionBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  margin-left: auto;
+  padding: 0 0.32rem;
+  border-radius: 999px;
+  background: #111;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1;
+  box-sizing: border-box;
+}
+
 .actionIcon {
   display: inline-flex;
   width: 1.15rem;

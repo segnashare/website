@@ -166,6 +166,7 @@ export function SiteNavChrome({
         </Link>
 
         <div className={styles.mobileHeaderActions}>
+          <AccountNavButton className={styles.navCartLink} tone="dark" />
           <CartNavLink className={styles.navCartLink} tone="dark" />
           <JoinClubCtaLink href={primaryHref} className={styles.mobileHeaderCta}>
             {primaryLabel}

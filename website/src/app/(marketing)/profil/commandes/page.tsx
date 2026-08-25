@@ -6,8 +6,8 @@ import {WebsitePageLoading} from '@/components/ui/WebsitePageLoading'
 import {getHomePageData, getWebsiteHeaderNav} from '@/lib/sanity'
 
 export const metadata: Metadata = {
-  title: 'Commandes & retours | Segna',
-  description: 'Suis tes commandes en cours, ton historique et tes retours Segna.',
+  title: 'Commandes | Segna',
+  description: 'Suis tes commandes d’achat en cours et ton historique Segna.',
 }
 
 export const revalidate = 86400

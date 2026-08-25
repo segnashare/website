@@ -1,8 +1,10 @@
 'use client'
 
+import {OrderSuccessDownloadAppModal} from '@/components/cart/OrderSuccessDownloadAppModal'
 import {WebsitePageLoading} from '@/components/ui/WebsitePageLoading'
 import {trackWebsiteEvent} from '@/lib/analytics/track'
 import {clearWebsiteCart} from '@/lib/cart/website-cart'
+import {bumpWebsiteOrderBadge} from '@/lib/orders/website-order-badge'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import Link from 'next/link'
 import {useSearchParams} from 'next/navigation'
@@ -30,6 +32,11 @@ export function PurchaseSuccessClient() {
   const [state, setState] = useState<ConfirmState>('loading')
   const [error, setError] = useState<string | null>(null)
   const [cartId, setCartId] = useState<string | null>(null)
+  const [appModalOpen, setAppModalOpen] = useState(false)
+
+  useEffect(() => {
+    if (state === 'ready') setAppModalOpen(true)
+  }, [state])
 
   useEffect(() => {
     if (startedRef.current) return
@@ -74,7 +81,11 @@ export function PurchaseSuccessClient() {
         if (!response.ok) {
           const msg = payload?.message ?? 'Impossible de confirmer la commande.'
           if (isAlreadyConfirmedRace(msg)) {
-            if (payload?.cartId?.trim()) setCartId(payload.cartId.trim())
+            if (payload?.cartId?.trim()) {
+              const id = payload.cartId.trim()
+              setCartId(id)
+              bumpWebsiteOrderBadge(id)
+            }
             setState('ready')
             return
           }
@@ -83,6 +94,7 @@ export function PurchaseSuccessClient() {
         if (payload?.cartId?.trim()) {
           const id = payload.cartId.trim()
           setCartId(id)
+          bumpWebsiteOrderBadge(id)
           trackWebsiteEvent(
             'order_confirmed',
             {
@@ -105,6 +117,7 @@ export function PurchaseSuccessClient() {
   }
 
   const orderHref = cartId ? `/profil/commandes/${cartId}` : '/profil/commandes'
+  const appNextPath = cartId ? `/commande/${cartId}` : '/profile'
 
   return (
     <main className={styles.page}>
@@ -138,6 +151,12 @@ export function PurchaseSuccessClient() {
           </>
         ) : null}
       </div>
+
+      <OrderSuccessDownloadAppModal
+        open={appModalOpen && state === 'ready'}
+        onClose={() => setAppModalOpen(false)}
+        appNextPath={appNextPath}
+      />
     </main>
   )
 }

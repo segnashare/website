@@ -8,7 +8,10 @@ import {
 import {getCheckoutPhoneState} from '@/lib/auth/checkout-phone'
 import {savePurchaseCheckoutDelivery} from '@/lib/auth/checkout-onboarding-persist'
 import {CartPaymentMethodsRow} from '@/components/cart/CartPaymentMethodsRow'
+import {WaveDotsLoader} from '@/components/ui/WaveDotsLoader'
 import {WebsitePageLoading} from '@/components/ui/WebsitePageLoading'
+import {clearWebsiteCart} from '@/lib/cart/website-cart'
+import {bumpWebsiteOrderBadge} from '@/lib/orders/website-order-badge'
 import {syncAndReserveWebsiteCartForCheckout} from '@/lib/cart/sync-website-cart-for-checkout'
 import {
   catalogPurchasePriceCents,
@@ -586,6 +589,21 @@ export function PurchaseCheckoutClient() {
         return
       }
 
+      try {
+        clearWebsiteCart()
+      } catch {
+        // ignore
+      }
+      try {
+        const target = new URL(checkoutPayload.url, window.location.origin)
+        const fromPath = target.pathname.match(/\/profil\/commandes\/([^/]+)/)?.[1]
+        const fromQuery = target.searchParams.get('cart_id')?.trim()
+        const cartId = (fromPath || fromQuery || '').trim()
+        if (cartId) bumpWebsiteOrderBadge(cartId)
+      } catch {
+        // ignore
+      }
+
       window.location.href = checkoutPayload.url
       return
     } catch {
@@ -1110,7 +1128,7 @@ export function PurchaseCheckoutClient() {
             className={styles.payBtn}
             disabled={!canPay || pending}
           >
-            {pending ? 'Redirection vers le paiement…' : 'Passer la commande'}
+            {pending ? <WaveDotsLoader /> : 'Passer la commande'}
           </button>
 
           <div className={styles.payMethodsWrap}>

@@ -6,12 +6,7 @@ import {
   resolveMemberOrderKindFromCart,
   type MemberOrderKind,
 } from '@/lib/orders/member-order-kind'
-import {
-  isActiveReturnPhase,
-  isReturnFinishedForList,
-  outboundStatusTitle,
-  returnStatusTitle,
-} from '@/lib/orders/shipment-status-copy'
+import {outboundStatusTitle} from '@/lib/orders/shipment-status-copy'
 import type {SupabaseClient} from '@supabase/supabase-js'
 
 export type WebsiteOrderCard = {
@@ -30,7 +25,6 @@ export type WebsiteOrderCard = {
 export type MemberOrdersBundle = {
   ongoing: WebsiteOrderCard[]
   history: WebsiteOrderCard[]
-  returns: WebsiteOrderCard[]
 }
 
 type CartRow = {
@@ -51,7 +45,25 @@ type ShipmentRow = {
   cart_id: string
   status: string
   updated_at: string
+  delivered_at?: string | null
   context: string
+}
+
+/** Aligné app `isPurchaseFinishedForMemberList` (réception manuelle ou auto 24 h). */
+const MEMBER_RECEIPT_AUTO_CONFIRM_AFTER_MS = 24 * 60 * 60 * 1000
+
+function isPurchaseFinishedForList(
+  memberReceiptConfirmedAt: string | null | undefined,
+  outbound: ShipmentRow | undefined,
+  nowMs: number,
+): boolean {
+  if (memberReceiptConfirmedAt?.trim()) return true
+  if (!outbound || outbound.status.trim().toLowerCase() !== 'delivered') return false
+  const anchorIso = (outbound.delivered_at?.trim() || outbound.updated_at || '').trim()
+  if (!anchorIso) return false
+  const anchor = Date.parse(anchorIso)
+  if (Number.isNaN(anchor)) return false
+  return nowMs >= anchor + MEMBER_RECEIPT_AUTO_CONFIRM_AFTER_MS
 }
 
 function isHttpUrl(value: string): boolean {
@@ -110,14 +122,13 @@ async function fetchThumbsByCartIds(
   return out
 }
 
-function buildCard(
+function buildPurchaseCard(
   order: CartRow,
   thumbs: string[],
   outbound: ShipmentRow | undefined,
-  ret: ShipmentRow | undefined,
-  opts: {historyFallback: boolean; preferReturn: boolean},
+  opts: {historyFallback: boolean; nowMs: number},
 ): WebsiteOrderCard {
-  const orderKind = resolveMemberOrderKindFromCart(order)
+  const orderKind: MemberOrderKind = 'achat'
   const orderTypeLabel = memberOrderTypeLabel(orderKind, order.checkout_borrow_duration_days)
   const orderNumberCompact = formatOrderNumberCompact(order.id)
   const base = {
@@ -127,76 +138,48 @@ function buildCard(
     orderNumberCompact,
     itemThumbUrls: thumbs,
     updatedAt: order.updated_at,
+    appDetailPath: `/commande/${order.id}`,
   }
 
   if ((order.status ?? '').toLowerCase() === 'canceled') {
-    return {
-      ...base,
-      statusLabel: 'Commande annulée',
-      appDetailPath: `/commande/${order.id}`,
-    }
+    return {...base, statusLabel: 'Commande annulée'}
   }
 
-  if (orderKind !== 'achat' && opts.preferReturn && ret) {
-    const phase = returnStatusTitle(ret.status)
-    return {
-      ...base,
-      statusLabel: phase.title,
-      showPulse: phase.pulse,
-      appDetailPath: `/exchange/retour/${order.id}`,
-    }
-  }
-
-  if (orderKind !== 'achat' && ret && isReturnFinishedForList(ret.status)) {
-    const phase = returnStatusTitle(ret.status)
-    return {
-      ...base,
-      statusLabel: phase.title,
-      appDetailPath: `/exchange/retour/${order.id}`,
-    }
+  const finished = isPurchaseFinishedForList(
+    order.member_receipt_confirmed_at,
+    outbound,
+    opts.nowMs,
+  )
+  if (finished) {
+    return {...base, statusLabel: 'Terminé'}
   }
 
   if (!outbound) {
     return {
       ...base,
-      statusLabel: opts.historyFallback ? 'Commande archivée' : 'Suivi non disponible',
-      appDetailPath: `/commande/${order.id}`,
+      statusLabel: opts.historyFallback ? 'Commande archivée' : 'En préparation',
+      showPulse: !opts.historyFallback,
     }
   }
 
   const phase = outboundStatusTitle(outbound.status)
   const st = outbound.status.toLowerCase()
-  const purchaseFinished =
-    orderKind === 'achat' && Boolean(order.member_receipt_confirmed_at?.trim())
-
-  if (orderKind === 'achat') {
-    return {
-      ...base,
-      statusLabel: purchaseFinished
-        ? 'Terminé'
-        : st === 'delivered' || st === 'closed'
-          ? 'Reçu'
-          : phase.title,
-      showPulse: phase.pulse && st !== 'delivered' && st !== 'closed',
-      appDetailPath: `/commande/${order.id}`,
-    }
-  }
-
   return {
     ...base,
-    statusLabel: phase.title,
-    showPulse: phase.pulse,
-    appDetailPath: st === 'delivered' ? `/exchange/emprunt/${order.id}` : `/commande/${order.id}`,
+    statusLabel: st === 'delivered' || st === 'closed' ? 'Reçu' : phase.title,
+    showPulse: phase.pulse && st !== 'delivered' && st !== 'closed',
   }
 }
 
 /**
- * Agrège location + achat (même table `carts`) — règles En cours / Historique comme l’hub Échange.
+ * Commandes website = achats uniquement (locations / retours → app).
+ * En cours / Historique alignés hub Échange app (réception validée → historique).
  */
 export async function fetchMemberOrdersBundle(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<MemberOrdersBundle> {
+  const nowMs = Date.now()
   const [activePoolRes, canceledRes] = await Promise.all([
     supabase
       .from('carts')
@@ -206,7 +189,8 @@ export async function fetchMemberOrdersBundle(
       .eq('user_id', userId)
       .is('deleted_at', null)
       .in('status', ['confirmed', 'archived', 'disputed'])
-      .order('updated_at', {ascending: false}),
+      .order('updated_at', {ascending: false})
+      .limit(50),
     supabase
       .from('carts')
       .select(
@@ -216,31 +200,30 @@ export async function fetchMemberOrdersBundle(
       .is('deleted_at', null)
       .eq('status', 'canceled')
       .order('updated_at', {ascending: false})
-      .limit(80),
+      .limit(50),
   ])
 
-  const activePoolCartRows = (activePoolRes.data ?? []) as CartRow[]
-  const canceledCartRows = (canceledRes.data ?? []) as CartRow[]
+  const activePoolAll = (activePoolRes.data ?? []) as CartRow[]
+  const canceledAll = (canceledRes.data ?? []) as CartRow[]
+
+  /** Site : uniquement les paniers achat (pas les locations app). */
+  const activePoolCartRows = activePoolAll.filter((r) => resolveMemberOrderKindFromCart(r) === 'achat')
+  const canceledCartRows = canceledAll.filter((r) => resolveMemberOrderKindFromCart(r) === 'achat')
   const allIds = [...new Set([...activePoolCartRows, ...canceledCartRows].map((r) => r.id))]
 
   const outboundByCart = new Map<string, ShipmentRow>()
-  const returnByCart = new Map<string, ShipmentRow>()
 
   if (allIds.length > 0) {
     const {data: shipments} = await supabase
       .from('shipments')
-      .select('cart_id,status,updated_at,context')
+      .select('cart_id,status,updated_at,delivered_at,context')
       .in('cart_id', allIds)
-      .in('context', ['cart_outbound', 'cart_return'])
+      .eq('context', 'cart_outbound')
       .is('deleted_at', null)
       .order('updated_at', {ascending: false})
 
     for (const row of (shipments ?? []) as ShipmentRow[]) {
-      if (row.context === 'cart_outbound') {
-        if (!outboundByCart.has(row.cart_id)) outboundByCart.set(row.cart_id, row)
-      } else if (row.context === 'cart_return') {
-        if (!returnByCart.has(row.cart_id)) returnByCart.set(row.cart_id, row)
-      }
+      if (!outboundByCart.has(row.cart_id)) outboundByCart.set(row.cart_id, row)
     }
   }
 
@@ -249,56 +232,39 @@ export async function fetchMemberOrdersBundle(
   const isOngoing = (cartId: string) => {
     const order = activePoolCartRows.find((row) => row.id === cartId)
     if (!order) return false
-    if (
-      resolveMemberOrderKindFromCart(order) === 'achat' &&
-      order.member_receipt_confirmed_at?.trim()
-    ) {
-      return false
+    if (String(order.status ?? '').toLowerCase() === 'archived') {
+      const finished = isPurchaseFinishedForList(
+        order.member_receipt_confirmed_at,
+        outboundByCart.get(cartId),
+        nowMs,
+      )
+      if (finished) return false
     }
-    const ret = returnByCart.get(cartId)
-    return !ret || !isReturnFinishedForList(ret.status)
+    return !isPurchaseFinishedForList(
+      order.member_receipt_confirmed_at,
+      outboundByCart.get(cartId),
+      nowMs,
+    )
   }
 
   const ongoingRows = activePoolCartRows.filter((r) => isOngoing(r.id))
   const finishedFromPool = activePoolCartRows.filter((r) => !isOngoing(r.id))
 
   const ongoing = ongoingRows.map((order) =>
-    buildCard(order, thumbs.get(order.id) ?? [], outboundByCart.get(order.id), returnByCart.get(order.id), {
+    buildPurchaseCard(order, thumbs.get(order.id) ?? [], outboundByCart.get(order.id), {
       historyFallback: false,
-      preferReturn: false,
+      nowMs,
     }),
   )
 
   const history = [...finishedFromPool, ...canceledCartRows]
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
     .map((order) =>
-      buildCard(order, thumbs.get(order.id) ?? [], outboundByCart.get(order.id), returnByCart.get(order.id), {
+      buildPurchaseCard(order, thumbs.get(order.id) ?? [], outboundByCart.get(order.id), {
         historyFallback: true,
-        preferReturn: false,
+        nowMs,
       }),
     )
 
-  const returnCartIds = new Set<string>()
-  for (const [cartId, ret] of returnByCart) {
-    if (isActiveReturnPhase(ret.status) || isReturnFinishedForList(ret.status)) {
-      returnCartIds.add(cartId)
-    }
-  }
-  const cartById = new Map([...activePoolCartRows, ...canceledCartRows].map((r) => [r.id, r]))
-  const returns = [...returnCartIds]
-    .map((id) => cartById.get(id))
-    .filter((r): r is CartRow => Boolean(r))
-    .sort((a, b) => {
-      const ra = returnByCart.get(a.id)?.updated_at ?? a.updated_at
-      const rb = returnByCart.get(b.id)?.updated_at ?? b.updated_at
-      return new Date(rb).getTime() - new Date(ra).getTime()
-    })
-    .map((order) =>
-      buildCard(order, thumbs.get(order.id) ?? [], outboundByCart.get(order.id), returnByCart.get(order.id), {
-        historyFallback: true,
-        preferReturn: true,
-      }),
-    )
-
-  return {ongoing, history, returns}
+  return {ongoing, history}
 }

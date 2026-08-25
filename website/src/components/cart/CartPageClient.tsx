@@ -2,6 +2,7 @@
 
 import {CheckoutAuthModal} from '@/components/auth/CheckoutAuthModal'
 import {CheckoutSignupOnboardingModal} from '@/components/auth/CheckoutSignupOnboardingModal'
+import {WaveDotsLoader} from '@/components/ui/WaveDotsLoader'
 import {resolveCheckoutOnboardingResume} from '@/lib/auth/checkout-onboarding-resume'
 import {trackWebsiteEvent} from '@/lib/analytics/track'
 import {
@@ -297,7 +298,7 @@ export function CartPageClient() {
                 disabled={checkoutPending}
                 onClick={() => void handleFinalizePurchase()}
               >
-                {checkoutPending ? 'Chargement…' : 'Finaliser mon achat'}
+                {checkoutPending ? <WaveDotsLoader /> : 'Finaliser mon achat'}
               </button>
               <CartPaymentMethodsRow />
             </section>

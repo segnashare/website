@@ -1,6 +1,12 @@
 'use client'
 
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
+import {fetchOngoingPurchaseOrderCount} from '@/lib/orders/fetch-ongoing-purchase-count'
+import {
+  getWebsiteOrderBadgeCount,
+  setWebsiteOrderBadgeCount,
+  subscribeWebsiteOrderBadge,
+} from '@/lib/orders/website-order-badge'
 import {useRouter} from 'next/navigation'
 import {useCallback, useEffect, useId, useRef, useState} from 'react'
 import styles from './accountNavButton.module.css'
@@ -73,11 +79,33 @@ export function AccountNavButton({className, tone = 'auto'}: Props) {
   const [memberName, setMemberName] = useState('')
   const [open, setOpen] = useState(false)
   const [pending, setPending] = useState(false)
+  const [orderBadge, setOrderBadge] = useState(0)
+
+  useEffect(() => {
+    const sync = () => setOrderBadge(getWebsiteOrderBadgeCount())
+    sync()
+    return subscribeWebsiteOrderBadge(sync)
+  }, [])
+
+  const refreshOrderBadge = useCallback(async (userId: string | undefined) => {
+    if (!userId) {
+      setWebsiteOrderBadgeCount(0)
+      return
+    }
+    try {
+      const supabase = createSupabaseBrowserClient()
+      const count = await fetchOngoingPurchaseOrderCount(supabase, userId)
+      setWebsiteOrderBadgeCount(count)
+    } catch {
+      // garde le cache
+    }
+  }, [])
 
   const loadMember = useCallback(async (userId: string | undefined) => {
     if (!userId) {
       setIsLoggedIn(false)
       setMemberName('')
+      setWebsiteOrderBadgeCount(0)
       return
     }
     setIsLoggedIn(true)
@@ -93,7 +121,8 @@ export function AccountNavButton({className, tone = 'auto'}: Props) {
     } catch {
       setMemberName('')
     }
-  }, [])
+    void refreshOrderBadge(userId)
+  }, [refreshOrderBadge])
 
   useEffect(() => {
     let cancelled = false
@@ -181,6 +210,9 @@ export function AccountNavButton({className, tone = 'auto'}: Props) {
     .filter(Boolean)
     .join(' ')
 
+  /* Même règle desktop / mobile : icône visible uniquement connecté. */
+  if (!ready || !isLoggedIn) return null
+
   return (
     <>
       {open ? (
@@ -195,13 +227,26 @@ export function AccountNavButton({className, tone = 'auto'}: Props) {
         <button
           type="button"
           className={triggerClass}
-          aria-label={memberName ? `Compte — ${memberName}` : 'Profil'}
+          aria-label={
+            memberName
+              ? orderBadge > 0
+                ? `Compte — ${memberName}, ${orderBadge} commande${orderBadge > 1 ? 's' : ''} à voir`
+                : `Compte — ${memberName}`
+              : orderBadge > 0
+                ? `Profil, ${orderBadge} commande${orderBadge > 1 ? 's' : ''} à voir`
+                : 'Profil'
+          }
           aria-haspopup={isLoggedIn ? 'dialog' : undefined}
           aria-expanded={isLoggedIn ? open : undefined}
           aria-controls={isLoggedIn ? panelId : undefined}
           onClick={onTriggerClick}
         >
           <ProfileIcon />
+          {isLoggedIn && orderBadge > 0 ? (
+            <span className={`${styles.badge} ${tone === 'light' ? styles.badgeOnDark : ''}`} aria-hidden>
+              {orderBadge > 9 ? '9+' : orderBadge}
+            </span>
+          ) : null}
         </button>
 
         {open && isLoggedIn ? (
@@ -235,7 +280,12 @@ export function AccountNavButton({className, tone = 'auto'}: Props) {
                 }}
               >
                 <OrdersIcon />
-                Mes commandes
+                <span className={styles.actionLabel}>Mes commandes</span>
+                {orderBadge > 0 ? (
+                  <span className={styles.actionBadge} aria-hidden>
+                    {orderBadge > 9 ? '9+' : orderBadge}
+                  </span>
+                ) : null}
               </button>
               <button
                 type="button"
