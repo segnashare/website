@@ -21,7 +21,7 @@ export function outboundStatusTitle(status: string): {title: string; pulse?: boo
     case 'in_transit_out':
       return {title: 'Retour en transit'}
     case 'delivered':
-      return {title: 'Échange en cours'}
+      return {title: 'Location en cours'}
     case 'closed':
       return {title: 'Expédition terminée'}
     default:
@@ -81,7 +81,7 @@ export function returnStatusTitle(status: string): {title: string; pulse?: boole
     case 'return_validated':
       return {title: 'Retour validé'}
     case 'closed':
-      return {title: 'Retour clos'}
+      return {title: 'Location terminée'}
     case 'failed':
       return {title: 'Retour en difficulté', pulse: true}
     default:

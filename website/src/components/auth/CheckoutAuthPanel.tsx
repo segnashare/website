@@ -2,7 +2,9 @@
 
 import {bootstrapUserAfterSignup} from '@/lib/auth/bootstrap-user'
 import type {CheckoutOnboardingStep} from '@/lib/auth/checkout-onboarding-resume'
+import {mapAuthErrorMessage} from '@/lib/auth/map-auth-error'
 import {getSignUpPasswordError, isSignUpPasswordValid} from '@/lib/auth/password'
+import {trackWebsiteEvent, trackWebsiteSignupOnce} from '@/lib/analytics/track'
 import {SEGNA_APP_BASE_URL} from '@/lib/catalog/catalog-app-links'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import Link from 'next/link'
@@ -200,24 +202,32 @@ export function CheckoutAuthPanel({
       const supabase = createSupabaseBrowserClient()
       const boot = await bootstrapUserAfterSignup(supabase)
       if (!boot.ok) {
-        setError(boot.message)
+        setError(mapAuthErrorMessage(boot.message, "Impossible d'initialiser ton compte."))
         return
+      }
+      if (mode === 'signup') {
+        trackWebsiteSignupOnce({method: 'email'})
       }
     } catch {
       // Compte déjà bootstrappé / RPC indisponible : on continue.
     }
     if (destination === 'app') {
+      trackWebsiteEvent('app_open_intent', {
+        destination: 'app_handoff',
+        placement: 'checkout_auth',
+      })
       await redirectToAppWithSession()
       return
     }
     onAuthenticated()
-  }, [destination, onAuthenticated, redirectToAppWithSession])
+  }, [destination, mode, onAuthenticated, redirectToAppWithSession])
 
   const handleGoogle = async () => {
     if (pending) return
     setError(null)
     setPending(true)
     try {
+      trackWebsiteEvent('auth_sign_up_started', {method: 'oauth', provider: 'google'})
       const supabase = createSupabaseBrowserClient()
       const appCallback = new URL('/auth/callback', SEGNA_APP_BASE_URL)
 
@@ -239,7 +249,7 @@ export function CheckoutAuthPanel({
         },
       })
       if (oauthError) {
-        setError(oauthError.message || 'Impossible de lancer Google.')
+        setError(mapAuthErrorMessage(oauthError.message, 'Impossible de lancer Google.'))
         setPending(false)
       }
     } catch {
@@ -290,6 +300,7 @@ export function CheckoutAuthPanel({
       }
 
       setEmail(trimmed)
+      trackWebsiteEvent('auth_sign_up_started', {method: 'email'})
 
       // Page signup : étape mot de passe avant OTP / création.
       if (isPage) {
@@ -319,7 +330,12 @@ export function CheckoutAuthPanel({
       onStartEmailOnboarding(trimmed, 'signup')
     } catch (err) {
       console.error('[checkout-auth] signup email step', err)
-      setError(err instanceof Error && err.message.trim() ? err.message : 'Une erreur est survenue. Réessaie.')
+      setError(
+        mapAuthErrorMessage(
+          err instanceof Error ? err.message : null,
+          'Une erreur est survenue. Réessaie.',
+        ),
+      )
       setPending(false)
     }
   }
@@ -360,9 +376,9 @@ export function CheckoutAuthPanel({
             setMode('signin')
           }
         } else if (msg.includes('password')) {
-          setError(signUpError.message || 'Mot de passe invalide.')
+          setError(mapAuthErrorMessage(signUpError.message, 'Mot de passe invalide.'))
         } else {
-          setError(signUpError.message || "Impossible de créer le compte.")
+          setError(mapAuthErrorMessage(signUpError.message, "Impossible de créer le compte."))
         }
         setPending(false)
         return
@@ -389,7 +405,12 @@ export function CheckoutAuthPanel({
       onStartEmailOnboarding(trimmed, 'signup', 1)
     } catch (err) {
       console.error('[checkout-auth] signup password', err)
-      setError(err instanceof Error && err.message.trim() ? err.message : 'Une erreur est survenue. Réessaie.')
+      setError(
+        mapAuthErrorMessage(
+          err instanceof Error ? err.message : null,
+          'Une erreur est survenue. Réessaie.',
+        ),
+      )
       setPending(false)
     }
   }
@@ -420,7 +441,9 @@ export function CheckoutAuthPanel({
           setError("Aucun compte avec cet e-mail. Crée un compte d'abord.")
           setMode('signup')
         } else {
-          setError(otpError.message || "Impossible d'envoyer l'e-mail pour le moment.")
+          setError(
+            mapAuthErrorMessage(otpError.message, "Impossible d'envoyer l'e-mail pour le moment."),
+          )
         }
         setPending(false)
         return
@@ -430,7 +453,12 @@ export function CheckoutAuthPanel({
       onStartEmailOnboarding(trimmed, 'signin')
     } catch (err) {
       console.error('[checkout-auth] signin otp', err)
-      setError(err instanceof Error && err.message.trim() ? err.message : 'Une erreur est survenue. Réessaie.')
+      setError(
+        mapAuthErrorMessage(
+          err instanceof Error ? err.message : null,
+          'Une erreur est survenue. Réessaie.',
+        ),
+      )
       setPending(false)
     }
   }
@@ -459,19 +487,19 @@ export function CheckoutAuthPanel({
         password,
       })
       if (signInError) {
-        const msg = (signInError.message ?? '').toLowerCase()
-        if (msg.includes('invalid login') || msg.includes('invalid credentials')) {
-          setError('E-mail ou mot de passe incorrect.')
-        } else {
-          setError(signInError.message || 'Connexion impossible.')
-        }
+        setError(mapAuthErrorMessage(signInError.message, 'Connexion impossible.'))
         setPending(false)
         return
       }
       await finishAuthenticated()
     } catch (err) {
       console.error('[checkout-auth] signin password', err)
-      setError(err instanceof Error && err.message.trim() ? err.message : 'Une erreur est survenue. Réessaie.')
+      setError(
+        mapAuthErrorMessage(
+          err instanceof Error ? err.message : null,
+          'Une erreur est survenue. Réessaie.',
+        ),
+      )
       setPending(false)
     }
   }

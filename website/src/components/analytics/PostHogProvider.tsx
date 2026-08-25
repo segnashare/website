@@ -1,9 +1,12 @@
 'use client'
 
+import {ANALYTICS_SURFACES} from '@segna/analytics'
 import {Suspense, useEffect, useState} from 'react'
 import {usePathname, useSearchParams} from 'next/navigation'
 import posthog from 'posthog-js'
 import {PostHogProvider as PostHogClientProvider} from 'posthog-js/react'
+
+import {PostHogAuthTracker} from '@/components/analytics/PostHogAuthTracker'
 
 type CookiebotConsent = {
   statistics?: boolean
@@ -48,7 +51,7 @@ function initPostHog(): boolean {
       disable_surveys: true,
       debug: process.env.NODE_ENV === 'development',
     })
-    posthog.register({surface: 'website'})
+    posthog.register({surface: ANALYTICS_SURFACES.website})
   }
 
   posthogWindow.posthog = posthog
@@ -67,7 +70,7 @@ function PostHogPageView({enabled}: {enabled: boolean}): null {
     const url = `${window.location.origin}${pathname}${query ? `?${query}` : ''}`
     posthog.capture('$pageview', {
       $current_url: url,
-      surface: 'website',
+      surface: ANALYTICS_SURFACES.website,
     })
   }, [enabled, pathname, searchParams])
 
@@ -113,6 +116,7 @@ export function PostHogProvider({children}: {children: React.ReactNode}) {
 
   return (
     <PostHogClientProvider client={posthog}>
+      <PostHogAuthTracker />
       <Suspense fallback={null}>
         <PostHogPageView enabled={capturing} />
       </Suspense>

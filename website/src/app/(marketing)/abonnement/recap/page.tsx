@@ -6,7 +6,7 @@ import {RECAP_WALL_ITEMS} from '@/lib/subscription/recap-wall-items'
 export const metadata: Metadata = {
   title: 'Votre mois offert | Segna',
   description:
-    'Activez votre abonnement Segna : le premier mois est offert, puis 39,99 €/mois. Annulation possible avant le renouvellement.',
+    'Activez votre abonnement Segna : −50 % le 1er mois (20 €), puis 40 €/mois. Annulation possible avant le renouvellement.',
 }
 
 export default function AbonnementRecapPage() {

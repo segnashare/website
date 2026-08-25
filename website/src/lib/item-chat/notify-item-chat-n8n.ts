@@ -1,8 +1,15 @@
 import {
+  buildItemChatThreadName,
+  type ItemChatThreadKind,
+} from '@/lib/item-chat/build-item-chat-thread-name'
+import {
   getItemPublicAppUrl,
   getItemPublicWebUrl,
 } from '@/lib/item-chat/config'
+import {splitChatMessageMedia} from '@/lib/item-chat/split-chat-message-media'
 import type {ItemChatConversationRow, ItemChatSource} from '@/lib/item-chat/types'
+
+export type {ItemChatThreadKind}
 
 export type ItemChatN8nNotifyInput = {
   conversation: ItemChatConversationRow
@@ -30,31 +37,42 @@ function readItemChatWebhookSecret(): string {
   return process.env.N8N_ITEM_CHAT_WEBHOOK_SECRET?.trim() ?? ''
 }
 
+/**
+ * URL publique joignable par n8n pour reply/bind-thread.
+ *
+ * Important : le website a sa propre API + DB. Les réponses Discord doivent
+ * revenir sur www.segnashare.com — pas sur app.segnashare.com (sinon le client
+ * website ne voit jamais le message).
+ */
 function replyUrlForSource(_source: ItemChatSource): string {
-  // Toujours l’app : même DB + secret interne déjà configuré en prod.
   const override = process.env.ITEM_CHAT_PUBLIC_BASE_URL?.trim().replace(/\/+$/, '')
   if (override) return `${override}/api/internal/item-chat/reply`
 
-  if (process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production') {
-    return 'https://app.segnashare.com/api/internal/item-chat/reply'
+  const site = (
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.NEXT_PUBLIC_MARKETING_SITE_URL ||
+    ''
+  )
+    .trim()
+    .replace(/\/+$/, '')
+
+  const vercelEnv = process.env.VERCEL_ENV?.trim()
+  if (vercelEnv === 'production') {
+    return `${site || 'https://www.segnashare.com'}/api/internal/item-chat/reply`
   }
 
-  const base = (
-    process.env.SEGNA_EMAIL_PUBLIC_BASE_URL ||
-    process.env.NEXT_PUBLIC_SEGNA_APP_URL ||
-    process.env.NEXT_PUBLIC_APP_URL ||
-    'https://app.segnashare.com'
-  ).replace(/\/+$/, '')
-  if (base.includes('localhost') || base.includes('127.0.0.1')) {
-    return 'https://app.segnashare.com/api/internal/item-chat/reply'
+  // Preview / local : n8n cloud ne joint pas localhost → site public.
+  if (site && !/localhost|127\.0\.0\.1|192\.168\./i.test(site)) {
+    return `${site}/api/internal/item-chat/reply`
   }
-  return `${base}/api/internal/item-chat/reply`
+  return 'https://www.segnashare.com/api/internal/item-chat/reply'
 }
 
 function resolveClientName(input: ItemChatN8nNotifyInput): {
   firstName: string | null
   lastName: string | null
   clientName: string
+  threadKind: ItemChatThreadKind
   threadName: string
 } {
   const firstName =
@@ -69,11 +87,16 @@ function resolveClientName(input: ItemChatN8nNotifyInput): {
   const email = input.conversation.contact_email?.trim() || ''
   const emailLocal = email.includes('@') ? email.split('@')[0]!.trim() : email
   const clientName = fromUser || emailLocal || 'Visiteur'
+  const {threadKind, threadName} = buildItemChatThreadName({
+    conversation: input.conversation,
+    clientName,
+  })
   return {
     firstName,
     lastName,
     clientName,
-    threadName: clientName.slice(0, 100),
+    threadKind,
+    threadName,
   }
 }
 
@@ -97,7 +120,9 @@ export async function notifyItemChatN8n(
 
   const conv = input.conversation
   const bindUrl = replyUrlForSource(input.source).replace(/\/reply$/, '/bind-thread')
-  const {firstName, lastName, clientName, threadName} = resolveClientName(input)
+  const {firstName, lastName, clientName, threadKind, threadName} = resolveClientName(input)
+  const {text: bodyText, imageUrls} = splitChatMessageMedia(input.body)
+  const photoUrls = imageUrls.slice(0, 10)
   const payload = {
     event: input.isFirstVisitorMessage ? 'item_chat_opened' : 'item_chat_message',
     conversation_id: conv.id,
@@ -105,24 +130,29 @@ export async function notifyItemChatN8n(
     is_first_visitor_message: input.isFirstVisitorMessage,
     discord_thread_id: conv.discord_thread_id,
     body: input.body,
+    body_text: bodyText,
+    photo_urls: photoUrls,
     source: input.source,
     item_id: conv.item_id,
     item_title: conv.item_title,
     item_size_label: conv.item_size_label,
     item_condition_label: conv.item_condition_label,
+    cart_dispute_id:
+      typeof conv.cart_dispute_id === 'string' && conv.cart_dispute_id.trim()
+        ? conv.cart_dispute_id.trim()
+        : null,
     contact_email: conv.contact_email,
     visitor_id: conv.visitor_id,
     user_id: conv.user_id,
     client_first_name: firstName,
     client_last_name: lastName,
     client_name: clientName,
-    /** Titre Discord thread (nom client). n8n : Options → Thread Name = `{{ $json.body.thread_name }}` */
+    thread_kind: threadKind,
     thread_name: threadName,
     web_url: getItemPublicWebUrl(conv.item_id),
     app_url: getItemPublicAppUrl(conv.item_id),
     reply_url: replyUrlForSource(input.source),
     bind_thread_url: bindUrl,
-    /** n8n doit POST bind_thread_url avec ce header + conversation_id + discord_thread_id. */
     bind_authorization: 'Bearer <SEGNA_INTERNAL_ITEM_CHAT_SECRET>',
     sent_at: new Date().toISOString(),
   }

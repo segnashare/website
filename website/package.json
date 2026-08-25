@@ -13,6 +13,7 @@
     "@portabletext/types": "^2.0.13",
     "@sanity/client": "latest",
     "@sanity/image-url": "latest",
+    "@segna/analytics": "file:./packages/analytics",
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.98.0",
     "framer-motion": "^12.36.0",

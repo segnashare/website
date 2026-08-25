@@ -6,6 +6,7 @@ import {
   discordStaffProfileFromAuthor,
 } from '@/lib/item-chat/discord'
 import {isItemChatDiscordSyncEnabled} from '@/lib/item-chat/config'
+import {markLinkedCartDisputeInReviewFromChat} from '@/lib/item-chat/mark-cart-dispute-in-review-from-chat'
 import {ensureStaffJoinedEvent} from '@/lib/item-chat/service'
 import type {ItemChatConversationRow} from '@/lib/item-chat/types'
 
@@ -74,6 +75,7 @@ async function syncOneConversation(
           updated_at: new Date().toISOString(),
         } as never)
         .eq('id', conv.id)
+      await markLinkedCartDisputeInReviewFromChat(admin, conv)
     }
 
     if (latestId && latestId !== conv.discord_last_message_id) {

@@ -3,7 +3,7 @@ export const SEGNAX_COMPARE_ROWS = [
   {
     label: 'Prix de location',
     guest: '10 % du prix / semaine ou 20 % / mois',
-    member: '39,99 € / mois pour 400 € de pièces',
+    member: '40 € / mois pour 400 € de pièces',
   },
   {
     label: 'Durée de location',

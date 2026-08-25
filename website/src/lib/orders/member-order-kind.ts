@@ -10,7 +10,8 @@ export function memberOrderTypeLabel(
     Number.isFinite(Number(checkoutBorrowDurationDays)) &&
     Number(checkoutBorrowDurationDays) >= 1
       ? Math.trunc(Number(checkoutBorrowDurationDays))
-      : 30
+      : null
+  if (days == null) return 'Location'
   return `Location ${days}j`
 }
 

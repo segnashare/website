@@ -19,6 +19,7 @@ const posthogAssetsHost = posthogHost.includes('eu.i.')
 
 const nextConfig: NextConfig = {
   skipTrailingSlashRedirect: true,
+  transpilePackages: ['@segna/analytics'],
   async rewrites() {
     // beforeFiles: sinon `/ingest` est capturé par la page marketing `[slug]`.
     return {

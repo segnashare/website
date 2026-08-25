@@ -1,3 +1,4 @@
+import { buildItemChatThreadName } from "@/lib/item-chat/build-item-chat-thread-name";
 import {
   getDiscordBotToken,
   getDiscordItemChatChannelId,
@@ -64,13 +65,10 @@ async function discordFetch(path: string, init?: RequestInit): Promise<Response>
 }
 
 function threadNameFromConversation(conv: ItemChatConversationRow): string {
-  const who = (conv.contact_email || conv.visitor_id.slice(0, 8)).trim()
-  const emailLocal = who.includes('@') ? who.split('@')[0]!.trim() : who
-  const visitor = emailLocal || 'Visiteur'
-  if (conv.item_title?.trim() === 'Panier') {
-    return `Panier — ${visitor}`.slice(0, 100)
-  }
-  return visitor.slice(0, 100)
+  const who = (conv.contact_email || conv.visitor_id.slice(0, 8)).trim();
+  const emailLocal = who.includes("@") ? who.split("@")[0]!.trim() : who;
+  const visitor = emailLocal || "Visiteur";
+  return buildItemChatThreadName({ conversation: conv, clientName: visitor }).threadName;
 }
 
 export async function discordCreateThreadAndPost(params: {
@@ -98,7 +96,7 @@ export async function discordCreateThreadAndPost(params: {
   }
 
   const embed = {
-    title: conv.item_title || (conv.item_id ? "Question pièce" : "Question générale"),
+    title: conv.item_title || (conv.item_id ? "Item" : "Général"),
     description: params.body.slice(0, 2000),
     color: 0x6b6560,
     fields,

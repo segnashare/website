@@ -304,23 +304,21 @@ export function ItemChatBubble() {
                           className={styles.listRow}
                           onClick={() => void openConversation(c.id)}
                         >
-                          <span className={styles.listAvatarWrap}>
+                          <ConversationAvatar
+                            name={operatorName}
+                            url={c.operatorAvatarUrl}
+                            className={styles.listAvatar}
+                            size={36}
+                          />
+                          <span className={styles.listBody}>
+                            <span className={styles.listName}>{listTitle}</span>
+                            <span className={styles.listPreview}>{preview}</span>
+                          </span>
+                          <span className={styles.listAside}>
+                            <span className={styles.listWhen}>{formatWhen(c.lastMessageAt)}</span>
                             {c.unreadStaffCount > 0 ? (
                               <span className={styles.listUnreadDot} aria-label="Nouvelle réponse" />
                             ) : null}
-                            <ConversationAvatar
-                              name={operatorName}
-                              url={c.operatorAvatarUrl}
-                              className={styles.listAvatar}
-                              size={36}
-                            />
-                          </span>
-                          <span className={styles.listBody}>
-                            <span className={styles.listTop}>
-                              <span className={styles.listName}>{listTitle}</span>
-                              <span className={styles.listWhen}>{formatWhen(c.lastMessageAt)}</span>
-                            </span>
-                            <span className={styles.listPreview}>{preview}</span>
                           </span>
                         </button>
                       )

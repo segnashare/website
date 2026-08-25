@@ -15,9 +15,9 @@ export const ABONNEMENT_FALLBACK_MARKETING: MarketingPageData = {
   slug: {current: 'abonnement'},
   heroTitle: 'Louer avec SegnaX',
   heroSubtitle:
-    '1er mois gratuit, puis 39,99 €/mois — jusqu’à 400 € de pièces, échanges et assurance inclus.',
+    '−50 % le 1er mois (20 €), puis 40 €/mois — jusqu’à 400 € de pièces, échanges et assurance inclus.',
   heroPresentation: 'single_photo',
-  heroCtaLabel: 'Commencer — 1er mois gratuit',
+  heroCtaLabel: 'Commencer — −50 % le 1er mois',
   heroCtaHref: '#offre-segnax',
 }
 
@@ -38,7 +38,7 @@ async function getAbonnementMarketingShellUncached() {
       : null
 
   const cta = customCta ?? {
-    label: 'Commencer — 1er mois gratuit',
+    label: 'Commencer — −50 % le 1er mois',
     href: '#offre-segnax',
   }
 

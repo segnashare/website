@@ -2,6 +2,7 @@
 
 import {RecapPiecesWall} from '@/components/subscription/RecapPiecesWall'
 import {WebsitePageLoading} from '@/components/ui/WebsitePageLoading'
+import {mapAuthErrorMessage} from '@/lib/auth/map-auth-error'
 import {getSignUpPasswordError, isSignUpPasswordValid} from '@/lib/auth/password'
 import {RECAP_WALL_ITEMS} from '@/lib/subscription/recap-wall-items'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
@@ -117,12 +118,9 @@ export function ResetPasswordClient() {
       const supabase = createSupabaseBrowserClient()
       const {error: updateError} = await supabase.auth.updateUser({password})
       if (updateError) {
-        const msg = (updateError.message ?? '').toLowerCase()
-        if (msg.includes('different from the old password')) {
-          setError('Le nouveau mot de passe doit être différent de l’ancien.')
-        } else {
-          setError(updateError.message || 'Impossible de mettre à jour le mot de passe.')
-        }
+        setError(
+          mapAuthErrorMessage(updateError.message, 'Impossible de mettre à jour le mot de passe.'),
+        )
         setPending(false)
         return
       }

@@ -3,6 +3,7 @@
 import {CheckoutSignupOnboardingModal} from '@/components/auth/CheckoutSignupOnboardingModal'
 import type {CheckoutOnboardingStep} from '@/lib/auth/checkout-onboarding-resume'
 import {resolveCheckoutOnboardingResume} from '@/lib/auth/checkout-onboarding-resume'
+import {trackWebsiteEvent} from '@/lib/analytics/track'
 import {WEBSITE_SUBSCRIPTION_RECAP_PATH} from '@/lib/cart/paths'
 import {openIosAppOrAppStore, SEGNA_APP_BASE_URL} from '@/lib/catalog/catalog-app-links'
 import {detectClientPlatform, type ClientPlatform} from '@/lib/platform/client-platform'
@@ -87,6 +88,10 @@ export function SubscriptionRecapClient({wallItems}: Props) {
       return
     }
 
+    trackWebsiteEvent('subscription_checkout_started', {
+      plan_code: 'segna_x',
+    })
+
     const response = await fetch('/api/subscription/checkout', {
       method: 'POST',
       credentials: 'omit',
@@ -163,6 +168,11 @@ export function SubscriptionRecapClient({wallItems}: Props) {
     setPending(true)
     try {
       const appUrl = await buildAppHandoffUrl('website_skip_subscription')
+      trackWebsiteEvent('app_open_intent', {
+        destination: platform === 'ios' ? 'app_store' : 'app_handoff',
+        href: appUrl,
+        placement: 'abonnement_recap_secondary',
+      })
       if (platform === 'ios') {
         openIosAppOrAppStore(appUrl)
         return
@@ -184,7 +194,7 @@ export function SubscriptionRecapClient({wallItems}: Props) {
       <div className={styles.shell}>
         <main className={styles.main}>
           <div className={styles.panel}>
-            <h1 className={styles.title}>Votre mois offert est prêt</h1>
+            <h1 className={styles.title}>Votre offre −50 % est prête</h1>
             <p className={styles.lead}>
               Vous allez pouvoir commencer à louer vos prochaines pièces avec Segna dès aujourd’hui.
             </p>
@@ -192,13 +202,13 @@ export function SubscriptionRecapClient({wallItems}: Props) {
             <div className={styles.priceGrid}>
               <div>
                 <p className={styles.priceLabel}>Aujourd’hui</p>
-                <p className={styles.priceValue}>Mois offert</p>
+                <p className={styles.priceValue}>20&nbsp;€</p>
               </div>
               <div>
                 <p className={styles.priceLabel}>Ensuite</p>
-                <p className={styles.priceValue}>39,99&nbsp;€/mois</p>
+                <p className={styles.priceValue}>40&nbsp;€/mois</p>
               </div>
-              <p className={styles.priceCommitment}>Sans engagement</p>
+              <p className={styles.priceCommitment}>Sans engagement · −50 % le 1er mois</p>
             </div>
 
             <p className={styles.benefitsIntro}>
@@ -226,7 +236,7 @@ export function SubscriptionRecapClient({wallItems}: Props) {
             </ul>
 
             <button type="button" className={styles.cta} disabled={pending} onClick={() => void handleActivate()}>
-              {pending ? 'Préparation…' : 'Activer mon mois offert'}
+              {pending ? 'Préparation…' : 'Activer — 20 € le 1er mois'}
             </button>
 
             <button

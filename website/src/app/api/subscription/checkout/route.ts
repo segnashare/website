@@ -3,7 +3,7 @@ import {SEGNA_APP_BASE_URL} from '@/lib/catalog/catalog-app-links'
 import {NextResponse} from 'next/server'
 
 /**
- * Proxy website → app Stripe Checkout SegnaX (trial + empreinte).
+ * Proxy website → app Stripe Checkout SegnaX (−50 % 1er mois + empreinte).
  * Auth : `Authorization: Bearer <access_token>` (session Supabase website).
  */
 export async function POST(request: Request) {
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({
         planCode: 'segna_x',
-        trialPeriodDays: 30,
+        firstMonthPercentOff: 50,
         bankHold: true,
         cancelReturnPath,
       }),

@@ -4,6 +4,7 @@ import {ProfileReferralCard} from '@/components/auth/ProfileReferralCard'
 import {WebsitePageLoading} from '@/components/ui/WebsitePageLoading'
 import {redirectToAppWithSession} from '@/lib/auth/app-handoff'
 import {buildAppHandoffUrl} from '@/lib/auth/build-app-handoff-url'
+import {trackWebsiteEvent} from '@/lib/analytics/track'
 import {
   openIosAppOrAppStore,
   SEGNA_APP_BASE_URL,
@@ -130,6 +131,11 @@ export function ProfilePageClient() {
     setPending(true)
     try {
       const appUrl = await buildAppHandoffUrl('/profile?tab=plus')
+      trackWebsiteEvent('app_open_intent', {
+        destination: SEGNA_APP_STORE_URL ? 'app_store' : 'app_handoff',
+        href: appUrl || SEGNA_APP_STORE_URL || SEGNA_APP_BASE_URL,
+        placement: 'profile_download_app',
+      })
       if (detectClientPlatform() === 'ios' && SEGNA_APP_STORE_URL) {
         openIosAppOrAppStore(appUrl, SEGNA_APP_STORE_URL)
         return

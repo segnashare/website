@@ -38,6 +38,7 @@ type CartRow = {
   status: string | null
   created_at: string
   updated_at: string
+  member_receipt_confirmed_at?: string | null
   checkout_borrow_duration_days?: number | null
   checkout_purchase_mode?: boolean | null
   cart_order_stripe_invoices?:
@@ -136,7 +137,7 @@ function buildCard(
     }
   }
 
-  if (opts.preferReturn && ret) {
+  if (orderKind !== 'achat' && opts.preferReturn && ret) {
     const phase = returnStatusTitle(ret.status)
     return {
       ...base,
@@ -146,7 +147,7 @@ function buildCard(
     }
   }
 
-  if (ret && isReturnFinishedForList(ret.status)) {
+  if (orderKind !== 'achat' && ret && isReturnFinishedForList(ret.status)) {
     const phase = returnStatusTitle(ret.status)
     return {
       ...base,
@@ -165,6 +166,22 @@ function buildCard(
 
   const phase = outboundStatusTitle(outbound.status)
   const st = outbound.status.toLowerCase()
+  const purchaseFinished =
+    orderKind === 'achat' && Boolean(order.member_receipt_confirmed_at?.trim())
+
+  if (orderKind === 'achat') {
+    return {
+      ...base,
+      statusLabel: purchaseFinished
+        ? 'Terminé'
+        : st === 'delivered' || st === 'closed'
+          ? 'Reçu'
+          : phase.title,
+      showPulse: phase.pulse && st !== 'delivered' && st !== 'closed',
+      appDetailPath: `/commande/${order.id}`,
+    }
+  }
+
   return {
     ...base,
     statusLabel: phase.title,
@@ -180,31 +197,31 @@ export async function fetchMemberOrdersBundle(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<MemberOrdersBundle> {
-  const [ongoingRes, historyRes] = await Promise.all([
+  const [activePoolRes, canceledRes] = await Promise.all([
     supabase
       .from('carts')
       .select(
-        'id,status,created_at,updated_at,checkout_borrow_duration_days,checkout_purchase_mode,cart_order_stripe_invoices(guest_purchase_stripe_invoice_id)',
+        'id,status,created_at,updated_at,member_receipt_confirmed_at,checkout_borrow_duration_days,checkout_purchase_mode,cart_order_stripe_invoices(guest_purchase_stripe_invoice_id)',
       )
       .eq('user_id', userId)
       .is('deleted_at', null)
-      .eq('status', 'confirmed')
+      .in('status', ['confirmed', 'archived', 'disputed'])
       .order('updated_at', {ascending: false}),
     supabase
       .from('carts')
       .select(
-        'id,status,created_at,updated_at,checkout_borrow_duration_days,checkout_purchase_mode,cart_order_stripe_invoices(guest_purchase_stripe_invoice_id)',
+        'id,status,created_at,updated_at,member_receipt_confirmed_at,checkout_borrow_duration_days,checkout_purchase_mode,cart_order_stripe_invoices(guest_purchase_stripe_invoice_id)',
       )
       .eq('user_id', userId)
       .is('deleted_at', null)
-      .in('status', ['archived', 'canceled'])
+      .eq('status', 'canceled')
       .order('updated_at', {ascending: false})
       .limit(80),
   ])
 
-  const ongoingCartRows = (ongoingRes.data ?? []) as CartRow[]
-  const historyCartRows = (historyRes.data ?? []) as CartRow[]
-  const allIds = [...new Set([...ongoingCartRows, ...historyCartRows].map((r) => r.id))]
+  const activePoolCartRows = (activePoolRes.data ?? []) as CartRow[]
+  const canceledCartRows = (canceledRes.data ?? []) as CartRow[]
+  const allIds = [...new Set([...activePoolCartRows, ...canceledCartRows].map((r) => r.id))]
 
   const outboundByCart = new Map<string, ShipmentRow>()
   const returnByCart = new Map<string, ShipmentRow>()
@@ -230,12 +247,20 @@ export async function fetchMemberOrdersBundle(
   const thumbs = await fetchThumbsByCartIds(supabase, allIds)
 
   const isOngoing = (cartId: string) => {
+    const order = activePoolCartRows.find((row) => row.id === cartId)
+    if (!order) return false
+    if (
+      resolveMemberOrderKindFromCart(order) === 'achat' &&
+      order.member_receipt_confirmed_at?.trim()
+    ) {
+      return false
+    }
     const ret = returnByCart.get(cartId)
     return !ret || !isReturnFinishedForList(ret.status)
   }
 
-  const ongoingRows = ongoingCartRows.filter((r) => isOngoing(r.id))
-  const finishedFromConfirmed = ongoingCartRows.filter((r) => !isOngoing(r.id))
+  const ongoingRows = activePoolCartRows.filter((r) => isOngoing(r.id))
+  const finishedFromPool = activePoolCartRows.filter((r) => !isOngoing(r.id))
 
   const ongoing = ongoingRows.map((order) =>
     buildCard(order, thumbs.get(order.id) ?? [], outboundByCart.get(order.id), returnByCart.get(order.id), {
@@ -244,7 +269,7 @@ export async function fetchMemberOrdersBundle(
     }),
   )
 
-  const history = [...finishedFromConfirmed, ...historyCartRows]
+  const history = [...finishedFromPool, ...canceledCartRows]
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
     .map((order) =>
       buildCard(order, thumbs.get(order.id) ?? [], outboundByCart.get(order.id), returnByCart.get(order.id), {
@@ -259,7 +284,7 @@ export async function fetchMemberOrdersBundle(
       returnCartIds.add(cartId)
     }
   }
-  const cartById = new Map([...ongoingCartRows, ...historyCartRows].map((r) => [r.id, r]))
+  const cartById = new Map([...activePoolCartRows, ...canceledCartRows].map((r) => [r.id, r]))
   const returns = [...returnCartIds]
     .map((id) => cartById.get(id))
     .filter((r): r is CartRow => Boolean(r))

@@ -21,6 +21,7 @@ export type ItemChatConversationRow = {
   usefulness_prompted_at: string | null;
   usefulness_rating: ItemChatUsefulnessRating | null;
   discord_thread_deleted_at: string | null;
+  cart_dispute_id?: string | null;
   created_at: string;
   updated_at: string;
 };

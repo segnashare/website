@@ -139,12 +139,12 @@ export function SubscriptionLandingClient() {
         </p>
 
         <div className={styles.offerCard}>
-          <p className={styles.offerBadge}>Offre claire</p>
+          <p className={styles.offerBadge}>Sans engagement</p>
           <p className={styles.offerPrice}>
-            <span className={styles.offerAmount}>39,99&nbsp;€</span>
+            <span className={styles.offerAmount}>40&nbsp;€</span>
             <span className={styles.offerPeriod}>/mois</span>
           </p>
-          <p className={styles.offerTrial}>1er mois gratuit</p>
+          <p className={styles.offerTrial}>−50&nbsp;% le 1er mois (20&nbsp;€)</p>
           <ul className={styles.offerList}>
             <li>Jusqu&apos;à 400&nbsp;€ de pièces en location</li>
             <li>Durée illimitée + 1 échange inclus / mois</li>
@@ -152,10 +152,10 @@ export function SubscriptionLandingClient() {
             <li>−30&nbsp;% sur l&apos;achat des pièces</li>
           </ul>
           <button type="button" className={styles.primaryCta} disabled={pending} onClick={() => void handleCta()}>
-            {pending ? 'Chargement…' : 'Commencer — 1er mois gratuit'}
+            {pending ? 'Chargement…' : 'Commencer — 20 € le 1er mois'}
           </button>
           <p className={styles.offerFine}>
-            Puis 39,99&nbsp;€/mois. Résiliable depuis l&apos;app. Le suivi des locations se fait sur Segna.
+            Puis 40&nbsp;€/mois. Résiliable depuis l&apos;app. Le suivi des locations se fait sur Segna.
           </p>
         </div>
       </section>
@@ -209,7 +209,7 @@ export function SubscriptionLandingClient() {
           </li>
         </ol>
         <button type="button" className={styles.primaryCta} disabled={pending} onClick={() => void handleCta()}>
-          {pending ? 'Chargement…' : 'Activer mon essai gratuit'}
+          {pending ? 'Chargement…' : 'Activer — −50 % le 1er mois'}
         </button>
       </section>
 

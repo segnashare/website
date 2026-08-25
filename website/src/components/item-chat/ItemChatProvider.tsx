@@ -110,6 +110,10 @@ export function ItemChatProvider({children, source, apiBase = ''}: ProviderProps
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const claimedRef = useRef(false)
+  /** Fil réellement ouvert — ignore les réponses async d’un ancien thread. */
+  const activeThreadIdRef = useRef<string | null>(null)
+  const messagesCacheRef = useRef<Map<string, ItemChatMessage[]>>(new Map())
+  const prefetchInFlightRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
     setLocal(loadItemChatLocalState())
@@ -122,11 +126,20 @@ export function ItemChatProvider({children, source, apiBase = ''}: ProviderProps
 
   const clearError = useCallback(() => setError(null), [])
 
-  const refreshConversation = useCallback(
-    async (conversationId: string, visitorId: string) => {
+  const loadConversationMessages = useCallback(
+    async (
+      conversationId: string,
+      visitorId: string,
+      opts?: {applyToUi?: boolean; syncDiscord?: boolean},
+    ) => {
+      const wantedId = conversationId.trim()
+      if (!wantedId) return
+      const applyToUi = opts?.applyToUi !== false
+      const syncDiscord = opts?.syncDiscord !== false
+      const qs = syncDiscord ? '' : '?sync=0'
       const res = await apiFetch(
         apiBase,
-        `/api/item-chat/conversations/${conversationId}/messages`,
+        `/api/item-chat/conversations/${wantedId}/messages${qs}`,
         visitorId,
       )
       if (!res.ok) return
@@ -134,10 +147,50 @@ export function ItemChatProvider({children, source, apiBase = ''}: ProviderProps
         conversation?: ItemChatConversation
         messages?: ItemChatMessage[]
       }
-      if (data.conversation) setConversation(data.conversation)
+      if (Array.isArray(data.messages)) {
+        messagesCacheRef.current.set(wantedId, data.messages)
+      }
+      const isActive =
+        !activeThreadIdRef.current || activeThreadIdRef.current === wantedId
+      if (!applyToUi || !isActive) return
+      if (data.conversation && data.conversation.id === wantedId) {
+        setConversation(data.conversation)
+      }
       if (Array.isArray(data.messages)) setMessages(data.messages)
     },
     [apiBase],
+  )
+
+  const refreshConversation = useCallback(
+    async (conversationId: string, visitorId: string) => {
+      await loadConversationMessages(conversationId, visitorId, {
+        applyToUi: true,
+        syncDiscord: true,
+      })
+    },
+    [loadConversationMessages],
+  )
+
+  const prefetchConversations = useCallback(
+    async (visitorId: string, list: ItemChatConversation[]) => {
+      await Promise.all(
+        list.map(async (c) => {
+          const id = c.id
+          if (!id || prefetchInFlightRef.current.has(id)) return
+          if (messagesCacheRef.current.has(id)) return
+          prefetchInFlightRef.current.add(id)
+          try {
+            await loadConversationMessages(id, visitorId, {
+              applyToUi: false,
+              syncDiscord: false,
+            })
+          } finally {
+            prefetchInFlightRef.current.delete(id)
+          }
+        }),
+      )
+    },
+    [loadConversationMessages],
   )
 
   const refreshList = useCallback(
@@ -145,9 +198,11 @@ export function ItemChatProvider({children, source, apiBase = ''}: ProviderProps
       const res = await apiFetch(apiBase, '/api/item-chat/conversations', visitorId)
       if (!res.ok) return
       const data = (await res.json()) as {conversations?: ItemChatConversation[]}
-      if (Array.isArray(data.conversations)) setConversations(data.conversations)
+      if (!Array.isArray(data.conversations)) return
+      setConversations(data.conversations)
+      void prefetchConversations(visitorId, data.conversations)
     },
-    [apiBase],
+    [apiBase, prefetchConversations],
   )
 
   const goToList = useCallback(() => {
@@ -185,6 +240,7 @@ export function ItemChatProvider({children, source, apiBase = ''}: ProviderProps
         }
         const data = (await res.json()) as {conversation?: ItemChatConversation}
         if (!data.conversation) return
+        activeThreadIdRef.current = data.conversation.id
         setConversation(data.conversation)
         persist({...state, conversationId: data.conversation.id})
 
@@ -236,14 +292,40 @@ export function ItemChatProvider({children, source, apiBase = ''}: ProviderProps
 
   const openConversation = useCallback(
     async (id: string) => {
+      const wantedId = id.trim()
+      if (!wantedId) return
       const state = local ?? loadItemChatLocalState()
       setError(null)
       setView('thread')
       setPanelOpen(true)
-      persist({...state, conversationId: id})
-      await refreshConversation(id, state.visitorId)
+      activeThreadIdRef.current = wantedId
+      const fromList = conversations.find((c) => c.id === wantedId) || null
+      setConversation(
+        fromList ?? {
+          id: wantedId,
+          itemId: null,
+          itemTitle: null,
+          itemSizeLabel: null,
+          itemConditionLabel: null,
+          contactEmail: null,
+          status: 'open',
+          lastMessageAt: new Date().toISOString(),
+          lastReadAt: null,
+          unreadStaffCount: 0,
+          hasVisitorMessage: false,
+          usefulnessPromptedAt: null,
+          usefulnessRating: null,
+          lastMessagePreview: null,
+          operatorDisplayName: null,
+          operatorAvatarUrl: null,
+        },
+      )
+      const cached = messagesCacheRef.current.get(wantedId)
+      setMessages(cached ? cached : [])
+      persist({...state, conversationId: wantedId})
+      void refreshConversation(wantedId, state.visitorId)
     },
-    [local, persist, refreshConversation],
+    [conversations, local, persist, refreshConversation],
   )
 
   const openForItem = useCallback(
@@ -276,6 +358,7 @@ export function ItemChatProvider({children, source, apiBase = ''}: ProviderProps
         }
         const data = (await res.json()) as {conversation?: ItemChatConversation}
         if (!data.conversation) return
+        activeThreadIdRef.current = data.conversation.id
         setConversation(data.conversation)
         persist({...state, conversationId: data.conversation.id})
 
@@ -348,12 +431,22 @@ export function ItemChatProvider({children, source, apiBase = ''}: ProviderProps
   }, [local, refreshConversation, refreshList])
 
   useEffect(() => {
+    if (!panelOpen || !local || conversations.length === 0) return
+    void prefetchConversations(local.visitorId, conversations)
+  }, [conversations, local, panelOpen, prefetchConversations])
+
+  useEffect(() => {
     if (!local) return
-    const id = conversation?.id || local.conversationId
+    const id =
+      (view === 'thread' ? local.conversationId || conversation?.id : conversation?.id) ||
+      local.conversationId
     if (!id) return
+    if (view === 'thread') activeThreadIdRef.current = id
+    const visitorId = local.visitorId
     const tick = () => {
-      void refreshConversation(id, local.visitorId)
-      if (view === 'list') void refreshList(local.visitorId)
+      const current = activeThreadIdRef.current || id
+      void refreshConversation(current, visitorId)
+      if (view === 'list') void refreshList(visitorId)
     }
     const ms = panelOpen ? 8_000 : 25_000
     const t = window.setInterval(tick, ms)
