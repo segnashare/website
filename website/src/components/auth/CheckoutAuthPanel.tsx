@@ -4,6 +4,7 @@ import {bootstrapUserAfterSignup} from '@/lib/auth/bootstrap-user'
 import type {CheckoutOnboardingStep} from '@/lib/auth/checkout-onboarding-resume'
 import {mapAuthErrorMessage} from '@/lib/auth/map-auth-error'
 import {getSignUpPasswordError, isSignUpPasswordValid} from '@/lib/auth/password'
+import {storeWebsiteAuthNext} from '@/lib/auth/website-auth-next'
 import {trackWebsiteEvent, trackWebsiteSignupOnce} from '@/lib/analytics/track'
 import {SEGNA_APP_BASE_URL} from '@/lib/catalog/catalog-app-links'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
@@ -229,22 +230,34 @@ export function CheckoutAuthPanel({
     try {
       trackWebsiteEvent('auth_sign_up_started', {method: 'oauth', provider: 'google'})
       const supabase = createSupabaseBrowserClient()
-      const appCallback = new URL('/auth/callback', SEGNA_APP_BASE_URL)
 
       if (destination === 'app') {
         // Connexion membre : reste sur l’app (pas de return_to website).
+        const appCallback = new URL('/auth/callback', SEGNA_APP_BASE_URL)
         appCallback.searchParams.set('intent', 'member')
-      } else {
-        const websiteHandoff = new URL('/auth/callback', window.location.origin)
-        websiteHandoff.searchParams.set('next', returnPath)
-        appCallback.searchParams.set('intent', 'signup')
-        appCallback.searchParams.set('return_to', websiteHandoff.toString())
+        const {error: oauthError} = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: appCallback.toString(),
+            queryParams: {prompt: 'select_account'},
+          },
+        })
+        if (oauthError) {
+          setError(mapAuthErrorMessage(oauthError.message, 'Impossible de lancer Google.'))
+          setPending(false)
+        }
+        return
       }
 
+      // Website (panier / checkout / signup) : callback direct sur le site.
+      // Évite le détour app qui perd souvent `return_to` → atterrissage Site URL (homepage).
+      storeWebsiteAuthNext(returnPath)
+      const websiteCallback = new URL('/auth/callback', window.location.origin)
+      websiteCallback.searchParams.set('next', returnPath)
       const {error: oauthError} = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: appCallback.toString(),
+          redirectTo: websiteCallback.toString(),
           queryParams: {prompt: 'select_account'},
         },
       })

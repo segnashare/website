@@ -1,21 +1,25 @@
 'use client'
 
 import {bootstrapUserAfterSignup} from '@/lib/auth/bootstrap-user'
-import {WEBSITE_AUTH_NEXT_STORAGE_KEY} from '@/lib/auth/website-auth-next'
+import {
+  clearWebsiteAuthNext,
+  readWebsiteAuthNext,
+} from '@/lib/auth/website-auth-next'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import {useRouter} from 'next/navigation'
 import {useEffect, useState} from 'react'
 
 function safeNextPath(raw: string | null): string {
-  const fallback = '/abonnement/recap'
+  const fallback = '/'
   if (!raw?.trim()) return fallback
   try {
     const decoded = decodeURIComponent(raw.trim())
     if (!decoded.startsWith('/') || decoded.startsWith('//')) return fallback
-    if (decoded === '/abonnement/recap' || decoded.startsWith('/abonnement/recap?')) return decoded
-    if (decoded === '/abonnement/succes' || decoded.startsWith('/abonnement/succes?')) return decoded
+    // Ancien tunnel abo : ne pas renvoyer sur /abonnement nu (landing) après OAuth.
     if (decoded === '/abonnement' || decoded.startsWith('/abonnement/') || decoded.startsWith('/abonnement?')) {
-      return fallback
+      if (decoded === '/abonnement/recap' || decoded.startsWith('/abonnement/recap?')) return decoded
+      if (decoded === '/abonnement/succes' || decoded.startsWith('/abonnement/succes?')) return decoded
+      return '/abonnement/recap'
     }
     return decoded
   } catch {
@@ -46,22 +50,6 @@ function markPasswordRecovery(): void {
   }
 }
 
-function readStoredNext(): string | null {
-  try {
-    return window.sessionStorage.getItem(WEBSITE_AUTH_NEXT_STORAGE_KEY)
-  } catch {
-    return null
-  }
-}
-
-function clearStoredNext(): void {
-  try {
-    window.sessionStorage.removeItem(WEBSITE_AUTH_NEXT_STORAGE_KEY)
-  } catch {
-    // ignore
-  }
-}
-
 /**
  * Finalise l’OAuth website (hash tokens, flow implicit) puis renvoie vers `next`.
  * Ne dépend plus du handoff app → website.
@@ -80,8 +68,8 @@ export function AuthCallbackClient() {
       // Recovery : ignorer un `next` checkout / sessionStorage (sinon « Qui es-tu ? »).
       const nextPath = recoveryRedirect
         ? '/reset-password'
-        : safeNextPath(params.get('next') || readStoredNext())
-      clearStoredNext()
+        : safeNextPath(params.get('next') || readWebsiteAuthNext())
+      clearWebsiteAuthNext()
       const authError = params.get('auth_error') || params.get('error')
 
       if (authError) {
@@ -147,7 +135,11 @@ export function AuthCallbackClient() {
           target.pathname.startsWith('/signup') ||
           target.pathname.startsWith('/reset-password') ||
           target.pathname.startsWith('/forgot-password')
-        if (!target.searchParams.has('checkout') && !skipCheckoutFlag) {
+        const isCartOrCheckout =
+          target.pathname === '/panier' ||
+          target.pathname.startsWith('/panier/') ||
+          target.pathname.startsWith('/catalogue')
+        if (!target.searchParams.has('checkout') && !skipCheckoutFlag && isCartOrCheckout) {
           target.searchParams.set('checkout', '1')
         }
         window.history.replaceState(null, '', `${target.pathname}${target.search}`)
