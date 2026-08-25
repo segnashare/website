@@ -354,6 +354,19 @@ export function CartPageClient() {
               className={styles.appPromo}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => {
+                const href = catalogItemAppHref(items[0]?.id)
+                trackWebsiteEvent('cta_clicked', {
+                  cta_label: 'Découvrir Segna sur l’app',
+                  cta_href: href,
+                  placement: 'cart_app_promo',
+                })
+                trackWebsiteEvent('app_open_intent', {
+                  destination: 'app_store',
+                  href,
+                  placement: 'cart_app_promo',
+                })
+              }}
             >
               <p className={styles.appPromoTitle}>Découvrir Segna sur l’app</p>
               <p className={styles.appPromoSubtitle}>

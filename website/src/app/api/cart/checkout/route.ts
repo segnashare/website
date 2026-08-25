@@ -30,6 +30,10 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         ...body,
         purchaseMode: true,
+        /** Réduction Segna X réservée à l’app — prix catalogue plein sur le site. */
+        applyMemberPurchaseDiscount: false,
+        /** Chronopost domicile offert dès 200 € (aligné UI website). */
+        websitePurchaseCheckout: true,
         acceptRentalTerms: true,
         deliveryChannel: body.deliveryChannel ?? 'home',
         homeSpeed: body.homeSpeed ?? 'standard',

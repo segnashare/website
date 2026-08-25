@@ -21,7 +21,7 @@ const BENEFITS = [
   'Pressing inclus',
   'Assurance incluse',
   '1 échange inclus par mois',
-  '10% de réduction sur l’achat des pièces',
+  '20 % de réduction sur l’achat des pièces',
 ] as const
 
 type Props = {

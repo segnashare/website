@@ -14,6 +14,7 @@ import {
   catalogPurchasePriceCents,
   formatCatalogPurchasePriceLabel,
 } from '@/lib/catalog/catalog-borrow-price-label'
+import {catalogItemAppHref, SEGNA_APP_BASE_URL} from '@/lib/catalog/catalog-app-links'
 import {formatCatalogCardSizeLabel} from '@/lib/catalog/format-catalog-card-size'
 import {WEBSITE_CART_PATH} from '@/lib/cart/paths'
 import {useWebsiteCart} from '@/lib/cart/use-website-cart'
@@ -22,6 +23,10 @@ import {
   WEBSITE_PURCHASE_FREE_SHIPPING_THRESHOLD_CENTS,
   websiteChronopostHomeOutboundTtcCents,
 } from '@/lib/cart/website-cart-shipping'
+import {
+  validateWebsitePurchasePromoCode,
+  websitePurchasePromoGrantsFreeShipping,
+} from '@/lib/cart/website-purchase-promo-codes'
 import {buildMapEmbedSrc, getDefaultMapCenter} from '@/lib/maps/google-maps-embed'
 import {normalizeFrenchLocalNumber} from '@/lib/phone/fr-mobile'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
@@ -125,6 +130,8 @@ export function PurchaseCheckoutClient() {
   const [mapCenter, setMapCenter] = useState(getDefaultMapCenter)
   const [promoCode, setPromoCode] = useState('')
   const [promoNote, setPromoNote] = useState<string | null>(null)
+  const [promoNoteTone, setPromoNoteTone] = useState<'ok' | 'error' | null>(null)
+  const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null)
   const [billingSameAsShipping, setBillingSameAsShipping] = useState(true)
   const [billingIsCompany, setBillingIsCompany] = useState(false)
   const [billingCompanyName, setBillingCompanyName] = useState('')
@@ -155,7 +162,9 @@ export function PurchaseCheckoutClient() {
       }, 0),
     [items],
   )
-  const freeShippingUnlocked = subtotalCents >= WEBSITE_PURCHASE_FREE_SHIPPING_THRESHOLD_CENTS
+  const freeShippingUnlocked =
+    subtotalCents >= WEBSITE_PURCHASE_FREE_SHIPPING_THRESHOLD_CENTS ||
+    websitePurchasePromoGrantsFreeShipping(appliedPromoCode)
   const shippingTtcCents = freeShippingUnlocked ? 0 : websiteChronopostHomeOutboundTtcCents(count)
   const totalCents = subtotalCents + shippingTtcCents
 
@@ -417,12 +426,21 @@ export function PurchaseCheckoutClient() {
 
   function onPromoSubmit(event: FormEvent) {
     event.preventDefault()
-    const code = promoCode.trim()
-    if (!code) {
-      setPromoNote(null)
+    const result = validateWebsitePurchasePromoCode(promoCode)
+    if (!result.ok) {
+      setAppliedPromoCode(null)
+      if (result.reason === 'empty') {
+        setPromoNote(null)
+        setPromoNoteTone(null)
+        return
+      }
+      setPromoNote(result.message)
+      setPromoNoteTone('error')
       return
     }
-    setPromoNote('Les codes promo seront appliqués au paiement.')
+    setAppliedPromoCode(result.code)
+    setPromoNote(result.message)
+    setPromoNoteTone('ok')
   }
 
   async function onSubmit(event: FormEvent) {
@@ -556,6 +574,7 @@ export function PurchaseCheckoutClient() {
           },
           purchaseMode: true,
           acceptRentalTerms: true,
+          ...(appliedPromoCode ? {promoCode: appliedPromoCode} : {}),
         }),
       })
       const checkoutPayload = (await checkoutRes.json().catch(() => null)) as {
@@ -598,14 +617,43 @@ export function PurchaseCheckoutClient() {
     normalizeFrenchLocalNumber(phoneLocal).length === 9 &&
     billingReady
 
+  const expressAppHref = `${SEGNA_APP_BASE_URL}/cart`
+  const expressCtaLabel = 'Livraison Express (coursier) sur l’app'
+
   return (
     <main className={styles.page}>
       <div className={styles.layout}>
         <section className={styles.formCol} aria-labelledby="delivery-heading">
-          <h1 id="delivery-heading" className={styles.title}>
-            Adresse de livraison
-          </h1>
-          <p className={styles.subtitle}>Ajoute ton adresse de livraison pour finaliser la commande.</p>
+          <div className={styles.headerRow}>
+            <div className={styles.headerText}>
+              <h1 id="delivery-heading" className={styles.title}>
+                Adresse de livraison
+              </h1>
+              <p className={styles.subtitle}>
+                Ajoute ton adresse de livraison pour finaliser la commande.
+              </p>
+            </div>
+            <a
+              href={expressAppHref}
+              className={styles.expressAppCta}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => {
+                trackWebsiteEvent('cta_clicked', {
+                  cta_label: expressCtaLabel,
+                  cta_href: expressAppHref,
+                  placement: 'purchase_checkout_express_delivery_promo',
+                })
+                trackWebsiteEvent('app_open_intent', {
+                  destination: 'app_store',
+                  href: expressAppHref,
+                  placement: 'purchase_checkout_express_delivery_promo',
+                })
+              }}
+            >
+              {expressCtaLabel}
+            </a>
+          </div>
 
           <form
             id="purchase-checkout-form"
@@ -1120,14 +1168,64 @@ export function PurchaseCheckoutClient() {
                 className={styles.input}
                 value={promoCode}
                 placeholder="Saisissez votre code"
-                onChange={(e) => setPromoCode(e.target.value)}
+                onChange={(e) => {
+                  setPromoCode(e.target.value)
+                  if (appliedPromoCode || promoNote) {
+                    setAppliedPromoCode(null)
+                    setPromoNote(null)
+                    setPromoNoteTone(null)
+                  }
+                }}
+                autoComplete="off"
+                spellCheck={false}
               />
               <button type="submit" className={styles.promoApply}>
                 OK
               </button>
             </form>
-            {promoNote ? <p className={styles.hint}>{promoNote}</p> : null}
+            {promoNote ? (
+              <p
+                className={promoNoteTone === 'ok' ? styles.statusOk : styles.formError}
+                role={promoNoteTone === 'error' ? 'alert' : undefined}
+              >
+                {promoNote}
+              </p>
+            ) : null}
           </div>
+
+          <a
+            href={catalogItemAppHref(items[0]?.id)}
+            className={styles.appDiscountPromo}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => {
+              const href = catalogItemAppHref(items[0]?.id)
+              trackWebsiteEvent('cta_clicked', {
+                cta_label: 'Segna X −20 % sur l’app',
+                cta_href: href,
+                placement: 'purchase_checkout_member_discount_promo',
+              })
+              trackWebsiteEvent('app_open_intent', {
+                destination: 'app_store',
+                href,
+                placement: 'purchase_checkout_member_discount_promo',
+              })
+            }}
+          >
+            <p className={styles.appDiscountPromoTitle}>Membre Segna X ?</p>
+            <p className={styles.appDiscountPromoSubtitle}>
+              Ta réduction de −20 % à l’achat est disponible uniquement sur l’app.
+            </p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/brand/app-store-badge.png"
+              alt="Download on the App Store"
+              className={styles.appDiscountPromoBadge}
+              width={180}
+              height={52}
+              decoding="async"
+            />
+          </a>
         </aside>
       </div>
     </main>

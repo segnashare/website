@@ -4,11 +4,12 @@ import type {WebsiteDbCatalogSection} from '@/lib/sanity'
 import type {MarketingCatalogGridItem, MarketingCatalogItemRow} from '@/lib/catalog/marketing-catalog-items'
 import {getFirstPhotoCoverMeta} from '@/lib/catalog/item-photos'
 import {resolveCatalogCardBadges, getMarketingCatalogNewestIdSet} from '@/lib/catalog/catalog-card-badges'
-import {fetchMarketingCatalogItemsByIds, gridItemsFromRows, resolveCoverUrlsForItems} from '@/lib/catalog/marketing-catalog-items'
+import {fetchMarketingCatalogItemsByIds, resolveCoverUrlsForItems} from '@/lib/catalog/marketing-catalog-items'
 import {loadCatalogBrowse} from '@/lib/catalog/catalog-page-loader'
 import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
 import {objectPositionFromHotspot} from '@/lib/homeStagedPlacements'
 import {CatalogScrollStrip} from '@/components/catalog/CatalogScrollStrip'
+import {CatalogScrollStripSkeleton} from '@/components/catalog/CatalogScrollStripSkeleton'
 import {CatalogBrowseLinked} from '@/components/page-sections/CatalogBrowseLinked'
 import {CatalogPuzzleIntroFit} from '@/components/page-sections/CatalogPuzzleIntroFit'
 import {DEFAULT_CATALOG_BROWSE_QUERY} from '@/lib/catalog/catalog-browse-defaults'
@@ -66,6 +67,32 @@ function rowToBrowseItem(
   }
 }
 
+function CatalogSectionSkeleton({
+  section,
+  heading,
+  intro,
+  stackedAfterSmall,
+  stackedBeforeSmall,
+}: {
+  section: WebsiteDbCatalogSection
+  heading: string
+  intro: string
+  stackedAfterSmall?: boolean
+  stackedBeforeSmall?: boolean
+}) {
+  return (
+    <CatalogScrollStripSkeleton
+      heading={heading || undefined}
+      intro={intro || undefined}
+      introCtaLabel={section.introCtaLabel}
+      introCtaHref={section.introCtaHref}
+      cardSize={section.cardSize ?? 'small'}
+      stackedAfterSmall={stackedAfterSmall}
+      stackedBeforeSmall={stackedBeforeSmall}
+    />
+  )
+}
+
 export async function SectionWebsiteDbCatalog({
   section,
   stackedAfterSmall,
@@ -76,55 +103,32 @@ export async function SectionWebsiteDbCatalog({
   const intro = section.intro?.trim() ?? ''
   const showIntro = Boolean(heading || intro || (section.introCtaLabel && section.introCtaHref))
   const supabase = getSupabaseServiceRoleClient()
-  const missingEnv = !supabase && process.env.NODE_ENV === 'development'
 
   if (!supabase) {
+    // Never expose config / env errors to end users — show loading frames instead.
     return (
-      <section className={styles.section}>
-        {showIntro ? (
-          <header>
-            <CatalogPuzzleIntroFit
-              heading={heading || undefined}
-              lead={intro || undefined}
-              introCtaLabel={section.introCtaLabel}
-              introCtaHref={section.introCtaHref}
-            />
-          </header>
-        ) : null}
-        {missingEnv ? (
-          <p className={styles.note}>
-            Variables <code>NEXT_PUBLIC_SUPABASE_URL</code> et une clé serveur (
-            <code>SUPABASE_SERVICE_ROLE_KEY</code> ou <code>SUPABASE_SECRET_KEY</code>) manquantes : le catalogue Segna
-            ne peut pas se charger.
-          </p>
-        ) : (
-          <p className={styles.note}>Configuration Supabase manquante sur ce déploiement.</p>
-        )}
-      </section>
+      <CatalogSectionSkeleton
+        section={section}
+        heading={heading}
+        intro={intro}
+        stackedAfterSmall={stackedAfterSmall}
+        stackedBeforeSmall={stackedBeforeSmall}
+      />
     )
   }
 
   if (mode === 'full_catalog') {
     const payload = await loadCatalogBrowse(DEFAULT_CATALOG_BROWSE_QUERY)
 
-    if (!payload) {
+    if (!payload || payload.total === 0) {
       return (
-        <section className={styles.section}>
-          {showIntro ? (
-            <header>
-              <CatalogPuzzleIntroFit
-                heading={heading || undefined}
-                lead={intro || undefined}
-                introCtaLabel={section.introCtaLabel}
-                introCtaHref={section.introCtaHref}
-              />
-            </header>
-          ) : null}
-          <p className={styles.note}>
-            Impossible de charger les facettes catalogue. Vérifiez la migration{' '}
-            <code>get_marketing_website_catalog_facets</code> et la configuration Supabase.
-          </p>
-        </section>
+        <CatalogSectionSkeleton
+          section={section}
+          heading={heading}
+          intro={intro}
+          stackedAfterSmall={stackedAfterSmall}
+          stackedBeforeSmall={stackedBeforeSmall}
+        />
       )
     }
 
@@ -140,14 +144,7 @@ export async function SectionWebsiteDbCatalog({
             />
           </header>
         ) : null}
-        {payload.total === 0 ? (
-          <p className={styles.note}>
-            Aucune pièce catalogue pour le moment. Vérifiez les migrations SQL{' '}
-            <code>get_marketing_website_catalog_items_page</code> et les pièces éligibles dans la base.
-          </p>
-        ) : (
-          <CatalogBrowseLinked payload={payload} />
-        )}
+        <CatalogBrowseLinked payload={payload} />
       </section>
     )
   }
@@ -155,21 +152,13 @@ export async function SectionWebsiteDbCatalog({
   const entries = (section.dbItems ?? []).filter((e) => e.itemId && UUID_RE.test(e.itemId.trim()))
   if (entries.length === 0) {
     return (
-      <section className={styles.section}>
-        {showIntro ? (
-          <header>
-            <CatalogPuzzleIntroFit
-              heading={heading || undefined}
-              lead={intro || undefined}
-              introCtaLabel={section.introCtaLabel}
-              introCtaHref={section.introCtaHref}
-            />
-          </header>
-        ) : null}
-        <p className={styles.note}>
-          Mode « Sélection » : ajoutez au moins une pièce (UUID) dans Studio, ou passez le bloc en « Catalogue complet ».
-        </p>
-      </section>
+      <CatalogSectionSkeleton
+        section={section}
+        heading={heading}
+        intro={intro}
+        stackedAfterSmall={stackedAfterSmall}
+        stackedBeforeSmall={stackedBeforeSmall}
+      />
     )
   }
 
@@ -210,21 +199,13 @@ export async function SectionWebsiteDbCatalog({
 
   if (browseItems.length === 0) {
     return (
-      <section className={styles.section}>
-        {showIntro ? (
-          <header>
-            <CatalogPuzzleIntroFit
-              heading={heading || undefined}
-              lead={intro || undefined}
-              introCtaLabel={section.introCtaLabel}
-              introCtaHref={section.introCtaHref}
-            />
-          </header>
-        ) : null}
-        <p className={styles.note}>
-          Aucune pièce affichable (UUID invalide ou pièce non éligible au catalogue public).
-        </p>
-      </section>
+      <CatalogSectionSkeleton
+        section={section}
+        heading={heading}
+        intro={intro}
+        stackedAfterSmall={stackedAfterSmall}
+        stackedBeforeSmall={stackedBeforeSmall}
+      />
     )
   }
 

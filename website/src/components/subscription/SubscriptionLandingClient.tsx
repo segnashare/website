@@ -149,7 +149,7 @@ export function SubscriptionLandingClient() {
             <li>Jusqu&apos;à 400&nbsp;€ de pièces en location</li>
             <li>Durée illimitée + 1 échange inclus / mois</li>
             <li>Assurance &amp; pressing inclus</li>
-            <li>−30&nbsp;% sur l&apos;achat des pièces</li>
+            <li>−20&nbsp;% sur l&apos;achat des pièces</li>
           </ul>
           <button type="button" className={styles.primaryCta} disabled={pending} onClick={() => void handleCta()}>
             {pending ? 'Chargement…' : 'Commencer — 20 € le 1er mois'}

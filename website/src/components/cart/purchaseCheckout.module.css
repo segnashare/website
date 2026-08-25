@@ -41,6 +41,20 @@
   box-sizing: border-box;
 }
 
+.headerRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem 1.25rem;
+  margin: 0 0 1.75rem;
+  flex-wrap: wrap;
+}
+
+.headerText {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+
 .title {
   margin: 0 0 0.35rem;
   font-size: clamp(1.65rem, 3vw, 2rem);
@@ -49,9 +63,35 @@
 }
 
 .subtitle {
-  margin: 0 0 1.75rem;
+  margin: 0;
   font-size: 0.95rem;
   color: #52525b;
+}
+
+.expressAppCta {
+  flex: 0 1 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  max-width: 100%;
+  min-height: 2.5rem;
+  padding: 0.55rem 1.05rem;
+  border: 1px solid #14110f;
+  border-radius: 999px;
+  background: #14110f;
+  color: #fff;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.expressAppCta:hover {
+  background: #000;
 }
 
 .form {
@@ -447,6 +487,55 @@
   cursor: pointer;
 }
 
+.promoBlock .formError,
+.promoBlock .statusOk {
+  margin: 0.15rem 0 0;
+}
+
+.appDiscountPromo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 0.25rem;
+  padding: 1.15rem 1.05rem 1.2rem;
+  border-radius: 1rem;
+  background: #14110f;
+  color: #fff;
+  text-decoration: none;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.appDiscountPromo:hover {
+  background: #000;
+}
+
+.appDiscountPromoTitle {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: #fff;
+}
+
+.appDiscountPromoSubtitle {
+  margin: 0 0 0.9rem;
+  font-size: 0.86rem;
+  font-weight: 400;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.appDiscountPromoBadge {
+  display: block;
+  width: auto;
+  height: 2.4rem;
+  max-width: 100%;
+  object-fit: contain;
+  margin-inline: auto;
+}
+
 .backLink {
   display: inline-block;
   margin-top: 1.5rem;
@@ -479,5 +568,14 @@
 @media (max-width: 560px) {
   .row2 {
     grid-template-columns: 1fr;
+  }
+
+  .headerRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .expressAppCta {
+    align-self: stretch;
   }
 }

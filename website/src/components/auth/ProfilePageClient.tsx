@@ -131,6 +131,11 @@ export function ProfilePageClient() {
     setPending(true)
     try {
       const appUrl = await buildAppHandoffUrl('/profile?tab=plus')
+      trackWebsiteEvent('cta_clicked', {
+        cta_label: 'Télécharger l’app',
+        cta_href: appUrl || SEGNA_APP_STORE_URL || SEGNA_APP_BASE_URL,
+        placement: 'profile_download_app',
+      })
       trackWebsiteEvent('app_open_intent', {
         destination: SEGNA_APP_STORE_URL ? 'app_store' : 'app_handoff',
         href: appUrl || SEGNA_APP_STORE_URL || SEGNA_APP_BASE_URL,

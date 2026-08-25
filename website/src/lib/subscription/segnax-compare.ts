@@ -28,6 +28,6 @@ export const SEGNAX_COMPARE_ROWS = [
   {
     label: 'Achat des pièces',
     guest: 'Prix standard',
-    member: '30 % de réduction',
+    member: '20 % de réduction',
   },
 ] as const

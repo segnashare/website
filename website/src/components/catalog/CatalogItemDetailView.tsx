@@ -350,7 +350,8 @@ function CtaBlock({
             plan_code: 'segna_x',
           })
         }}
-      >        *&nbsp;Louez cette pièce pendant 1 mois avec l&apos;abonnement Segna, puis profitez de 30&nbsp;% de
+      >
+        *&nbsp;Louez cette pièce pendant 1 mois avec l&apos;abonnement Segna, puis profitez de 20&nbsp;% de
         réduction si vous souhaitez l&apos;acheter.
       </a>
     </div>
@@ -513,9 +514,7 @@ function InfoPanel({
             réduisant la fraude et les échecs de paiement.
           </p>
           <p className={styles.description}>
-            À l&apos;achat&nbsp;: <strong>10&nbsp;%</strong> sur l&apos;app.
-            <br />
-            Avec abonnement&nbsp;: <strong>30&nbsp;%</strong> sur l&apos;app.
+            Avec SegnaX&nbsp;: <strong>20&nbsp;%</strong> de réduction sur l&apos;app.
           </p>
         </AppAccordion>
       </div>
