@@ -5,7 +5,7 @@ import {CatalogItemLooksSection} from '@/components/catalog/CatalogItemLooksSect
 import {CatalogItemPhotoCover} from '@/components/catalog/CatalogItemPhotoCover'
 import {openItemChat} from '@/lib/item-chat/client-storage'
 import {formatCatalogPurchasePriceLabel} from '@/lib/catalog/catalog-borrow-price-label'
-import {isMarketingCatalogItemSold} from '@/lib/catalog/catalog-card-badges'
+import {isMarketingCatalogItemReserved, isMarketingCatalogItemSold} from '@/lib/catalog/catalog-card-badges'
 import {catalogItemPagePath, catalogSubscriptionHref} from '@/lib/catalog/catalog-app-links'
 import type {CatalogItemDetailPayload} from '@/lib/catalog/catalog-item-detail'
 import type {CatalogItemLookMedia} from '@/lib/catalog/catalog-item-style-looks'
@@ -287,6 +287,7 @@ function SizeConditionCard({
 
 function CtaBlock({
   sold,
+  reserved,
   subscriptionHref,
   addPending,
   inCart,
@@ -294,6 +295,7 @@ function CtaBlock({
   onRemoveFromCart,
 }: {
   sold: boolean
+  reserved: boolean
   subscriptionHref: string
   addPending: boolean
   inCart: boolean
@@ -306,14 +308,20 @@ function CtaBlock({
   return (
     <div className={styles.ctaBlock}>
       <div className={styles.ctaRow}>
-        <button
-          type="button"
-          className={inCart ? styles.ctaPrimaryInverse : styles.ctaPrimary}
-          disabled={addPending}
-          onClick={inCart ? onRemoveFromCart : onAddToCart}
-        >
-          {addPending ? 'Ajout…' : inCart ? 'Retirer du panier' : 'Ajouter au panier'}
-        </button>
+        {reserved ? (
+          <button type="button" className={styles.ctaPrimaryMuted} disabled>
+            Article loué
+          </button>
+        ) : (
+          <button
+            type="button"
+            className={inCart ? styles.ctaPrimaryInverse : styles.ctaPrimary}
+            disabled={addPending}
+            onClick={inCart ? onRemoveFromCart : onAddToCart}
+          >
+            {addPending ? 'Ajout…' : inCart ? 'Retirer du panier' : 'Ajouter au panier'}
+          </button>
+        )}
         <a
           href={subscriptionHref}
           className={styles.ctaSecondary}
@@ -362,6 +370,7 @@ function InfoPanel({
   detail,
   titleId,
   sold,
+  reserved,
   sizeLine,
   subscriptionHref,
   looks,
@@ -373,6 +382,7 @@ function InfoPanel({
   detail: CatalogItemDetailPayload
   titleId?: string
   sold: boolean
+  reserved: boolean
   sizeLine: string
   subscriptionHref: string
   looks: CatalogItemLookMedia[]
@@ -414,6 +424,7 @@ function InfoPanel({
 
       <CtaBlock
         sold={sold}
+        reserved={reserved}
         subscriptionHref={subscriptionHref}
         addPending={addPending}
         inCart={inCart}
@@ -570,6 +581,7 @@ export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks 
   const slots = detail.gallery
   const sizeLine = formatCatalogCardSizeLabel(detail.size_label, detail.size_code)
   const sold = isMarketingCatalogItemSold(detail.status)
+  const reserved = isMarketingCatalogItemReserved(detail.status)
   const subscriptionHref = catalogSubscriptionHref()
   const isPage = layout === 'page'
 
@@ -586,7 +598,7 @@ export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks 
   }, [detail.brand_label, detail.id, detail.price_points, detail.title, layout])
 
   const handleAddToCart = useCallback(() => {
-    if (sold || addPending) return
+    if (sold || reserved || addPending) return
     setAddPending(true)
     try {
       addWebsiteCartItem({
@@ -614,14 +626,14 @@ export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks 
     } finally {
       setAddPending(false)
     }
-  }, [addPending, detail, layout, sold])
+  }, [addPending, detail, layout, reserved, sold])
 
   const handleRemoveFromCart = useCallback(() => {
-    if (sold || addPending) return
+    if (sold || reserved || addPending) return
     removeWebsiteCartItem(detail.id)
     clearOpenCartDrawerIntent(detail.id)
     setAddModalOpen(false)
-  }, [addPending, detail.id, sold])
+  }, [addPending, detail.id, reserved, sold])
 
   const closeCartDrawer = useCallback(() => {
     clearOpenCartDrawerIntent(detail.id)
@@ -793,6 +805,7 @@ export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks 
               detail={detail}
               titleId={titleId}
               sold={sold}
+              reserved={reserved}
               sizeLine={sizeLine}
               subscriptionHref={subscriptionHref}
               looks={looks}
@@ -871,6 +884,7 @@ export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks 
           detail={detail}
           titleId={titleId}
           sold={sold}
+          reserved={reserved}
           sizeLine={sizeLine}
           subscriptionHref={subscriptionHref}
           looks={[]}

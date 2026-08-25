@@ -20,7 +20,6 @@ export function HeroTrustpilotRating({className}: Props) {
       className={rootClass}
       aria-label="4,7 sur 5 sur Trustpilot"
     >
-      <span className={styles.trustpilotSep} aria-hidden="true" />
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/brand/trustpilot.svg"

@@ -117,8 +117,8 @@ export function OrderDetailPageClient({cartId}: Props) {
       ) : (
         <>
           <header className={styles.pageHeader}>
-            <div className={styles.pageTitleRow}>
-              <h1 className={styles.pageTitle}>Commande {order.orderNumberCompact}</h1>
+            <h1 className={styles.pageTitle}>Commande {order.orderNumberCompact}</h1>
+            <div className={styles.pageKindRow}>
               <button
                 type="button"
                 className={styles.manageAppBtn}
@@ -127,8 +127,8 @@ export function OrderDetailPageClient({cartId}: Props) {
               >
                 {appPending ? <WaveDotsLoader /> : 'Gère ta commande'}
               </button>
+              <p className={styles.pageKind}>{order.orderTypeLabel}</p>
             </div>
-            <p className={styles.pageKind}>{order.orderTypeLabel}</p>
           </header>
           <OrderDetailBody order={order} />
         </>

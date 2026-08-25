@@ -15,6 +15,11 @@ export function isMarketingCatalogItemSold(status: string | null | undefined): b
   return status === 'sold'
 }
 
+/** Pièce louée / emprunt en cours — pas d’ajout panier website. */
+export function isMarketingCatalogItemReserved(status: string | null | undefined): boolean {
+  return status === 'reserved'
+}
+
 /**
  * IDs des ~20 % de pièces marketing ajoutées en dernier (`created_at`).
  * Mis en cache ; recalcul périodique via ISR.
