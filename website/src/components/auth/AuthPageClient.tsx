@@ -123,6 +123,30 @@ export function AuthPageClient({mode}: Props) {
     window.location.assign(`${SEGNA_APP_BASE_URL}/auth/login?from=member`)
   }, [])
 
+  const goToResetPassword = useCallback(() => {
+    try {
+      sessionStorage.setItem('segna_password_recovery', '1')
+    } catch {
+      // ignore
+    }
+    const hash = window.location.hash.startsWith('#')
+      ? window.location.hash.slice(1)
+      : window.location.hash
+    const hashParams = new URLSearchParams(hash)
+    const accessToken = hashParams.get('access_token')
+    const refreshToken = hashParams.get('refresh_token')
+    const target = new URL('/reset-password', window.location.origin)
+    if (accessToken && refreshToken) {
+      target.hash = new URLSearchParams({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        token_type: 'bearer',
+        type: 'recovery',
+      }).toString()
+    }
+    window.location.replace(`${target.pathname}${target.search}${target.hash}`)
+  }, [])
+
   const goNext = useCallback(async () => {
     try {
       const supabase = createSupabaseBrowserClient()
@@ -139,13 +163,13 @@ export function AuthPageClient({mode}: Props) {
           ? new URLSearchParams(window.location.search).get('type')
           : null
       if (hashType === 'recovery' || queryType === 'recovery') {
-        router.replace('/reset-password')
+        goToResetPassword()
         return
       }
       try {
         if (sessionStorage.getItem('segna_password_recovery') === '1') {
           sessionStorage.removeItem('segna_password_recovery')
-          router.replace('/reset-password')
+          goToResetPassword()
           return
         }
       } catch {
@@ -176,7 +200,7 @@ export function AuthPageClient({mode}: Props) {
     } catch {
       router.replace(WEBSITE_SUBSCRIPTION_RECAP_PATH)
     }
-  }, [openOnboardingResume, redirectToApp, router])
+  }, [goToResetPassword, openOnboardingResume, redirectToApp, router])
 
   // Flag recovery (hash consommé) pour éviter l’onboarding sur /signin|/signup.
   useEffect(() => {
@@ -189,11 +213,11 @@ export function AuthPageClient({mode}: Props) {
         // ignore
       }
       if (!window.location.pathname.startsWith('/reset-password')) {
-        router.replace('/reset-password')
+        goToResetPassword()
       }
     })
     return () => sub.subscription.unsubscribe()
-  }, [router])
+  }, [goToResetPassword])
 
   // Déjà connecté sur /signup (ou /signin) → ne pas rester sur le formulaire.
   useEffect(() => {
@@ -204,8 +228,7 @@ export function AuthPageClient({mode}: Props) {
         try {
           if (sessionStorage.getItem('segna_password_recovery') === '1') {
             resumeHandledRef.current = true
-            sessionStorage.removeItem('segna_password_recovery')
-            router.replace('/reset-password')
+            goToResetPassword()
             return
           }
         } catch {
@@ -219,7 +242,7 @@ export function AuthPageClient({mode}: Props) {
           new URLSearchParams(window.location.search).get('type') === 'recovery'
         ) {
           resumeHandledRef.current = true
-          router.replace('/reset-password')
+          goToResetPassword()
           return
         }
 
@@ -232,8 +255,7 @@ export function AuthPageClient({mode}: Props) {
         try {
           if (sessionStorage.getItem('segna_password_recovery') === '1') {
             resumeHandledRef.current = true
-            sessionStorage.removeItem('segna_password_recovery')
-            router.replace('/reset-password')
+            goToResetPassword()
             return
           }
         } catch {
@@ -246,7 +268,7 @@ export function AuthPageClient({mode}: Props) {
         // rester sur le formulaire
       }
     })()
-  }, [goNext, router])
+  }, [goNext, goToResetPassword])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
