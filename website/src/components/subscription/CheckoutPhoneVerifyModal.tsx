@@ -4,6 +4,8 @@ import {
   sendCheckoutPhoneOtp,
   verifyCheckoutPhoneOtp,
 } from '@/lib/auth/checkout-phone'
+import {ANALYTICS_SURFACES} from '@segna/analytics'
+import {trackWebsiteEvent} from '@/lib/analytics/track'
 import {formatFrenchPhoneDisplay, normalizeFrenchLocalNumber, normalizeFrenchPhoneToE164} from '@/lib/phone/fr-mobile'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import {useCallback, useEffect, useId, useRef, useState, type FormEvent} from 'react'
@@ -131,6 +133,7 @@ export function CheckoutPhoneVerifyModal({open, initialPhoneE164, onClose, onVer
         return
       }
       setPending(false)
+      trackWebsiteEvent('phone_verified', {surface: ANALYTICS_SURFACES.website})
       onVerified()
     } catch {
       setError('Vérification impossible.')

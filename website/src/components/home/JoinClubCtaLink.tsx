@@ -99,6 +99,17 @@ export function JoinClubCtaLink({
         cta_label: ariaLabel?.trim() || undefined,
         placement,
       })
+      if (
+        fallbackHref.includes('/location') ||
+        fallbackHref.includes('/abonnement') ||
+        fallbackHref.includes('/signup')
+      ) {
+        trackWebsiteEvent('subscription_interest', {
+          placement,
+          href: fallbackHref,
+          plan_code: 'segna_x',
+        })
+      }
       onClick?.()
       try {
         const supabase = createSupabaseBrowserClient()

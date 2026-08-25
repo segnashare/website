@@ -3,6 +3,7 @@
 import {CheckoutAuthModal} from '@/components/auth/CheckoutAuthModal'
 import {CheckoutSignupOnboardingModal} from '@/components/auth/CheckoutSignupOnboardingModal'
 import {resolveCheckoutOnboardingResume} from '@/lib/auth/checkout-onboarding-resume'
+import {trackWebsiteEvent} from '@/lib/analytics/track'
 import {
   catalogPurchasePriceCents,
   formatCatalogPurchasePriceLabel,
@@ -68,6 +69,10 @@ export function CartPageClient() {
 
   const handleFinalizePurchase = useCallback(async () => {
     if (checkoutPending) return
+    trackWebsiteEvent('purchase_intent', {
+      placement: 'cart_finalize',
+      item_count: count,
+    })
     setCheckoutPending(true)
     setAuthError(null)
     try {
@@ -90,7 +95,7 @@ export function CartPageClient() {
     } finally {
       setCheckoutPending(false)
     }
-  }, [checkoutPending, goToPurchaseCheckout])
+  }, [checkoutPending, count, goToPurchaseCheckout])
 
   useEffect(() => {
     if (typeof window === 'undefined' || count === 0) return
@@ -211,7 +216,17 @@ export function CartPageClient() {
               </ul>
             </section>
 
-            <Link href={WEBSITE_LOCATION_PATH} className={styles.segnaCard}>
+            <Link
+              href={WEBSITE_LOCATION_PATH}
+              className={styles.segnaCard}
+              onClick={() => {
+                trackWebsiteEvent('subscription_interest', {
+                  placement: 'cart_segnax_card',
+                  href: WEBSITE_LOCATION_PATH,
+                  plan_code: 'segna_x',
+                })
+              }}
+            >
               <span className={styles.segnaCardCopy}>
                 <span className={styles.segnaCardTitle}>
                   Un accès premium et illimité

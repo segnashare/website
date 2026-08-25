@@ -11,6 +11,7 @@ import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import {useSearchParams} from 'next/navigation'
 import {useCallback, useEffect, useRef, useState} from 'react'
 import {WebsitePageLoading} from '@/components/ui/WebsitePageLoading'
+import {trackWebsiteEvent} from '@/lib/analytics/track'
 import {RecapPiecesWall} from './RecapPiecesWall'
 import styles from './subscriptionRecap.module.css'
 
@@ -81,6 +82,11 @@ export function SubscriptionSuccessClient({wallItems}: Props) {
           }
           throw new Error(payload?.message ?? `Impossible de confirmer l’abonnement (HTTP ${response.status}).`)
         }
+        trackWebsiteEvent('subscription_confirmed', {
+          plan_code: planCode,
+          checkout_mode: 'stripe',
+          stripe_session_id: sessionId,
+        })
         setConfirmState('ready')
       } catch (error) {
         setErrorMessage(error instanceof Error ? error.message : 'Impossible de confirmer l’abonnement.')
@@ -113,6 +119,11 @@ export function SubscriptionSuccessClient({wallItems}: Props) {
     setPending(true)
     try {
       const appUrl = await buildAppHandoffUrl()
+      trackWebsiteEvent('app_open_intent', {
+        destination: platform === 'ios' ? 'app_store' : 'app_handoff',
+        href: appUrl,
+        placement: 'abonnement_succes',
+      })
       if (platform === 'ios') {
         openIosAppOrAppStore(appUrl, SEGNA_APP_STORE_URL)
         return

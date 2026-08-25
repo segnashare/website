@@ -14,6 +14,7 @@ import {itemDescriptionToSafeHtml} from '@/lib/catalog/item-description-format'
 import {formatItemDimensionDisplayValue, formatItemEraLabel} from '@/lib/catalog/item-era-fitting-dimensions'
 import {addWebsiteCartItem, removeWebsiteCartItem} from '@/lib/cart/website-cart'
 import {useWebsiteCart} from '@/lib/cart/use-website-cart'
+import {trackWebsiteEvent} from '@/lib/analytics/track'
 import {useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type UIEvent} from 'react'
 import {createPortal} from 'react-dom'
 import styles from './catalogItemDetailView.module.css'
@@ -313,7 +314,18 @@ function CtaBlock({
         >
           {addPending ? 'Ajout…' : inCart ? 'Retirer du panier' : 'Ajouter au panier'}
         </button>
-        <a href={subscriptionHref} className={styles.ctaSecondary} aria-label="Tester SegnaX">
+        <a
+          href={subscriptionHref}
+          className={styles.ctaSecondary}
+          aria-label="Tester SegnaX"
+          onClick={() => {
+            trackWebsiteEvent('subscription_interest', {
+              placement: 'piece_tester_segnax',
+              href: subscriptionHref,
+              plan_code: 'segna_x',
+            })
+          }}
+        >
           <span className={styles.ctaInline}>
             <span>Tester</span>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -328,8 +340,17 @@ function CtaBlock({
           </span>
         </a>
       </div>
-      <a href={subscriptionHref} className={styles.promoNote}>
-        *&nbsp;Louez cette pièce pendant 1 mois avec l&apos;abonnement Segna, puis profitez de 30&nbsp;% de
+      <a
+        href={subscriptionHref}
+        className={styles.promoNote}
+        onClick={() => {
+          trackWebsiteEvent('subscription_interest', {
+            placement: 'piece_promo_note',
+            href: subscriptionHref,
+            plan_code: 'segna_x',
+          })
+        }}
+      >        *&nbsp;Louez cette pièce pendant 1 mois avec l&apos;abonnement Segna, puis profitez de 30&nbsp;% de
         réduction si vous souhaitez l&apos;acheter.
       </a>
     </div>
@@ -554,6 +575,16 @@ export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks 
   const isPage = layout === 'page'
 
   photoIndexRef.current = photoIndex
+
+  useEffect(() => {
+    trackWebsiteEvent('item_viewed', {
+      item_id: detail.id,
+      source: layout,
+      title: detail.title,
+      brand_label: detail.brand_label ?? undefined,
+      price_points: detail.price_points ?? undefined,
+    })
+  }, [detail.brand_label, detail.id, detail.price_points, detail.title, layout])
 
   const handleAddToCart = useCallback(() => {
     if (sold || addPending) return

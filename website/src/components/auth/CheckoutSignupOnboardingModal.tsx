@@ -18,6 +18,7 @@ import {APPAREL_SIZE_BANDS} from '@/lib/catalog/apparel-size-referential'
 import {buildMapEmbedSrc, getDefaultMapCenter} from '@/lib/maps/google-maps-embed'
 import {normalizeFrenchLocalNumber} from '@/lib/phone/fr-mobile'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
+import {trackWebsiteEvent} from '@/lib/analytics/track'
 import type {User} from '@supabase/supabase-js'
 import {useCallback, useEffect, useId, useRef, useState, type FormEvent} from 'react'
 import {createPortal} from 'react-dom'
@@ -208,6 +209,18 @@ export function CheckoutSignupOnboardingModal({
   const birthOk = isValidBirthDate(day, month, year)
   const firstNameOk = firstName.trim().length >= 2
 
+  useEffect(() => {
+    if (!open) return
+    trackWebsiteEvent('onboarding_signup_step_reached', {
+      step: `website_checkout_onboarding_${step}`,
+    })
+  }, [open, step])
+
+  const finishOnboarding = useCallback(() => {
+    trackWebsiteEvent('onboarding_completed', {path: 'website_checkout_onboarding'})
+    onComplete()
+  }, [onComplete])
+
   const selectLocationSuggestion = useCallback((suggestion: BanAddressSuggestion) => {
     setLocationQuery(suggestion.label)
     setSelectedLocation(suggestion)
@@ -307,7 +320,7 @@ export function CheckoutSignupOnboardingModal({
           const resume = await resolveCheckoutOnboardingResume(supabase)
           if (cancelled) return
           if (emailOtpOnly || resume.status === 'ready' || resume.status === 'need_phone_verify') {
-            onComplete()
+            finishOnboarding()
             return
           }
           if (resume.status === 'resume' && resume.step >= 2) {
@@ -401,12 +414,12 @@ export function CheckoutSignupOnboardingModal({
       if (isEmailVerified(existingUser, normalizedEmail)) {
         await bootstrapUserAfterSignup(supabase)
         if (emailOtpOnly) {
-          onComplete()
+          finishOnboarding()
           return
         }
         const resume = await resolveCheckoutOnboardingResume(supabase)
         if (resume.status === 'ready' || resume.status === 'need_phone_verify') {
-          onComplete()
+          finishOnboarding()
           return
         }
         if (resume.status === 'resume' && resume.step >= 2) {
@@ -435,7 +448,7 @@ export function CheckoutSignupOnboardingModal({
           setError('Trop de tentatives. Attends un peu avant de renvoyer le code.')
           setResendRemaining(RESEND_SECONDS)
         } else if (msg.includes('already') || msg.includes('confirmed') || msg.includes('verified')) {
-          if (emailOtpOnly) onComplete()
+          if (emailOtpOnly) finishOnboarding()
           else {
             setStep(2)
             setStatus(null)
@@ -543,7 +556,7 @@ export function CheckoutSignupOnboardingModal({
           const resume = await resolveCheckoutOnboardingResume(supabase)
           if (resume.status === 'ready' || resume.status === 'need_phone_verify') {
             setPending(false)
-            onComplete()
+            finishOnboarding()
             return
           }
           if (intent === 'signin') {
@@ -632,7 +645,7 @@ export function CheckoutSignupOnboardingModal({
           return
         }
         setPending(false)
-        onComplete()
+        finishOnboarding()
       } catch (e) {
         console.error('[checkout-onboarding] submitStep', e)
         if (isAuthLockError(e)) {

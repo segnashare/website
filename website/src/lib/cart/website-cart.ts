@@ -102,7 +102,23 @@ export function addWebsiteCartItem(item: WebsiteCartItem): {
     return {items: current, added: false, alreadyInCart: false}
   }
   const next = [...current, item]
-  return {items: writeItems(next), added: true, alreadyInCart: false}
+  const written = writeItems(next)
+  // Lazy import to avoid circular deps with analytics on SSR.
+  if (typeof window !== 'undefined') {
+    void import('@/lib/analytics/track').then(({trackWebsiteEvent}) => {
+      trackWebsiteEvent('cart_item_added', {
+        item_id: item.id,
+        source: 'website',
+        trigger: 'add_to_cart',
+      })
+      trackWebsiteEvent('purchase_intent', {
+        placement: 'add_to_cart',
+        item_id: item.id,
+        item_count: written.length,
+      })
+    })
+  }
+  return {items: written, added: true, alreadyInCart: false}
 }
 
 export function removeWebsiteCartItem(itemId: string): WebsiteCartItem[] {

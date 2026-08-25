@@ -5,6 +5,12 @@ export const ANALYTICS_EVENTS = {
   appOpenIntent: "app_open_intent",
   appOpened: "app_opened",
 
+  // — Catalog / purchase intent (website) —
+  itemViewed: "item_viewed",
+  catalogViewed: "catalog_viewed",
+  purchaseIntent: "purchase_intent",
+  subscriptionInterest: "subscription_interest",
+
   // — Auth / onboarding —
   userSignedUp: "user_signed_up",
   authSignUpStarted: "auth_sign_up_started",
@@ -12,7 +18,7 @@ export const ANALYTICS_EVENTS = {
   phoneVerified: "phone_verified",
   onboardingCompleted: "onboarding_completed",
 
-  // — Borrow funnel —
+  // — Borrow / purchase funnel —
   cartCheckoutStarted: "cart_checkout_started",
   orderConfirmed: "order_confirmed",
   cartItemAdded: "cart_item_added",
@@ -20,7 +26,7 @@ export const ANALYTICS_EVENTS = {
   orderReceived: "order_received",
   orderReturned: "order_returned",
 
-  // — Lend funnel (mostly server / future mobile) —
+  // — Lend (legacy / unused) —
   itemDraftStarted: "item_draft_started",
   itemSubmitted: "item_submitted",
   itemAvailable: "item_available",
@@ -66,6 +72,29 @@ export type AnalyticsEventProperties = {
   app_opened: {
     source?: "cold_start" | "deep_link" | "universal_link" | "push" | "unknown";
     path?: string;
+  };
+  item_viewed: {
+    item_id: string;
+    source?: "page" | "modal" | "strip" | "recommended" | string;
+    title?: string;
+    brand_label?: string;
+    price_points?: number;
+  };
+  catalog_viewed: {
+    source?: string;
+    segment?: string;
+    category?: string;
+  };
+  purchase_intent: {
+    placement: string;
+    item_id?: string;
+    item_count?: number;
+    href?: string;
+  };
+  subscription_interest: {
+    placement: string;
+    href?: string;
+    plan_code?: string;
   };
   user_signed_up: {
     method: "email" | "oauth";

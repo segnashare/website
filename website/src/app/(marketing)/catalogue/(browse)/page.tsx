@@ -1,4 +1,5 @@
 import type {Metadata} from 'next'
+import {CatalogViewTracker} from '@/components/analytics/CatalogViewTracker'
 import {CatalogBrowseLinked} from '@/components/page-sections/CatalogBrowseLinked'
 import {DEFAULT_CATALOG_BROWSE_QUERY} from '@/lib/catalog/catalog-browse-defaults'
 import {loadCatalogBrowse} from '@/lib/catalog/catalog-page-loader'
@@ -38,5 +39,10 @@ export default async function CatalogueRootPage() {
     )
   }
 
-  return <CatalogBrowseLinked payload={payload} />
+  return (
+    <>
+      <CatalogViewTracker source="catalogue" />
+      <CatalogBrowseLinked payload={payload} />
+    </>
+  )
 }

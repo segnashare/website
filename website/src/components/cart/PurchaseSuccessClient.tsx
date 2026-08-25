@@ -1,6 +1,7 @@
 'use client'
 
 import {WebsitePageLoading} from '@/components/ui/WebsitePageLoading'
+import {trackWebsiteEvent} from '@/lib/analytics/track'
 import {clearWebsiteCart} from '@/lib/cart/website-cart'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import Link from 'next/link'
@@ -52,9 +53,22 @@ export function PurchaseSuccessClient() {
           },
           body: JSON.stringify({sessionId}),
         })
-        const payload = (await response.json().catch(() => null)) as {message?: string} | null
+        const payload = (await response.json().catch(() => null)) as {
+          message?: string
+          cartId?: string
+        } | null
         if (!response.ok) {
           throw new Error(payload?.message ?? 'Impossible de confirmer la commande.')
+        }
+        if (payload?.cartId) {
+          trackWebsiteEvent(
+            'order_confirmed',
+            {
+              cart_id: payload.cartId,
+              checkout_mode: 'stripe',
+            },
+            {insertId: `order_confirmed:${payload.cartId}`},
+          )
         }
         try {
           clearWebsiteCart()

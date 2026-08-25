@@ -91,6 +91,10 @@ export function SubscriptionRecapClient({wallItems}: Props) {
     trackWebsiteEvent('subscription_checkout_started', {
       plan_code: 'segna_x',
     })
+    trackWebsiteEvent('subscription_interest', {
+      placement: 'abonnement_recap_activate',
+      plan_code: 'segna_x',
+    })
 
     const response = await fetch('/api/subscription/checkout', {
       method: 'POST',

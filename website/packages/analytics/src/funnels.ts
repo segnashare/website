@@ -1,8 +1,32 @@
 /**
  * Funnels à recréer dans PostHog (Product analytics → New funnel).
- * Inclut les parcours website → mobile (même projet PostHog, même distinct_id = user.id).
+ * Website ↔ mobile, même projet PostHog, distinct_id = user.id.
+ * (Plus de funnel prêt — le dépôt de pièces n’est plus un parcours produit.)
  */
 export const POSTHOG_FUNNEL_INSIGHTS = [
+  {
+    id: "website_item_vers_achat",
+    name: "Site : pièce → achat",
+    description: "Vue item → ajout panier → checkout → commande",
+    steps: ["item_viewed", "cart_item_added", "cart_checkout_started", "order_confirmed"],
+  },
+  {
+    id: "website_intention_abonnement",
+    name: "Site : intention abonnement",
+    description: "Intérêt SegnaX → checkout Stripe → confirmé",
+    steps: ["subscription_interest", "subscription_checkout_started", "subscription_confirmed"],
+  },
+  {
+    id: "website_creation_compte",
+    name: "Site : création de compte",
+    description: "CTA → signup started → steps → compte créé",
+    steps: [
+      "cta_clicked",
+      "auth_sign_up_started",
+      "onboarding_signup_step_reached",
+      "user_signed_up",
+    ],
+  },
   {
     id: "acquisition_site_vers_mobile",
     name: "Acquisition site → mobile",
@@ -30,9 +54,40 @@ export const POSTHOG_FUNNEL_INSIGHTS = [
   },
   {
     id: "onboarding_signup",
-    name: "Onboarding signup (email)",
-    description: "Email OTP → téléphone vérifié → fin onboarding signup",
-    steps: ["auth_sign_up_started", "phone_verified", "onboarding_completed"],
+    name: "Onboarding signup",
+    description: "Étapes signup (filtre `step`) → téléphone → fin onboarding",
+    steps: [
+      "auth_sign_up_started",
+      "onboarding_signup_step_reached",
+      "phone_verified",
+      "onboarding_completed",
+    ],
+  },
+  {
+    id: "onboarding_in_app",
+    name: "Onboarding in-app",
+    description: "Même event, filtre `to_step` à chaque step PostHog",
+    steps: [
+      { event: "onboarding_in_app_step_completed", filter: { property: "to_step", value: "profile" } },
+      { event: "onboarding_in_app_step_completed", filter: { property: "to_step", value: "panier" } },
+      { event: "onboarding_in_app_step_completed", filter: { property: "to_step", value: "offer" } },
+      { event: "onboarding_in_app_step_completed", filter: { property: "to_step", value: "exchange" } },
+    ],
+  },
+  {
+    id: "credits_offerts_premier_emprunt",
+    name: "Crédits offerts → 1er emprunt",
+    steps: ["included_credits_activated", "cart_item_added", "order_confirmed"],
+  },
+  {
+    id: "parrainage_activation",
+    name: "Parrainage → activation",
+    description: "Step 1 : filtre `referral_code_present` = true sur `user_signed_up`",
+    steps: [
+      { event: "user_signed_up", filter: { property: "referral_code_present", value: true } },
+      "referral_qualified",
+      "order_confirmed",
+    ],
   },
   {
     id: "abandon_checkout",

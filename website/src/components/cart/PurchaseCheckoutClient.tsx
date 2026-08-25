@@ -17,6 +17,7 @@ import {
 import {formatCatalogCardSizeLabel} from '@/lib/catalog/format-catalog-card-size'
 import {WEBSITE_CART_PATH} from '@/lib/cart/paths'
 import {useWebsiteCart} from '@/lib/cart/use-website-cart'
+import {trackWebsiteEvent} from '@/lib/analytics/track'
 import {
   WEBSITE_PURCHASE_FREE_SHIPPING_THRESHOLD_CENTS,
   websiteChronopostHomeOutboundTtcCents,
@@ -525,6 +526,15 @@ export function PurchaseCheckoutClient() {
         setError('Session expirée. Reconnecte-toi pour payer.')
         return
       }
+
+      trackWebsiteEvent('cart_checkout_started', {
+        cart_id: sync.cartId,
+        item_count: items.length,
+      })
+      trackWebsiteEvent('purchase_intent', {
+        placement: 'purchase_checkout_submit',
+        item_count: items.length,
+      })
 
       const checkoutRes = await fetch('/api/cart/checkout', {
         method: 'POST',
