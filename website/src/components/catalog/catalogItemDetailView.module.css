@@ -284,7 +284,7 @@
   border: 2px solid transparent;
   border-radius: 3px;
   overflow: hidden;
-  background: #ece8e2;
+  background: transparent;
   cursor: pointer;
 }
 

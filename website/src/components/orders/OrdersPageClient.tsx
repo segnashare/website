@@ -1,5 +1,6 @@
 'use client'
 
+import {AccountSectionShell} from '@/components/auth/AccountSectionShell'
 import {
   fetchMemberOrdersBundle,
   type MemberOrdersBundle,
@@ -8,7 +9,6 @@ import {
 import {setWebsiteOrderBadgeCount} from '@/lib/orders/website-order-badge'
 import {trackWebsiteEvent} from '@/lib/analytics/track'
 import {WEBSITE_LOCATION_PATH} from '@/lib/cart/paths'
-import {SEGNA_APP_BASE_URL} from '@/lib/catalog/catalog-app-links'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import {WebsitePageLoading} from '@/components/ui/WebsitePageLoading'
 import Link from 'next/link'
@@ -108,44 +108,6 @@ function SegnaXPromoCard() {
   )
 }
 
-function AppOrdersPromo() {
-  const href = `${SEGNA_APP_BASE_URL}/exchange`
-  return (
-    <a
-      href={href}
-      className={cartStyles.appPromo}
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={() => {
-        trackWebsiteEvent('cta_clicked', {
-          cta_label: 'Découvrir Segna sur l’app',
-          cta_href: href,
-          placement: 'orders_app_promo',
-        })
-        trackWebsiteEvent('app_open_intent', {
-          destination: 'app_store',
-          href,
-          placement: 'orders_app_promo',
-        })
-      }}
-    >
-      <p className={cartStyles.appPromoTitle}>Découvrir Segna sur l’app</p>
-      <p className={cartStyles.appPromoSubtitle}>
-        Suis tes commandes en direct et les livraisons — notifications incluses.
-      </p>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/brand/app-store-badge.png"
-        alt="Download on the App Store"
-        className={cartStyles.appPromoBadge}
-        width={180}
-        height={52}
-        decoding="async"
-      />
-    </a>
-  )
-}
-
 export function OrdersPageClient() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
@@ -197,15 +159,6 @@ export function OrdersPageClient() {
 
   const ordersPanel = (
     <section className={styles.panelCard} aria-labelledby="orders-heading">
-      <div className={styles.panelHeader}>
-        <Link href="/profil" className={styles.back}>
-          ← Profil
-        </Link>
-        <h1 id="orders-heading" className={styles.title}>
-          Commandes
-        </h1>
-      </div>
-
       <div className={styles.statusTabsTwo} role="tablist" aria-label="Commandes">
         <button
           type="button"
@@ -240,8 +193,11 @@ export function OrdersPageClient() {
   )
 
   return (
-    <main className={styles.main}>
-      <div className={styles.layout}>
+    <AccountSectionShell
+      title="Commandes & retours"
+      lead="Suivez vos colis, effectuez des retours ou consultez votre historique de commandes."
+    >
+      <div className={styles.sectionLayout}>
         <div className={styles.leftCol}>
           {ordersPanel}
           <div className={styles.desktopOnly}>
@@ -272,11 +228,9 @@ export function OrdersPageClient() {
                 Continuer vos achats
               </Link>
             </section>
-
-            <AppOrdersPromo />
           </div>
         </aside>
       </div>
-    </main>
+    </AccountSectionShell>
   )
 }

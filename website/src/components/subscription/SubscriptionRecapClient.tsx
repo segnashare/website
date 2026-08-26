@@ -28,9 +28,17 @@ const BENEFITS = [
 
 type Props = {
   wallItems: RecapWallItem[]
+  /** Intégré dans le shell compte (`/profil/abonnement`) : panneau seul, sans mur. */
+  embedded?: boolean
+  /** URL `next` après signup / session (défaut : `/abonnement/recap`). */
+  authNextPath?: string
 }
 
-export function SubscriptionRecapClient({wallItems}: Props) {
+export function SubscriptionRecapClient({
+  wallItems,
+  embedded = false,
+  authNextPath = WEBSITE_SUBSCRIPTION_RECAP_PATH,
+}: Props) {
   const router = useRouter()
   const resumeHandledRef = useRef(false)
   const [pending, setPending] = useState(false)
@@ -104,7 +112,7 @@ export function SubscriptionRecapClient({wallItems}: Props) {
     const {data} = await supabase.auth.getSession()
     const accessToken = data.session?.access_token
     if (!accessToken) {
-      router.replace(`/signup?next=${encodeURIComponent(WEBSITE_SUBSCRIPTION_RECAP_PATH)}`)
+      router.replace(`/signup?next=${encodeURIComponent(authNextPath)}`)
       return
     }
 
@@ -112,7 +120,7 @@ export function SubscriptionRecapClient({wallItems}: Props) {
       plan_code: 'segna_x',
     })
     trackWebsiteEvent('subscription_interest', {
-      placement: 'abonnement_recap_activate',
+      placement: embedded ? 'profil_abonnement_recap_activate' : 'abonnement_recap_activate',
       plan_code: 'segna_x',
     })
 
@@ -140,7 +148,7 @@ export function SubscriptionRecapClient({wallItems}: Props) {
     }
 
     window.location.assign(payload.url)
-  }, [router])
+  }, [authNextPath, embedded, router])
 
   const handleActivate = useCallback(async () => {
     if (pending) return
@@ -151,7 +159,7 @@ export function SubscriptionRecapClient({wallItems}: Props) {
       const supabase = createSupabaseBrowserClient()
       const resume = await resolveCheckoutOnboardingResume(supabase)
       if (resume.status === 'need_auth') {
-        router.replace(`/signup?next=${encodeURIComponent(WEBSITE_SUBSCRIPTION_RECAP_PATH)}`)
+        router.replace(`/signup?next=${encodeURIComponent(authNextPath)}`)
         return
       }
       if (resume.status === 'resume') {
@@ -171,7 +179,7 @@ export function SubscriptionRecapClient({wallItems}: Props) {
     } finally {
       setPending(false)
     }
-  }, [pending, router, startStripeCheckout])
+  }, [authNextPath, pending, router, startStripeCheckout])
 
   const handlePhoneVerified = useCallback(async () => {
     setPhoneVerifyE164(null)
@@ -189,6 +197,10 @@ export function SubscriptionRecapClient({wallItems}: Props) {
 
   const handleSecondaryCta = useCallback(async () => {
     if (pending) return
+    if (embedded) {
+      router.push('/profil')
+      return
+    }
     setPending(true)
     try {
       const appUrl = await buildAppHandoffUrl('website_skip_subscription')
@@ -211,7 +223,7 @@ export function SubscriptionRecapClient({wallItems}: Props) {
     } finally {
       setPending(false)
     }
-  }, [buildAppHandoffUrl, pending, platform])
+  }, [buildAppHandoffUrl, embedded, pending, platform, router])
 
   const statusBlock =
     activateError || activatedNote ? (
@@ -222,9 +234,10 @@ export function SubscriptionRecapClient({wallItems}: Props) {
     ) : null
 
   const primaryCtaContent = pending ? <WaveDotsLoader /> : 'Activer — 20 € le 1er mois'
+  const secondaryLabel = embedded ? 'Retour au compte' : 'Continuer sans abonnement'
 
   return (
-    <div className={styles.page}>
+    <div className={[styles.page, embedded ? styles.pageEmbedded : ''].filter(Boolean).join(' ')}>
       {/* —— Mobile : UI/UX alignée page package app —— */}
       <div className={styles.mobilePackage}>
         <header className={styles.mobileHeader}>
@@ -319,7 +332,7 @@ export function SubscriptionRecapClient({wallItems}: Props) {
             disabled={pending}
             onClick={() => void handleSecondaryCta()}
           >
-            Continuer sans abonnement
+            {secondaryLabel}
           </button>
         </footer>
       </div>
@@ -379,14 +392,14 @@ export function SubscriptionRecapClient({wallItems}: Props) {
               disabled={pending}
               onClick={() => void handleSecondaryCta()}
             >
-              Continuer sans abonnement
+              {secondaryLabel}
             </button>
 
             {statusBlock}
           </div>
         </main>
 
-        {wallItems.length > 0 ? (
+        {!embedded && wallItems.length > 0 ? (
           <aside className={styles.wallSlot}>
             <RecapPiecesWall items={wallItems} fade="none" />
           </aside>

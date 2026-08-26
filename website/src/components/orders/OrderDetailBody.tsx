@@ -4,11 +4,7 @@ import {buildAppHandoffUrl} from '@/lib/auth/build-app-handoff-url'
 import {hasActivePaidSubscription} from '@/lib/auth/has-active-subscription'
 import {trackWebsiteEvent} from '@/lib/analytics/track'
 import {WEBSITE_LOCATION_PATH} from '@/lib/cart/paths'
-import {
-  openIosAppOrAppStore,
-  SEGNA_APP_BASE_URL,
-  SEGNA_APP_STORE_URL,
-} from '@/lib/catalog/catalog-app-links'
+import {openIosAppOrAppStore, SEGNA_APP_STORE_URL} from '@/lib/catalog/catalog-app-links'
 import type {WebsiteOrderDetail} from '@/lib/orders/fetch-member-order-detail'
 import {
   shipmentProgressActiveStepIndex,
@@ -306,45 +302,43 @@ function DeliveryCard({order}: {order: WebsiteOrderDetail}) {
   )
 }
 
-function AppManagePromo({order}: {order: WebsiteOrderDetail}) {
-  const href = `${SEGNA_APP_BASE_URL}${order.appDetailPath}`
+function ManageOrderButton({
+  pending,
+  onManage,
+}: {
+  pending: boolean
+  onManage: () => void
+}) {
   return (
-    <a
-      href={href}
-      className={cartStyles.appPromo}
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={() => {
-        trackWebsiteEvent('cta_clicked', {
-          cta_label: 'Découvrir Segna sur l’app',
-          cta_href: href,
-          placement: 'order_detail_app_promo',
-        })
-        trackWebsiteEvent('app_open_intent', {
-          destination: 'app_store',
-          href,
-          placement: 'order_detail_app_promo',
-        })
-      }}
+    <button
+      type="button"
+      className={styles.manageAppBtn}
+      disabled={pending}
+      onClick={onManage}
     >
-      <p className={cartStyles.appPromoTitle}>Découvrir Segna sur l’app</p>
-      <p className={cartStyles.appPromoSubtitle}>
-        Télécharge l’app pour gérer ta commande, le suivi et les notifications.
-      </p>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/brand/app-store-badge.png"
-        alt="Download on the App Store"
-        className={cartStyles.appPromoBadge}
-        width={180}
-        height={52}
-        decoding="async"
-      />
-    </a>
+      {pending ? <WaveDotsLoader /> : 'Gère ta commande'}
+    </button>
   )
 }
 
-function PurchaseDetail({order}: {order: WebsiteOrderDetail}) {
+function OrderTitle({order}: {order: WebsiteOrderDetail}) {
+  return (
+    <header className={styles.orderHeader}>
+      <h1 className={styles.orderTitle}>Commande {order.orderNumberCompact}</h1>
+      <p className={styles.orderLead}>{order.orderTypeLabel}</p>
+    </header>
+  )
+}
+
+function PurchaseDetail({
+  order,
+  onManage,
+  managePending,
+}: {
+  order: WebsiteOrderDetail
+  onManage: () => void
+  managePending: boolean
+}) {
   const [showSegnaX, setShowSegnaX] = useState(false)
 
   useEffect(() => {
@@ -366,6 +360,8 @@ function PurchaseDetail({order}: {order: WebsiteOrderDetail}) {
   return (
     <div className={styles.detailLayout}>
       <div className={styles.leftCol}>
+        <OrderTitle order={order} />
+
         <div className={styles.metaRow}>
           <div>
             <p className={styles.metaLabel}>Date de commande</p>
@@ -426,19 +422,19 @@ function PurchaseDetail({order}: {order: WebsiteOrderDetail}) {
           </div>
         ) : null}
 
-        {/* Mobile : frais + livraison + app sous le contenu */}
+        {/* Mobile : bouton + frais + livraison sous le contenu */}
         <div className={styles.mobileSideStack}>
+          <ManageOrderButton pending={managePending} onManage={onManage} />
           <FeesCard order={order} />
           <DeliveryCard order={order} />
-          <AppManagePromo order={order} />
         </div>
       </div>
 
       <aside className={styles.rightCol} aria-label="Récapitulatif commande">
         <div className={styles.rightSticky}>
+          <ManageOrderButton pending={managePending} onManage={onManage} />
           <FeesCard order={order} />
           <DeliveryCard order={order} />
-          <AppManagePromo order={order} />
         </div>
       </aside>
     </div>
@@ -512,9 +508,35 @@ function LocationGate({order}: {order: WebsiteOrderDetail}) {
 }
 
 /** Corps détail commande (achat complet ou gate location) — pour page dédiée. */
-export function OrderDetailBody({order}: {order: WebsiteOrderDetail}) {
+export function OrderDetailBody({
+  order,
+  onManage,
+  managePending,
+}: {
+  order: WebsiteOrderDetail
+  onManage: () => void
+  managePending: boolean
+}) {
   if (order.orderKind === 'achat') {
-    return <PurchaseDetail order={order} />
+    return (
+      <PurchaseDetail order={order} onManage={onManage} managePending={managePending} />
+    )
   }
-  return <LocationGate order={order} />
+
+  return (
+    <div className={styles.detailLayout}>
+      <div className={styles.leftCol}>
+        <OrderTitle order={order} />
+        <LocationGate order={order} />
+        <div className={styles.mobileSideStack}>
+          <ManageOrderButton pending={managePending} onManage={onManage} />
+        </div>
+      </div>
+      <aside className={styles.rightCol} aria-label="Actions commande">
+        <div className={styles.rightSticky}>
+          <ManageOrderButton pending={managePending} onManage={onManage} />
+        </div>
+      </aside>
+    </div>
+  )
 }

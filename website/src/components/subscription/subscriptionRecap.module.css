@@ -4,6 +4,42 @@
   color: #14110f;
 }
 
+.pageEmbedded {
+  min-height: 0;
+  width: 100%;
+  max-width: 28rem;
+}
+
+.pageEmbedded .mobilePackage {
+  min-height: 0;
+  max-width: none;
+  margin: 0;
+}
+
+.pageEmbedded .mobileHeader {
+  position: static;
+  top: auto;
+  padding-left: 0;
+  padding-right: 0;
+  text-align: left;
+}
+
+.pageEmbedded .offerRailTrack {
+  padding-left: 0;
+  padding-right: 0;
+  justify-content: flex-start;
+}
+
+.pageEmbedded .mobileFooter {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.pageEmbedded .mobilePackage .status {
+  margin-left: 0;
+  margin-right: 0;
+}
+
 .srOnly {
   position: absolute;
   width: 1px;
@@ -543,6 +579,23 @@
   .wallSlot {
     display: block;
     min-height: calc(100dvh - 4.5rem);
+  }
+
+  .pageEmbedded .shell {
+    display: block;
+    grid-template-columns: none;
+  }
+
+  .pageEmbedded .main {
+    min-height: 0;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0;
+  }
+
+  .pageEmbedded .panel {
+    width: min(100%, 28rem);
+    margin: 0 auto;
   }
 }
 

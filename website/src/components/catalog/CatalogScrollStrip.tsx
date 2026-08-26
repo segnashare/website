@@ -43,11 +43,13 @@ function CatalogScrollCard({
   item,
   onOpen,
   decorative,
+  priority = false,
 }: {
   item: MarketingCatalogGridItem
   onOpen?: (itemId: string) => void
   /** Clone marquee : non interactif. */
   decorative?: boolean
+  priority?: boolean
 }) {
   const titleLine = item.displayTitle ?? item.title
   const sizeLine = formatCatalogCardSizeLabel(item.size_label, item.size_code)
@@ -56,7 +58,7 @@ function CatalogScrollCard({
   const body = (
     <>
       <div className={styles.catalogCardMedia}>
-        <CatalogGridCardMedia item={item} />
+        <CatalogGridCardMedia item={item} priority={priority && !decorative} />
       </div>
       <div className={styles.catalogCardBody}>
         <div className={styles.catalogCardTitleRow}>
@@ -121,9 +123,11 @@ export function CatalogScrollStrip({
 
   const slides: HorizontalScrollSlide[] = useMemo(
     () =>
-      items.map((item) => ({
+      items.map((item, index) => ({
         key: item.id,
-        node: <CatalogScrollCard item={item} onOpen={setOpenItemId} />,
+        node: (
+          <CatalogScrollCard item={item} onOpen={setOpenItemId} priority={index < 2} />
+        ),
         cloneNode: <CatalogScrollCard item={item} decorative />,
       })),
     [items],

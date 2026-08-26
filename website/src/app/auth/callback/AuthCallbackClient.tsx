@@ -6,6 +6,7 @@ import {
   readWebsiteAuthNext,
 } from '@/lib/auth/website-auth-next'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
+import {WebsitePageLoading} from '@/components/ui/WebsitePageLoading'
 import {useRouter} from 'next/navigation'
 import {useEffect, useState} from 'react'
 
@@ -56,7 +57,7 @@ function markPasswordRecovery(): void {
  */
 export function AuthCallbackClient() {
   const router = useRouter()
-  const [message, setMessage] = useState('Connexion en cours…')
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -130,7 +131,7 @@ export function AuthCallbackClient() {
           // Session déjà détectée via detectSessionInUrl
           const {data} = await supabase.auth.getSession()
           if (!data.session) {
-            setMessage('Session manquante. Retour…')
+            setErrorMessage('Session manquante. Retour…')
             router.replace(nextPath.startsWith('/signin') || nextPath.startsWith('/signup') ? nextPath : '/signin')
             return
           }
@@ -178,7 +179,7 @@ export function AuthCallbackClient() {
         router.replace(`${target.pathname}${target.search}`)
       } catch {
         if (!cancelled) {
-          setMessage('Impossible de finaliser la connexion.')
+          setErrorMessage('Impossible de finaliser la connexion.')
           const target = new URL('/signin', window.location.origin)
           target.searchParams.set('next', nextPath)
           target.searchParams.set('auth_error', 'exchange_failed')
@@ -194,19 +195,23 @@ export function AuthCallbackClient() {
     }
   }, [router])
 
-  return (
-    <main
-      style={{
-        minHeight: '40vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '2rem',
-        fontFamily: 'system-ui, sans-serif',
-        color: '#3f3f46',
-      }}
-    >
-      <p>{message}</p>
-    </main>
-  )
+  if (errorMessage) {
+    return (
+      <main
+        style={{
+          minHeight: '40vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '2rem',
+          fontFamily: 'system-ui, sans-serif',
+          color: '#3f3f46',
+        }}
+      >
+        <p>{errorMessage}</p>
+      </main>
+    )
+  }
+
+  return <WebsitePageLoading label="Connexion en cours" />
 }

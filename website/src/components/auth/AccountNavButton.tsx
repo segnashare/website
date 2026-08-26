@@ -49,12 +49,40 @@ function OrdersIcon() {
   )
 }
 
-function AccountIcon() {
+function SecurityIcon() {
   return (
     <svg className={styles.actionIcon} viewBox="0 0 24 24" fill="none" aria-hidden>
-      <circle cx="12" cy="8" r="3" stroke="currentColor" strokeWidth="1.6" />
       <path
-        d="M5.8 19c1.3-2.8 3.4-4.1 6.2-4.1s4.9 1.3 6.2 4.1"
+        d="M12 3.5 5.5 6.2v5.1c0 4.1 2.7 7.4 6.5 8.7 3.8-1.3 6.5-4.6 6.5-8.7V6.2L12 3.5Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M10.2 12.1 11.5 13.4 14.2 10.4"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function SubscriptionIcon() {
+  return (
+    <svg className={styles.actionIcon} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <rect
+        x="4.5"
+        y="6.5"
+        width="15"
+        height="11"
+        rx="2"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      />
+      <path
+        d="M8 10.5h8M8 13.5h5"
         stroke="currentColor"
         strokeWidth="1.6"
         strokeLinecap="round"
@@ -78,7 +106,6 @@ export function AccountNavButton({className, tone = 'auto'}: Props) {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [memberName, setMemberName] = useState('')
   const [open, setOpen] = useState(false)
-  const [pending, setPending] = useState(false)
   const [orderBadge, setOrderBadge] = useState(0)
 
   useEffect(() => {
@@ -174,19 +201,13 @@ export function AccountNavButton({className, tone = 'auto'}: Props) {
     }
   }, [open])
 
-  const signOut = useCallback(async () => {
-    setPending(true)
-    try {
-      const supabase = createSupabaseBrowserClient()
-      await supabase.auth.signOut()
-      setIsLoggedIn(false)
-      setMemberName('')
+  const go = useCallback(
+    (href: string) => {
       setOpen(false)
-      window.location.assign('/')
-    } catch {
-      setPending(false)
-    }
-  }, [])
+      router.push(href)
+    },
+    [router],
+  )
 
   const onTriggerClick = useCallback(() => {
     if (!ready) return
@@ -261,23 +282,15 @@ export function AccountNavButton({className, tone = 'auto'}: Props) {
               <button
                 type="button"
                 className={styles.actionBtn}
-                disabled={pending}
-                onClick={() => {
-                  setOpen(false)
-                  router.push('/profil')
-                }}
+                onClick={() => go('/profil/abonnement')}
               >
-                <AccountIcon />
-                Mon compte
+                <SubscriptionIcon />
+                Abonnement
               </button>
               <button
                 type="button"
                 className={styles.actionBtn}
-                disabled={pending}
-                onClick={() => {
-                  setOpen(false)
-                  router.push('/profil/commandes')
-                }}
+                onClick={() => go('/profil/commandes')}
               >
                 <OrdersIcon />
                 <span className={styles.actionLabel}>Mes commandes</span>
@@ -289,11 +302,20 @@ export function AccountNavButton({className, tone = 'auto'}: Props) {
               </button>
               <button
                 type="button"
-                className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
-                disabled={pending}
-                onClick={() => void signOut()}
+                className={styles.actionBtn}
+                onClick={() => go('/profil/details')}
               >
-                Se déconnecter
+                <SecurityIcon />
+                Détails et sécurité
+              </button>
+            </div>
+            <div className={styles.panelFooter}>
+              <button
+                type="button"
+                className={styles.accountCta}
+                onClick={() => go('/profil')}
+              >
+                Mon compte
               </button>
             </div>
           </div>

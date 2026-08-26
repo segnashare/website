@@ -116,17 +116,35 @@
   cursor: wait;
 }
 
-.actionBtnDanger {
-  justify-content: center;
-  text-align: center;
-  background: #c62828;
-  border-color: #c62828;
-  color: #fff;
+.panelFooter {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #f4f4f5;
 }
 
-.actionBtnDanger:hover:not(:disabled) {
-  background: #a81f1f;
-  border-color: #a81f1f;
+.accountCta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.35rem;
+  margin: 0;
+  padding: 0.45rem 1.05rem;
+  border: 0;
+  border-radius: 0.45rem;
+  background: #18181b;
+  color: #fff;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.accountCta:hover {
+  background: #000;
 }
 
 .badge {

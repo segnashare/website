@@ -1,8 +1,8 @@
 'use client'
 
+import {AccountSectionShell} from '@/components/auth/AccountSectionShell'
 import {OrderDetailBody} from '@/components/orders/OrderDetailBody'
 import {WebsitePageLoading} from '@/components/ui/WebsitePageLoading'
-import {WaveDotsLoader} from '@/components/ui/WaveDotsLoader'
 import {buildAppHandoffUrl} from '@/lib/auth/build-app-handoff-url'
 import {trackWebsiteEvent} from '@/lib/analytics/track'
 import {openIosAppOrAppStore, SEGNA_APP_STORE_URL} from '@/lib/catalog/catalog-app-links'
@@ -11,7 +11,6 @@ import {fetchMemberOrderDetail, type WebsiteOrderDetail} from '@/lib/orders/fetc
 import {bumpWebsiteOrderBadge} from '@/lib/orders/website-order-badge'
 import {detectClientPlatform} from '@/lib/platform/client-platform'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
-import Link from 'next/link'
 import {useRouter, useSearchParams} from 'next/navigation'
 import {useCallback, useEffect, useState} from 'react'
 import styles from './orderDetailPage.module.css'
@@ -107,32 +106,18 @@ export function OrderDetailPageClient({cartId}: Props) {
   }
 
   return (
-    <main className={styles.page}>
-      <Link href="/profil/commandes" className={styles.pageBack}>
-        ← Mes commandes
-      </Link>
-
-      {error || !order ? (
-        <p className={styles.error}>Impossible de charger cette commande.</p>
-      ) : (
-        <>
-          <header className={styles.pageHeader}>
-            <h1 className={styles.pageTitle}>Commande {order.orderNumberCompact}</h1>
-            <div className={styles.pageKindRow}>
-              <button
-                type="button"
-                className={styles.manageAppBtn}
-                disabled={appPending}
-                onClick={() => void openInApp()}
-              >
-                {appPending ? <WaveDotsLoader /> : 'Gère ta commande'}
-              </button>
-              <p className={styles.pageKind}>{order.orderTypeLabel}</p>
-            </div>
-          </header>
-          <OrderDetailBody order={order} />
-        </>
-      )}
-    </main>
+    <AccountSectionShell>
+      <div className={styles.embedded}>
+        {error || !order ? (
+          <p className={styles.error}>Impossible de charger cette commande.</p>
+        ) : (
+          <OrderDetailBody
+            order={order}
+            onManage={() => void openInApp()}
+            managePending={appPending}
+          />
+        )}
+      </div>
+    </AccountSectionShell>
   )
 }

@@ -761,6 +761,8 @@ export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks 
                     position={slot.position}
                     centerCover
                     objectPosition="center center"
+                    sizes="100vw"
+                    priority={i === 0}
                   />
                 </div>
               ))}
@@ -791,7 +793,12 @@ export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks 
                   setLightboxOpen(true)
                 }}
               >
-                <CatalogItemPhotoCover imageUrl={slot.url} position={slot.position} />
+                <CatalogItemPhotoCover
+                  imageUrl={slot.url}
+                  position={slot.position}
+                  sizes="(max-width: 768px) 100vw, 520px"
+                  priority={i === 0}
+                />
               </button>
             ))
           ) : (
@@ -850,6 +857,8 @@ export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks 
                     position={slot.position}
                     centerCover
                     objectPosition="center center"
+                    sizes="100vw"
+                    priority={i === 0}
                   />
                 </div>
               ))
@@ -871,7 +880,11 @@ export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks 
                   aria-current={i === photoIndex ? 'true' : undefined}
                   onClick={() => selectPhoto(i)}
                 >
-                  <CatalogItemPhotoCover imageUrl={slot.url} position={slot.position} />
+                  <CatalogItemPhotoCover
+                    imageUrl={slot.url}
+                    position={slot.position}
+                    sizes="64px"
+                  />
                 </button>
               ))}
             </div>

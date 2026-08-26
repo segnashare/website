@@ -1,26 +1,26 @@
 import type {Metadata} from 'next'
 import {Suspense} from 'react'
-import {ProfilePageClient} from '@/components/auth/ProfilePageClient'
+import {DetailsSecurityPageClient} from '@/components/auth/DetailsSecurityPageClient'
 import {SiteNavChrome} from '@/components/home/SiteNavChrome'
 import {WebsitePageLoading} from '@/components/ui/WebsitePageLoading'
 import {getHomePageData, getWebsiteHeaderNav} from '@/lib/sanity'
 
 export const metadata: Metadata = {
-  title: 'Mon compte | Segna',
-  description: 'Gère ton abonnement, tes commandes et les infos de ton compte Segna.',
+  title: 'Détails et sécurité | Segna',
+  description: 'Gère tes informations personnelles, ton mot de passe et la suppression de ton compte.',
 }
 
 export const revalidate = 86400
 
-export default async function ProfilPage() {
+export default async function ProfilDetailsPage() {
   const [homePage, siteNavFallback] = await Promise.all([getHomePageData(), getWebsiteHeaderNav()])
   const headerNav = homePage ?? siteNavFallback
 
   return (
     <>
-      <SiteNavChrome header={headerNav} mobileNavId="mobile-nav-profil" surface="light" />
-      <Suspense fallback={<WebsitePageLoading label="Chargement du compte" />}>
-        <ProfilePageClient />
+      <SiteNavChrome header={headerNav} mobileNavId="mobile-nav-profil-details" surface="light" />
+      <Suspense fallback={<WebsitePageLoading label="Chargement des détails" />}>
+        <DetailsSecurityPageClient />
       </Suspense>
     </>
   )

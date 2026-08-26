@@ -1,10 +1,7 @@
-.main {
-  width: 100%;
-  max-width: 32rem;
-  margin: 0 auto;
-  padding: calc(4.75rem + clamp(0.75rem, 2vw, 1.25rem)) clamp(1.15rem, 4vw, 1.5rem)
-    clamp(3rem, 8vw, 5rem);
-  box-sizing: border-box;
+.sectionLayout {
+  display: grid;
+  gap: 1.15rem;
+  align-items: start;
 }
 
 .layout {
@@ -361,16 +358,10 @@
 }
 
 @media (min-width: 901px) {
-  .main {
-    width: min(100%, 90rem);
-    max-width: none;
-    margin: 0 auto;
-    padding: clamp(1.25rem, 3vw, 2.5rem) clamp(1rem, 3.5vw, 2.5rem) 4.5rem;
-  }
-
+  .sectionLayout,
   .layout {
-    grid-template-columns: minmax(0, 1.55fr) minmax(18rem, 0.78fr);
-    gap: 1.25rem;
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 18.5rem);
+    gap: 1.5rem 2rem;
   }
 
   .desktopOnly {
@@ -394,11 +385,9 @@
 }
 
 @media (min-width: 1201px) {
-  .main {
-    padding: clamp(1.25rem, 3vw, 2.5rem) clamp(1rem, 3.5vw, 2.5rem) 4.5rem;
-  }
-
+  .sectionLayout,
   .layout {
-    grid-template-columns: minmax(0, 1.7fr) minmax(20rem, 0.72fr);
+    grid-template-columns: minmax(0, 1fr) minmax(17rem, 19rem);
+    gap: 1.75rem 2.5rem;
   }
 }

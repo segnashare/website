@@ -1,16 +1,10 @@
 'use client'
 
+import {ProfileAppStoreFrame} from '@/components/auth/ProfileAppStoreFrame'
 import {ProfileReferralCard} from '@/components/auth/ProfileReferralCard'
+import {ProfileReviewsRow} from '@/components/auth/ProfileReviewsRow'
 import {WebsitePageLoading} from '@/components/ui/WebsitePageLoading'
-import {redirectToAppWithSession} from '@/lib/auth/app-handoff'
-import {buildAppHandoffUrl} from '@/lib/auth/build-app-handoff-url'
-import {trackWebsiteEvent} from '@/lib/analytics/track'
-import {
-  openIosAppOrAppStore,
-  SEGNA_APP_BASE_URL,
-  SEGNA_APP_STORE_URL,
-} from '@/lib/catalog/catalog-app-links'
-import {detectClientPlatform} from '@/lib/platform/client-platform'
+import {hasActivePaidSubscription} from '@/lib/auth/has-active-subscription'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import {
   getWebsiteOrderBadgeCount,
@@ -20,69 +14,49 @@ import {
 import {fetchOngoingPurchaseOrderCount} from '@/lib/orders/fetch-ongoing-purchase-count'
 import Link from 'next/link'
 import {useRouter} from 'next/navigation'
-import {useCallback, useEffect, useState} from 'react'
+import {useCallback, useEffect, useState, type ReactNode} from 'react'
 import styles from './profilePage.module.css'
 
 type ProfileState = {
   firstName: string
   lastName: string
+  email: string
+  isSubscriber: boolean
   referralCode: string | null
 }
 
-function formatMemberName(firstName: string, lastName: string): string {
-  return [firstName, lastName].filter(Boolean).join(' ')
-}
-
-function ChevronIcon() {
-  return (
-    <svg className={styles.chevron} viewBox="0 0 20 20" fill="none" aria-hidden>
-      <path
-        d="M7.5 4.5 13 10l-5.5 5.5"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function NavRow({
-  label,
-  disabled,
-  onClick,
+function AccountTile({
+  title,
+  description,
   href,
   badgeCount,
 }: {
-  label: string
-  disabled?: boolean
-  onClick?: () => void
-  href?: string
+  title: string
+  description: string
+  href: string
   badgeCount?: number
 }) {
   const badge =
     badgeCount && badgeCount > 0 ? (
-      <span className={styles.rowBadge} aria-hidden>
+      <span className={styles.tileBadge} aria-hidden>
         {badgeCount > 9 ? '9+' : badgeCount}
       </span>
     ) : null
 
-  if (href) {
-    return (
-      <Link href={href} className={styles.row}>
-        <span className={styles.rowLabel}>{label}</span>
+  const body: ReactNode = (
+    <>
+      <span className={styles.tileTitleRow}>
+        <span className={styles.tileTitle}>{title}</span>
         {badge}
-        <ChevronIcon />
-      </Link>
-    )
-  }
+      </span>
+      <span className={styles.tileDescription}>{description}</span>
+    </>
+  )
 
   return (
-    <button type="button" className={styles.row} disabled={disabled} onClick={onClick}>
-      <span className={styles.rowLabel}>{label}</span>
-      {badge}
-      <ChevronIcon />
-    </button>
+    <Link href={href} className={styles.tile}>
+      {body}
+    </Link>
   )
 }
 
@@ -112,25 +86,34 @@ export function ProfilePageClient() {
           return
         }
 
-        const [{data: member}, {data: referral}, ongoingCount] = await Promise.all([
-          supabase.from('users').select('first_name, last_name').eq('id', user.id).maybeSingle(),
+        const [{data: member}, {data: referral}, ongoingCount, isSubscriber] = await Promise.all([
+          supabase.from('users').select('first_name, last_name, email').eq('id', user.id).maybeSingle(),
           supabase.from('referrals_codes').select('code').eq('user_id', user.id).maybeSingle(),
           fetchOngoingPurchaseOrderCount(supabase, user.id),
+          hasActivePaidSubscription(supabase),
         ])
 
         if (cancelled) return
 
         setWebsiteOrderBadgeCount(ongoingCount)
 
-        const m = member as {first_name?: string | null; last_name?: string | null} | null
+        const m = member as {
+          first_name?: string | null
+          last_name?: string | null
+          email?: string | null
+        } | null
         const code =
           typeof (referral as {code?: string | null} | null)?.code === 'string'
             ? (referral as {code: string}).code.trim()
             : ''
+        const email =
+          (typeof m?.email === 'string' && m.email.trim()) || user.email?.trim() || ''
 
         setProfile({
           firstName: typeof m?.first_name === 'string' ? m.first_name.trim() : '',
           lastName: typeof m?.last_name === 'string' ? m.last_name.trim() : '',
+          email,
+          isSubscriber,
           referralCode: code || null,
         })
       } catch {
@@ -144,46 +127,6 @@ export function ProfilePageClient() {
     }
   }, [router])
 
-  const goApp = useCallback(async (path: string) => {
-    setPending(true)
-    try {
-      await redirectToAppWithSession(path)
-    } finally {
-      setPending(false)
-    }
-  }, [])
-
-  const downloadApp = useCallback(async () => {
-    if (pending) return
-    setPending(true)
-    try {
-      const appUrl = await buildAppHandoffUrl('/profile?tab=plus')
-      trackWebsiteEvent('cta_clicked', {
-        cta_label: 'Télécharger l’app',
-        cta_href: appUrl || SEGNA_APP_STORE_URL || SEGNA_APP_BASE_URL,
-        placement: 'profile_download_app',
-      })
-      trackWebsiteEvent('app_open_intent', {
-        destination: SEGNA_APP_STORE_URL ? 'app_store' : 'app_handoff',
-        href: appUrl || SEGNA_APP_STORE_URL || SEGNA_APP_BASE_URL,
-        placement: 'profile_download_app',
-      })
-      if (detectClientPlatform() === 'ios' && SEGNA_APP_STORE_URL) {
-        openIosAppOrAppStore(appUrl, SEGNA_APP_STORE_URL)
-        return
-      }
-      if (SEGNA_APP_STORE_URL) {
-        window.open(SEGNA_APP_STORE_URL, '_blank', 'noopener,noreferrer')
-        return
-      }
-      window.location.assign(appUrl || `${SEGNA_APP_BASE_URL}/profile?tab=plus`)
-    } catch {
-      window.location.assign(SEGNA_APP_STORE_URL || SEGNA_APP_BASE_URL)
-    } finally {
-      setPending(false)
-    }
-  }, [pending])
-
   const signOut = useCallback(async () => {
     setPending(true)
     try {
@@ -196,73 +139,64 @@ export function ProfilePageClient() {
   }, [])
 
   if (loading || !profile) {
-    return <WebsitePageLoading label="Chargement du profil" />
+    return <WebsitePageLoading label="Chargement du compte" />
   }
 
-  const displayName = formatMemberName(profile.firstName, profile.lastName)
+  const firstName = profile.firstName || 'toi'
+  const welcomeTitle = `Bienvenue sur ton compte, ${firstName}`
 
   return (
     <main className={styles.main}>
       <header className={styles.header}>
-        <h1 className={styles.title}>{displayName || 'Mon profil'}</h1>
-      </header>
-
-      <div className={styles.layout}>
-        <section className={styles.section} aria-label="Mon compte">
-          <ul className={styles.list}>
-            <li>
-              <NavRow
-                label="Commandes"
-                href="/profil/commandes"
-                badgeCount={orderBadge}
-              />
-            </li>
-            <li>
-              <NavRow
-                label="Détails et sécurité"
-                disabled={pending}
-                onClick={() => void goApp('/profile/settings')}
-              />
-            </li>
-            <li>
-              <NavRow label="Préférences et communications" href="/profil/preferences" />
-            </li>
-          </ul>
-        </section>
-
-        <div className={styles.rightCol}>
-          <ProfileReferralCard referralCode={profile.referralCode} />
-
-          <button
-            type="button"
-            className={styles.appDownload}
-            disabled={pending}
-            onClick={() => void downloadApp()}
-          >
-            <span className={styles.appDownloadTitle}>Télécharger l’app</span>
-            <span className={styles.appDownloadSubtitle}>
-              Louez vos pièces, renouvelez quand vous voulez, et profitez d’avantages à l’achat.
-            </span>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/brand/app-store-badge.png"
-              alt="Download on the App Store"
-              className={styles.appDownloadBadge}
-              width={180}
-              height={52}
-              decoding="async"
-            />
-          </button>
+        <div className={styles.headerText}>
+          <h1 className={styles.title}>{welcomeTitle}</h1>
+          {profile.email ? <p className={styles.email}>{profile.email}</p> : null}
         </div>
-
         <button
           type="button"
-          className={styles.signOut}
+          className={styles.signOutHeaderBtn}
           disabled={pending}
           onClick={() => void signOut()}
         >
           Se déconnecter
         </button>
+      </header>
+
+      <section className={styles.tilesSection} aria-label="Mon compte">
+        <div className={styles.tilesGrid}>
+          <AccountTile
+            title="Commandes & retours"
+            description="Suivre vos commandes ou organiser un retour"
+            href="/profil/commandes"
+            badgeCount={orderBadge}
+          />
+          <AccountTile
+            title="Détails et sécurité"
+            description="Gérer votre identifiant et mot de passe"
+            href="/profil/details"
+          />
+          <AccountTile
+            title="Abonnement (SegnaX)"
+            description={
+              profile.isSubscriber
+                ? 'Gérer votre abonnement et vos factures'
+                : 'Explorer vos avantages et activer SegnaX'
+            }
+            href="/profil/abonnement"
+          />
+        </div>
+      </section>
+
+      <div className={styles.belowStack}>
+        <div className={styles.belowGrid}>
+          <div className={styles.belowLeft}>
+            <ProfileAppStoreFrame />
+            <ProfileReviewsRow />
+          </div>
+          <div className={styles.belowRight}>
+            <ProfileReferralCard referralCode={profile.referralCode} />
+          </div>
+        </div>
       </div>
     </main>
   )

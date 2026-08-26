@@ -11,10 +11,15 @@ type CatalogGridCardMediaProps = {
     'coverUrl' | 'coverPosition' | 'objectPosition' | 'isNew' | 'isSold'
   >
   mediaClassName?: string
+  priority?: boolean
 }
 
 /** Zone image d’une carte catalogue (cadrage BO ou hotspot Sanity) + badges New/Sold. */
-export function CatalogGridCardMedia({item, mediaClassName}: CatalogGridCardMediaProps) {
+export function CatalogGridCardMedia({
+  item,
+  mediaClassName,
+  priority = false,
+}: CatalogGridCardMediaProps) {
   return (
     <>
       {item.coverUrl ? (
@@ -23,6 +28,8 @@ export function CatalogGridCardMedia({item, mediaClassName}: CatalogGridCardMedi
           position={item.coverPosition}
           objectPosition={item.objectPosition}
           className={mediaClassName}
+          sizes="(max-width: 768px) 45vw, 240px"
+          priority={priority}
         />
       ) : null}
       {item.isSold ? (

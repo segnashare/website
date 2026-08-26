@@ -1,170 +1,113 @@
-.main {
+.embedded {
   width: 100%;
-  max-width: 32rem;
-  margin: 0 auto;
-  padding: calc(4.75rem + clamp(0.75rem, 2vw, 1.25rem)) clamp(1.15rem, 4vw, 1.5rem) clamp(3rem, 8vw, 5rem);
-  box-sizing: border-box;
+  min-width: 0;
+  max-width: 36rem;
 }
 
-@media (min-width: 1201px) {
-  .main {
-    padding: clamp(1.35rem, 4vw, 2.25rem) clamp(1.15rem, 4vw, 1.5rem) clamp(3rem, 8vw, 5rem);
-  }
-}
-
-.back {
-  display: inline-flex;
-  margin: 0 0 0.85rem;
-  color: #71717a;
-  font-size: 0.88rem;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.back:hover {
-  color: #18181b;
-}
-
-.title {
-  margin: 0 0 1.35rem;
-  font-family: var(--font-playfair-display), Georgia, 'Times New Roman', serif;
-  font-size: clamp(1.55rem, 4vw, 1.85rem);
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  color: #14110f;
-  line-height: 1.2;
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .section {
   margin: 0 0 1.65rem;
-  padding-top: 0.25rem;
-  border-top: 1px solid #f4f4f5;
-}
-
-.section:first-of-type {
-  border-top: 0;
-  padding-top: 0;
 }
 
 .sectionTitle {
-  margin: 0 0 0.35rem;
-  font-family: var(--font-playfair-display), Georgia, 'Times New Roman', serif;
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #14110f;
+  margin: 0 0 0.45rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #18181b;
   letter-spacing: -0.015em;
 }
 
-.list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.row {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  min-height: 3.35rem;
-  margin: 0;
-  padding: 0.85rem 0;
-  border: 0;
-  border-top: 1px solid #f4f4f5;
-  background: transparent;
-  color: #14110f;
-  font: inherit;
-  text-align: left;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.list > li:first-child .row {
-  border-top: 0;
-}
-
-.rowText {
-  min-width: 0;
-  flex: 1;
-}
-
-.rowTitle {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 500;
-  color: #18181b;
-  line-height: 1.3;
-}
-
-.rowSubtitle {
-  margin: 0.2rem 0 0;
-  font-size: 0.82rem;
+.sectionLead {
+  margin: 0 0 0.85rem;
+  font-size: 0.9rem;
   font-weight: 400;
-  color: #71717a;
-  line-height: 1.35;
+  line-height: 1.45;
+  color: #52525b;
 }
 
-.chevron {
-  flex-shrink: 0;
-  width: 1.05rem;
-  height: 1.05rem;
-  color: #d4d4d8;
+.field {
+  display: block;
+  width: 100%;
+  max-width: 22rem;
 }
 
-.contactRow {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  min-height: 3.1rem;
-  padding: 0.75rem 0;
-  border-top: 1px solid #f4f4f5;
-}
-
-.contactRow:first-of-type {
-  border-top: 0;
-}
-
-.contactValue {
-  min-width: 0;
-  flex: 1;
-  font-size: 1rem;
-  font-weight: 500;
-  color: #18181b;
-  word-break: break-word;
-}
-
-.verified {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.45rem;
-  height: 1.45rem;
-  border-radius: 999px;
-  background: #f4f4f5;
-  color: #18181b;
-  flex-shrink: 0;
-}
-
-.editBtn {
+.select {
+  display: block;
+  width: 100%;
+  min-height: 2.85rem;
   margin: 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
+  padding: 0.55rem 2.25rem 0.55rem 0.85rem;
+  border: 1px solid #18181b;
+  border-radius: 0.35rem;
+  background: #fff
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2352525b' d='M1.1 1.2 6 6.1l4.9-4.9'/%3E%3C/svg%3E")
+    no-repeat right 0.85rem center;
+  background-size: 0.75rem;
   color: #18181b;
   font: inherit;
-  font-size: 0.92rem;
-  font-weight: 700;
-  cursor: pointer;
-  flex-shrink: 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+  appearance: none;
+  box-sizing: border-box;
 }
 
-.editBtn:disabled {
+.select:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
 
-.muted {
-  color: #a1a1aa;
-  font-weight: 400;
+.actions {
+  margin-top: 1.5rem;
+}
+
+.saveBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  margin: 0;
+  padding: 0.7rem 1.5rem;
+  border: 0;
+  border-radius: 0.2rem;
+  background: #18181b;
+  color: #fff;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.saveBtn:hover:not(:disabled) {
+  background: #000;
+}
+
+.saveBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.feedback {
+  margin: 0.85rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.feedbackOk {
+  color: #166534;
+}
+
+.feedbackErr {
+  color: #b91c1c;
 }
