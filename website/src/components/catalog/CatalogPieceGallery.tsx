@@ -15,7 +15,7 @@ export function CatalogPieceGallery({slots}: CatalogPieceGalleryProps) {
     <div className={styles.gallery}>
       {slots.map((slot, i) => (
         <div key={`${slot.url}-${i}`} className={styles.cell}>
-          <CatalogItemPhotoCover imageUrl={slot.url} position={slot.position} />
+          <CatalogItemPhotoCover imageUrl={slot.url} position={slot.position} optimizedWidth={828} />
         </div>
       ))}
     </div>

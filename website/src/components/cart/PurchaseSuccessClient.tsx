@@ -121,33 +121,37 @@ export function PurchaseSuccessClient() {
 
   return (
     <main className={styles.page}>
-      <div className={styles.empty}>
+      <div className={styles.successPanel}>
         {state === 'ready' ? (
           <>
-            <h1 className={styles.title}>Commande confirmée</h1>
-            <p className={styles.subtitle}>Merci ! Ton paiement a bien été enregistré.</p>
-            <Link href={orderHref} className={styles.payBtn} style={{maxWidth: '16rem', textDecoration: 'none'}}>
-              Suivre ma commande
-            </Link>
-            <Link href="/catalogue" className={styles.backLink} style={{marginTop: '0.85rem'}}>
-              Continuer vos achats
-            </Link>
+            <h1 className={styles.successTitle}>Commande confirmée</h1>
+            <p className={styles.successSubtitle}>Merci ! Ton paiement a bien été enregistré.</p>
+            <div className={styles.successActions}>
+              <Link href={orderHref} className={styles.successPrimary}>
+                Suivre ma commande
+              </Link>
+              <Link href="/catalogue" className={styles.successSecondary}>
+                Continuer vos achats
+              </Link>
+            </div>
           </>
         ) : null}
         {state === 'error' ? (
           <>
-            <h1 className={styles.title}>Confirmation en cours</h1>
-            <p className={styles.subtitle}>
+            <h1 className={styles.successTitle}>Confirmation en cours</h1>
+            <p className={styles.successSubtitle}>
               {error && !/checkout_pending|wallet debit|Cart cannot|Forbidden:/i.test(error)
                 ? error
                 : 'Si tu as été débité, ta commande sera finalisée automatiquement sous peu.'}
             </p>
-            <Link href="/profil/commandes" className={styles.payBtn} style={{maxWidth: '16rem', textDecoration: 'none'}}>
-              Voir mes commandes
-            </Link>
-            <Link href="/catalogue" className={styles.backLink} style={{marginTop: '0.85rem'}}>
-              Retour au catalogue
-            </Link>
+            <div className={styles.successActions}>
+              <Link href="/profil/commandes" className={styles.successPrimary}>
+                Voir mes commandes
+              </Link>
+              <Link href="/catalogue" className={styles.successSecondary}>
+                Retour au catalogue
+              </Link>
+            </div>
           </>
         ) : null}
       </div>

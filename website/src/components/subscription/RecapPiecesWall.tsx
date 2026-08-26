@@ -1,7 +1,11 @@
 'use client'
 
 import type {RecapWallItem} from '@/lib/subscription/recap-wall-types'
-import {preloadRecapWallImages} from '@/lib/subscription/preload-recap-wall-images'
+import {RECAP_WALL_PRIORITY_PRELOAD_COUNT} from '@/lib/subscription/recap-wall-items'
+import {
+  preloadRecapWallImages,
+  warmRecapWallImages,
+} from '@/lib/subscription/preload-recap-wall-images'
 import {useEffect, useMemo, useState} from 'react'
 import styles from './recapPiecesWall.module.css'
 
@@ -21,6 +25,11 @@ function splitIntoLanes(items: RecapWallItem[], laneCount: number): RecapWallIte
   return lanes
 }
 
+/** Cartes visibles d’emblée par lane (avant scroll animé). */
+function eagerPerLane(layout: 'columns' | 'rows'): number {
+  return layout === 'rows' ? 4 : 5
+}
+
 function WallLane({
   items,
   ready,
@@ -34,22 +43,28 @@ function WallLane({
   const laneClass = layout === 'rows' ? styles.row : styles.column
   const trackClass = layout === 'rows' ? styles.rowTrack : styles.columnTrack
   const cardClass = layout === 'rows' ? styles.rowCard : styles.card
+  const eagerCount = eagerPerLane(layout)
+
   return (
     <div className={laneClass} aria-hidden>
       <div className={trackClass} data-ready={ready ? 'true' : 'false'}>
-        {loop.map((item, index) => (
-          <div key={`${item.id}-${index}`} className={cardClass}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={item.coverUrl}
-              alt=""
-              className={styles.cardImg}
-              loading="eager"
-              decoding="async"
-              fetchPriority={index < 6 ? 'high' : 'auto'}
-            />
-          </div>
-        ))}
+        {loop.map((item, index) => {
+          const isDuplicate = index >= items.length
+          const eager = !isDuplicate && index < eagerCount
+          return (
+            <div key={`${item.id}-${index}`} className={cardClass}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={item.coverUrl}
+                alt=""
+                className={styles.cardImg}
+                loading={eager ? 'eager' : 'lazy'}
+                decoding="async"
+                fetchPriority={eager ? 'high' : 'auto'}
+              />
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -62,8 +77,13 @@ export function RecapPiecesWall({items, className, fade = 'top', layout = 'colum
 
   useEffect(() => {
     let cancelled = false
-    void preloadRecapWallImages(items).then(() => {
+    // Viewport d’abord (timeout court) → fade-in ; le reste chauffe ensuite.
+    void preloadRecapWallImages(items, {
+      limit: RECAP_WALL_PRIORITY_PRELOAD_COUNT,
+      timeoutMs: 900,
+    }).then(() => {
       if (!cancelled) setReady(true)
+      warmRecapWallImages(items)
     })
     return () => {
       cancelled = true

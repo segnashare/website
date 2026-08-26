@@ -64,5 +64,5 @@ export const RECAP_WALL_ITEMS: RecapWallItem[] = FILE_NUMBERS.map((n) => ({
 /** Nombre total d’assets (pour preload / sanity checks). */
 export const RECAP_WALL_ITEM_COUNT = TOTAL_COUNT
 
-/** URLs à précharger en priorité (viewport mur ~3 colonnes × ~4 cartes). */
-export const RECAP_WALL_PRIORITY_PRELOAD_COUNT = 18
+/** URLs à précharger en priorité (viewport mur ~3 colonnes × ~4 / 2 rangées × ~4). */
+export const RECAP_WALL_PRIORITY_PRELOAD_COUNT = 12

@@ -1,5 +1,5 @@
 import type {SanityImage} from '@/lib/sanity'
-import {urlForCatalogPuzzleImage} from '@/lib/sanity'
+import {urlForCatalogStripImage} from '@/lib/sanity'
 import type {WebsiteDbCatalogSection} from '@/lib/sanity'
 import type {MarketingCatalogGridItem, MarketingCatalogItemRow} from '@/lib/catalog/marketing-catalog-items'
 import {getFirstPhotoCoverMeta} from '@/lib/catalog/item-photos'
@@ -28,7 +28,7 @@ type Props = {
 function coverUrlFromSanity(image?: SanityImage | null): string | null {
   const asset = image?.asset
   if (!asset || (!asset._ref && !asset.url)) return null
-  return urlForCatalogPuzzleImage(image!).url()
+  return urlForCatalogStripImage(image!).url()
 }
 
 function rowToBrowseItem(

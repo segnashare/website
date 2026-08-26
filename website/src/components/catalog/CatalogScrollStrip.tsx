@@ -58,7 +58,7 @@ function CatalogScrollCard({
   const body = (
     <>
       <div className={styles.catalogCardMedia}>
-        <CatalogGridCardMedia item={item} priority={priority && !decorative} />
+        <CatalogGridCardMedia item={item} priority={priority && !decorative} decorative={decorative} />
       </div>
       <div className={styles.catalogCardBody}>
         <div className={styles.catalogCardTitleRow}>

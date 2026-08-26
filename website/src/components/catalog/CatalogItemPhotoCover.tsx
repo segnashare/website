@@ -10,6 +10,9 @@ import {isDefaultItemPhotoPosition} from '@/lib/items/item-photo-frame'
 
 import styles from './catalogItemPhotoCover.module.css'
 
+/** Largeurs autorisées par `next.config` images.imageSizes / deviceSizes. */
+const DEFAULT_OPTIMIZED_WIDTH = 384
+
 type CatalogItemPhotoCoverProps = {
   imageUrl: string
   position?: ItemPhotoCoverPosition | null
@@ -25,6 +28,16 @@ type CatalogItemPhotoCoverProps = {
   sizes?: string
   /** Priorité LCP (premières cartes / hero). */
   priority?: boolean
+  /**
+   * Clone marquee : fond CSS via `/_next/image` (même URL que la carte réelle → cache navigateur),
+   * pas de 2e instance `next/image` / preload full-res.
+   */
+  decorative?: boolean
+  /**
+   * Largeur max demandée à `/_next/image` pour crop BO / clone CSS.
+   * Doit être dans imageSizes/deviceSizes (défaut 384 = carte).
+   */
+  optimizedWidth?: number
 }
 
 function canUseNextImage(url: string): boolean {
@@ -37,9 +50,15 @@ function canUseNextImage(url: string): boolean {
   }
 }
 
+/** URL Image Optimization Next — pour CSS background / preload crop BO. */
+function nextOptimizedSrc(url: string, width: number, quality = 75): string {
+  return `/_next/image?url=${encodeURIComponent(url)}&w=${width}&q=${quality}`
+}
+
 /**
  * Couverture catalogue : paint immédiat + `next/image` (resize Vercel) hors crop BO.
- * Crop BO : image cover d’abord, puis moteur `backgroundStyleCmsPhotoEditorMatch`.
+ * Crop BO : image optimisée (`/_next/image`) + moteur `backgroundStyleCmsPhotoEditorMatch`.
+ * Clone décoratif : fond CSS sur la même URL optimisée (évite le double fetch marquee).
  */
 export function CatalogItemPhotoCover({
   imageUrl,
@@ -49,6 +68,8 @@ export function CatalogItemPhotoCover({
   centerCover = false,
   sizes = '(max-width: 768px) 50vw, 280px',
   priority = false,
+  decorative = false,
+  optimizedWidth = DEFAULT_OPTIMIZED_WIDTH,
 }: CatalogItemPhotoCoverProps) {
   const frameRef = useRef<HTMLDivElement>(null)
   const [naturalSize, setNaturalSize] = useState<{w: number; h: number} | null>(null)
@@ -58,7 +79,11 @@ export function CatalogItemPhotoCover({
 
   const pos = position ?? null
   const useBoCrop = !centerCover && Boolean(pos && !isDefaultItemPhotoPosition(pos))
-  const useOptimizer = !useBoCrop && canUseNextImage(imageUrl)
+  const useOptimizer = !decorative && !useBoCrop && canUseNextImage(imageUrl)
+  const paintUrl =
+    canUseNextImage(imageUrl) && (useBoCrop || decorative)
+      ? nextOptimizedSrc(imageUrl, optimizedWidth)
+      : imageUrl
 
   useEffect(() => {
     setNaturalSize(null)
@@ -81,8 +106,9 @@ export function CatalogItemPhotoCover({
   }, [imageUrl])
 
   // Dimensions pour le crop BO uniquement (pas de blocage du paint).
+  // Charge la variante optimisée — pas le JPEG Storage original.
   useEffect(() => {
-    if (!useBoCrop || !imageUrl) return
+    if (!useBoCrop || !paintUrl) return
     let cancelled = false
     const img = new Image()
     img.onload = () => {
@@ -95,17 +121,26 @@ export function CatalogItemPhotoCover({
     img.onerror = () => {
       if (!cancelled) setLoadFailed(true)
     }
-    img.src = imageUrl
+    img.src = paintUrl
     return () => {
       cancelled = true
     }
-  }, [imageUrl, useBoCrop])
+  }, [paintUrl, useBoCrop])
 
   const fillStyle = useMemo((): CSSProperties | null => {
+    if (decorative && paintUrl) {
+      const objectPos = objectPosition ?? 'center center'
+      return {
+        backgroundImage: `url(${paintUrl})`,
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: objectPos,
+        backgroundSize: 'cover',
+      }
+    }
     if (!useBoCrop || !pos || !naturalSize || box.w <= 0 || box.h <= 0) return null
     return (
       backgroundStyleCmsPhotoEditorMatch({
-        photoUrl: imageUrl,
+        photoUrl: paintUrl,
         naturalWidth: naturalSize.w,
         naturalHeight: naturalSize.h,
         containerWidth: box.w,
@@ -115,7 +150,7 @@ export function CatalogItemPhotoCover({
         offsetY: pos.offset.y,
       }) ?? null
     )
-  }, [useBoCrop, pos, naturalSize, box.w, box.h, imageUrl])
+  }, [decorative, useBoCrop, pos, naturalSize, box.w, box.h, paintUrl, objectPosition])
 
   const frameClass = [styles.frame, className].filter(Boolean).join(' ')
   const objectPos = objectPosition ?? 'center center'

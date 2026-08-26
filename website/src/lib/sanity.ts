@@ -88,6 +88,11 @@ export function urlForCatalogPuzzleImage(source: SanityImageSource) {
   return builder.image(source).width(1600).fit('max').quality(85).auto('format')
 }
 
+/** Covers bandeaux / cartes catalogue (~200–350px affichés, marge retina). */
+export function urlForCatalogStripImage(source: SanityImageSource) {
+  return builder.image(source).width(800).fit('max').quality(75).auto('format')
+}
+
 /** Point chaud Sanity (éditeur d’image) — sert à `object-position` en cover. */
 export type SanityImageHotspot = {
   x?: number

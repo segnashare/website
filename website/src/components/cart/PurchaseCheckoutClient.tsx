@@ -480,9 +480,15 @@ export function PurchaseCheckoutClient() {
     setStatus(null)
     try {
       const supabase = createSupabaseBrowserClient()
-      const deliveryLabel =
+      // Toujours coller CP + ville : le label BAN est souvent « rue seule »,
+      // et le checkout app extrait le CP depuis ce libellé pour Sendcloud.
+      const streetPart =
         selectedLocation?.label?.trim() ||
-        `${addressQuery.trim()}, ${postcode.trim()} ${city.trim()}`
+        addressQuery.trim() ||
+        `${postcode.trim()} ${city.trim()}`
+      const deliveryLabel = /\b\d{5}\b/.test(streetPart)
+        ? streetPart
+        : `${streetPart}, ${postcode.trim()} ${city.trim()}`
       const result = await savePurchaseCheckoutDelivery(supabase, {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
@@ -574,6 +580,7 @@ export function PurchaseCheckoutClient() {
             city: city.trim(),
             relativeCity: selectedLocation?.relativeCity ?? city.trim(),
             timezone: selectedLocation?.timezone ?? 'Europe/Paris',
+            postalCode: postcode.trim(),
           },
           purchaseMode: true,
           acceptRentalTerms: true,

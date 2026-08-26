@@ -2,6 +2,24 @@ const BUCKET_ITEMS = 'bucket_items'
 const BUCKET_FOCUS = 'bucket_focus'
 const BUCKET_CMS_APP = 'bucket_cms_app'
 
+/**
+ * Resize côté Storage pour les covers catalogue (cartes ~150–350px).
+ * Évite de livrer les JPEG appareil photo multi‑Mo ; fallback plein original si transform KO.
+ */
+export type StorageImageTransform = {
+  width?: number
+  height?: number
+  quality?: number
+  resize?: 'cover' | 'contain' | 'fill'
+}
+
+/** Covers bandeaux / grille — assez pour retina sur carte small/large. */
+export const CATALOG_CARD_COVER_TRANSFORM: StorageImageTransform = {
+  width: 768,
+  quality: 70,
+  resize: 'contain',
+}
+
 export function normalizeStorageObjectPath(raw: string): string {
   let p = raw.trim().replace(/^\/+/, '')
   const lower = p.toLowerCase()
@@ -25,16 +43,35 @@ export type StorageSignClient = {
       createSignedUrl: (
         path: string,
         expiresIn: number,
+        options?: {transform?: StorageImageTransform},
       ) => Promise<{data?: {signedUrl?: string} | null; error?: {message?: string} | null}>
     }
   }
+}
+
+async function signObjectInBucket(
+  supabase: StorageSignClient,
+  bucketId: string,
+  objectPath: string,
+  expiresIn: number,
+  transform?: StorageImageTransform | null,
+): Promise<string | null> {
+  const {data, error} = await supabase.storage
+    .from(bucketId)
+    .createSignedUrl(objectPath, expiresIn, transform ? {transform} : undefined)
+  if (!error && data?.signedUrl) return data.signedUrl
+  // Transform endpoint can fail on some assets — fall back to full original.
+  if (transform) {
+    return signObjectInBucket(supabase, bucketId, objectPath, expiresIn, null)
+  }
+  return null
 }
 
 export async function createSignedUrlForStoragePath(
   supabase: StorageSignClient,
   rawPath: string,
   expiresIn: number,
-  options?: {explicitBucket?: string | null},
+  options?: {explicitBucket?: string | null; transform?: StorageImageTransform | null},
 ): Promise<string | null> {
   const trimmed = rawPath.trim()
   if (/^https?:\/\//i.test(trimmed)) return trimmed
@@ -44,9 +81,10 @@ export async function createSignedUrlForStoragePath(
   const buckets = explicit
     ? [explicit, ...orderedBucketsForStoragePath(objectPath).filter((b) => b !== explicit)]
     : orderedBucketsForStoragePath(objectPath)
+  const transform = options?.transform ?? null
   for (const bucketId of buckets) {
-    const {data, error} = await supabase.storage.from(bucketId).createSignedUrl(objectPath, expiresIn)
-    if (!error && data?.signedUrl) return data.signedUrl
+    const signed = await signObjectInBucket(supabase, bucketId, objectPath, expiresIn, transform)
+    if (signed) return signed
   }
   return null
 }

@@ -7,9 +7,8 @@ import {resolveCheckoutOnboardingResume} from '@/lib/auth/checkout-onboarding-re
 import {hasActivePaidSubscription} from '@/lib/auth/has-active-subscription'
 import {SEGNA_APP_BASE_URL} from '@/lib/catalog/catalog-app-links'
 import {WEBSITE_SUBSCRIPTION_RECAP_PATH} from '@/lib/cart/paths'
-import {RECAP_WALL_ITEMS} from '@/lib/subscription/recap-wall-items'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
-import {RecapPiecesWall} from '@/components/subscription/RecapPiecesWall'
+import {AuthRecapWallAsides} from '@/components/subscription/AuthRecapWallAsides'
 import Link from 'next/link'
 import {useRouter, useSearchParams} from 'next/navigation'
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
@@ -361,12 +360,10 @@ export function AuthPageClient({mode}: Props) {
           </div>
         </section>
 
-        <aside className={styles.visualCol} aria-hidden>
-          <RecapPiecesWall items={RECAP_WALL_ITEMS} fade="none" layout="columns" />
-        </aside>
-        <aside className={styles.visualColMobile} aria-hidden>
-          <RecapPiecesWall items={RECAP_WALL_ITEMS} fade="none" layout="rows" />
-        </aside>
+        <AuthRecapWallAsides
+          desktopClassName={styles.visualCol}
+          mobileClassName={styles.visualColMobile}
+        />
       </div>
 
       <CheckoutSignupOnboardingModal

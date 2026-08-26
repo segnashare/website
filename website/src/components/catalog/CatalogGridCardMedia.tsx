@@ -12,6 +12,10 @@ type CatalogGridCardMediaProps = {
   >
   mediaClassName?: string
   priority?: boolean
+  /** Clone marquee — pas de 2e next/image. */
+  decorative?: boolean
+  /** `sizes` next/image — défaut carte small (~207px). */
+  sizes?: string
 }
 
 /** Zone image d’une carte catalogue (cadrage BO ou hotspot Sanity) + badges New/Sold. */
@@ -19,6 +23,8 @@ export function CatalogGridCardMedia({
   item,
   mediaClassName,
   priority = false,
+  decorative = false,
+  sizes = '(max-width: 768px) 28vw, 210px',
 }: CatalogGridCardMediaProps) {
   return (
     <>
@@ -28,8 +34,9 @@ export function CatalogGridCardMedia({
           position={item.coverPosition}
           objectPosition={item.objectPosition}
           className={mediaClassName}
-          sizes="(max-width: 768px) 45vw, 240px"
+          sizes={sizes}
           priority={priority}
+          decorative={decorative}
         />
       ) : null}
       {item.isSold ? (

@@ -27,6 +27,7 @@
   position: absolute;
   top: 0.75rem;
   right: 0.75rem;
+  z-index: 2;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -36,14 +37,14 @@
   padding: 0;
   border: none;
   border-radius: 999px;
-  background: transparent;
-  color: #14110f;
+  background: rgb(255 255 255 / 0.14);
+  color: #fff;
   cursor: pointer;
   appearance: none;
 }
 
 .closeBtn:hover:not(:disabled) {
-  background: #f4f4f5;
+  background: rgb(255 255 255 / 0.24);
 }
 
 .closeBtn:disabled {

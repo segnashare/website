@@ -20,7 +20,11 @@ import {
   SIGNED_URL_CACHE_REVALIDATE_SEC,
   SIGNED_URL_TTL_SEC,
 } from '@/lib/catalog/catalog-cache'
-import {createSignedUrlForStoragePath, type StorageSignClient} from '@/lib/catalog/storage-signed-url'
+import {
+  CATALOG_CARD_COVER_TRANSFORM,
+  createSignedUrlForStoragePath,
+  type StorageSignClient,
+} from '@/lib/catalog/storage-signed-url'
 import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
 import type {SupabaseClient} from '@supabase/supabase-js'
 import {catalogDataRevalidateSec, withDataCache} from '@/lib/sanity-cache'
@@ -117,11 +121,33 @@ const getCachedSignedUrlForStoragePath = withDataCache(
   {revalidate: SIGNED_URL_CACHE_REVALIDATE_SEC},
 )
 
+/** Covers cartes : signed URL + transform Storage (pas le JPEG original). */
+const getCachedCatalogCoverSignedUrlForStoragePath = withDataCache(
+  async (rawPath: string): Promise<string | null> => {
+    const supabase = getSupabaseServiceRoleClient()
+    if (!supabase) return null
+    return createSignedUrlForStoragePath(supabase, rawPath, SIGNED_URL_TTL_SEC, {
+      transform: CATALOG_CARD_COVER_TRANSFORM,
+    })
+  },
+  ['marketing_catalog_cover_signed_url_v1'],
+  {revalidate: SIGNED_URL_CACHE_REVALIDATE_SEC},
+)
+
 async function resolveCachedSignedUrlForStoragePath(rawPath: string): Promise<string | null> {
   const trimmed = rawPath.trim()
   if (/^https?:\/\//i.test(trimmed)) return trimmed
   if (!trimmed) return null
   return getCachedSignedUrlForStoragePath(trimmed)
+}
+
+async function resolveCachedCatalogCoverSignedUrlForStoragePath(
+  rawPath: string,
+): Promise<string | null> {
+  const trimmed = rawPath.trim()
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+  if (!trimmed) return null
+  return getCachedCatalogCoverSignedUrlForStoragePath(trimmed)
 }
 
 function parseFacetOptions(raw: unknown): MarketingCatalogFacetOption[] {
@@ -804,12 +830,12 @@ export async function signPhotoPaths(
 }
 
 export async function resolveItemCoverSignedUrl(
-  supabase: StorageSignClient,
+  _supabase: StorageSignClient,
   photos: unknown,
 ): Promise<string | null> {
   const first = getFirstPhotoStoragePath(photos)
   if (!first) return null
-  return resolveCachedSignedUrlForStoragePath(first)
+  return resolveCachedCatalogCoverSignedUrlForStoragePath(first)
 }
 
 export async function resolveItemGallerySignedUrls(

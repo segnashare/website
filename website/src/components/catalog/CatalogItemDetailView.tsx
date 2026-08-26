@@ -797,6 +797,7 @@ export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks 
                   imageUrl={slot.url}
                   position={slot.position}
                   sizes="(max-width: 768px) 100vw, 520px"
+                  optimizedWidth={828}
                   priority={i === 0}
                 />
               </button>
@@ -884,6 +885,7 @@ export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks 
                     imageUrl={slot.url}
                     position={slot.position}
                     sizes="64px"
+                    optimizedWidth={128}
                   />
                 </button>
               ))}

@@ -188,7 +188,19 @@ export function PageSectionsRenderer({
 
         if (isWebsiteDbCatalogSection(section)) {
           return gate(
-            <Suspense fallback={<CatalogScrollStripSkeleton />}>
+            <Suspense
+              fallback={
+                <CatalogScrollStripSkeleton
+                  heading={section.heading?.trim() || undefined}
+                  intro={section.intro?.trim() || undefined}
+                  introCtaLabel={section.introCtaLabel}
+                  introCtaHref={section.introCtaHref}
+                  cardSize={section.cardSize ?? 'small'}
+                  stackedAfterSmall={stackedAfterSmall}
+                  stackedBeforeSmall={stackedBeforeSmall}
+                />
+              }
+            >
               <SectionWebsiteDbCatalog
                 section={section}
                 stackedAfterSmall={stackedAfterSmall}

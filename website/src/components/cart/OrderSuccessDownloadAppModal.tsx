@@ -111,7 +111,7 @@ export function OrderSuccessDownloadAppModal({
           </h2>
           <p className={styles.lead}>
             Télécharge Segna pour recevoir les notifications de suivi et gérer ta commande plus
-            facilement — tu peux aussi tout suivre depuis le site.
+            facilement.
           </p>
           <button
             type="button"

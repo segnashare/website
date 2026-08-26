@@ -1,11 +1,10 @@
 'use client'
 
-import {RecapPiecesWall} from '@/components/subscription/RecapPiecesWall'
+import {AuthRecapWallAsides} from '@/components/subscription/AuthRecapWallAsides'
 import {WaveDotsLoader} from '@/components/ui/WaveDotsLoader'
 import {WebsitePageLoading} from '@/components/ui/WebsitePageLoading'
 import {mapAuthErrorMessage} from '@/lib/auth/map-auth-error'
 import {getSignUpPasswordError, isSignUpPasswordValid} from '@/lib/auth/password'
-import {RECAP_WALL_ITEMS} from '@/lib/subscription/recap-wall-items'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import Link from 'next/link'
 import {useRouter} from 'next/navigation'
@@ -242,12 +241,10 @@ export function ResetPasswordClient() {
           </div>
         </section>
 
-        <aside className={pageStyles.visualCol} aria-hidden>
-          <RecapPiecesWall items={RECAP_WALL_ITEMS} fade="none" layout="columns" />
-        </aside>
-        <aside className={pageStyles.visualColMobile} aria-hidden>
-          <RecapPiecesWall items={RECAP_WALL_ITEMS} fade="none" layout="rows" />
-        </aside>
+        <AuthRecapWallAsides
+          desktopClassName={pageStyles.visualCol}
+          mobileClassName={pageStyles.visualColMobile}
+        />
       </div>
     </div>
   )
