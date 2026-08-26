@@ -205,6 +205,12 @@ export function WebsiteDbCatalogItemIdInput(props: StringInputProps) {
 
   return (
     <Stack space={3}>
+      {baseUrl.includes('localhost') ? (
+        <Text size={1} style={{color: 'var(--card-badge-caution-fg-color)'}}>
+          Recherche via {baseUrl} (staging local). Pour la prod, ouvre le Studio déployé ou
+          définis SANITY_STUDIO_WEBSITE_URL=https://www.segnashare.com.
+        </Text>
+      ) : null}
       <TextInput
         value={query}
         onChange={(e) => setQuery(e.currentTarget.value)}
@@ -232,7 +238,9 @@ export function WebsiteDbCatalogItemIdInput(props: StringInputProps) {
               tone={hit.marketingEligible === false ? 'caution' : 'transparent'}
               style={{cursor: readOnly ? 'default' : 'pointer'}}
               onClick={() => {
-                if (!readOnly) pick(hit)
+                if (readOnly) return
+                if (hit.marketingEligible === false) return
+                pick(hit)
               }}
             >
               <Flex align="center" gap={3}>
@@ -246,6 +254,7 @@ export function WebsiteDbCatalogItemIdInput(props: StringInputProps) {
                       objectFit: 'cover',
                       borderRadius: 4,
                       flexShrink: 0,
+                      opacity: hit.marketingEligible === false ? 0.45 : 1,
                     }}
                   />
                 ) : (
@@ -264,7 +273,11 @@ export function WebsiteDbCatalogItemIdInput(props: StringInputProps) {
                     {hit.title}
                   </Text>
                   <Text size={0} muted>
-                    {[hit.brand_label, hit.status, hit.marketingEligible === false ? 'hors site' : null]
+                    {[
+                      hit.brand_label,
+                      hit.status,
+                      hit.marketingEligible === false ? 'hors site — non sélectionnable' : null,
+                    ]
                       .filter(Boolean)
                       .join(' · ') || hit.id.slice(0, 8) + '…'}
                   </Text>

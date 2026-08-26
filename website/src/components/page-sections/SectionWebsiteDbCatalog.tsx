@@ -4,7 +4,7 @@ import type {WebsiteDbCatalogSection} from '@/lib/sanity'
 import type {MarketingCatalogGridItem, MarketingCatalogItemRow} from '@/lib/catalog/marketing-catalog-items'
 import {getFirstPhotoCoverMeta} from '@/lib/catalog/item-photos'
 import {resolveCatalogCardBadges, getMarketingCatalogNewestIdSet} from '@/lib/catalog/catalog-card-badges'
-import {fetchMarketingCatalogItemsByIds, fetchMarketingCatalogItemsFull, resolveCoverUrlsForItems} from '@/lib/catalog/marketing-catalog-items'
+import {fetchMarketingCatalogItemsByIds, resolveCoverUrlsForItems} from '@/lib/catalog/marketing-catalog-items'
 import {loadCatalogBrowse} from '@/lib/catalog/catalog-page-loader'
 import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
 import {objectPositionFromHotspot} from '@/lib/homeStagedPlacements'
@@ -198,38 +198,19 @@ export async function SectionWebsiteDbCatalog({
     )
   }
 
-  // Sanity a souvent des UUID d’un autre environnement : sans fallback la home
-  // reste bloquée sur des skeletons « Chargement » (CDN ISR).
-  if (browseItems.length < Math.min(entries.length, 6)) {
-    const missing = entries.length - browseItems.length
-    if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'development') {
+  if (browseItems.length === 0) {
+    if (process.env.NODE_ENV === 'development') {
       console.warn(
-        `[website-db-catalog] curated miss: ${browseItems.length}/${entries.length} rows for «${heading || section._key}» — fallback catalogue`,
+        `[website-db-catalog] curated empty: 0/${entries.length} rows for «${heading || section._key}» (UUID hors DB / hors filtres marketing)`,
       )
     }
-    const have = new Set(browseItems.map((item) => item.id))
-    const fallbackNeed = Math.max(missing, browseItems.length === 0 ? Math.min(entries.length, 12) : missing)
-    const fallbackRows = (await fetchMarketingCatalogItemsFull(fallbackNeed + have.size))
-      .filter((row) => !have.has(row.id))
-      .slice(0, fallbackNeed)
-    if (fallbackRows.length > 0) {
-      const fallbackCovers = await resolveCoverUrlsForItems(supabase, fallbackRows)
-      for (const row of fallbackRows) {
-        const badges = resolveCatalogCardBadges(row, newestIds)
-        browseItems.push(
-          rowToBrowseItem(row, fallbackCovers.get(row.id) ?? null, {
-            coverPosition: getFirstPhotoCoverMeta(row.photos)?.position ?? null,
-            isNew: badges.isNew,
-            isSold: badges.isSold,
-          }),
-        )
-      }
-    }
+    return null
   }
 
-  if (browseItems.length === 0) {
-    // Pas de faux loader : section absente plutôt que skeletons figés.
-    return null
+  if (browseItems.length < entries.length && process.env.NODE_ENV === 'development') {
+    console.warn(
+      `[website-db-catalog] curated partial: ${browseItems.length}/${entries.length} for «${heading || section._key}»`,
+    )
   }
 
   return (
