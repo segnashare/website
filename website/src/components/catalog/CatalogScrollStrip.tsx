@@ -44,12 +44,15 @@ function CatalogScrollCard({
   onOpen,
   decorative,
   priority = false,
+  /** Marquee `transform` : le lazy-load navigateur ne part jamais — forcer eager. */
+  eager = false,
 }: {
   item: MarketingCatalogGridItem
   onOpen?: (itemId: string) => void
   /** Clone marquee : non interactif. */
   decorative?: boolean
   priority?: boolean
+  eager?: boolean
 }) {
   const titleLine = item.displayTitle ?? item.title
   const sizeLine = formatCatalogCardSizeLabel(item.size_label, item.size_code)
@@ -58,7 +61,12 @@ function CatalogScrollCard({
   const body = (
     <>
       <div className={styles.catalogCardMedia}>
-        <CatalogGridCardMedia item={item} priority={priority && !decorative} decorative={decorative} />
+        <CatalogGridCardMedia
+          item={item}
+          priority={priority && !decorative}
+          eager={(eager || priority) && !decorative}
+          decorative={decorative}
+        />
       </div>
       <div className={styles.catalogCardBody}>
         <div className={styles.catalogCardTitleRow}>
@@ -121,16 +129,25 @@ export function CatalogScrollStrip({
 }: Props) {
   const [openItemId, setOpenItemId] = useState<string | null>(null)
 
+  // `auto_loop` anime le track en CSS `transform` : loading=lazy ne se déclenche pas
+  // (même bug que les bandeaux éditoriaux → eagerLoad).
+  const eagerImages = scrollMotion === 'auto_loop'
+
   const slides: HorizontalScrollSlide[] = useMemo(
     () =>
       items.map((item, index) => ({
         key: item.id,
         node: (
-          <CatalogScrollCard item={item} onOpen={setOpenItemId} priority={index < 2} />
+          <CatalogScrollCard
+            item={item}
+            onOpen={setOpenItemId}
+            priority={index < 2}
+            eager={eagerImages}
+          />
         ),
-        cloneNode: <CatalogScrollCard item={item} decorative />,
+        cloneNode: <CatalogScrollCard item={item} decorative eager={eagerImages} />,
       })),
-    [items],
+    [items, eagerImages],
   )
 
   if (items.length === 0) return null

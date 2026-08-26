@@ -12,6 +12,8 @@ type CatalogGridCardMediaProps = {
   >
   mediaClassName?: string
   priority?: boolean
+  /** Force `loading=eager` (bandeau marquee / transform). */
+  eager?: boolean
   /** Clone marquee — pas de 2e next/image. */
   decorative?: boolean
   /** `sizes` next/image — défaut carte small (~207px). */
@@ -23,6 +25,7 @@ export function CatalogGridCardMedia({
   item,
   mediaClassName,
   priority = false,
+  eager = false,
   decorative = false,
   sizes = '(max-width: 768px) 28vw, 210px',
 }: CatalogGridCardMediaProps) {
@@ -36,6 +39,7 @@ export function CatalogGridCardMedia({
           className={mediaClassName}
           sizes={sizes}
           priority={priority}
+          eager={eager || priority}
           decorative={decorative}
         />
       ) : null}

@@ -28,6 +28,8 @@ type CatalogItemPhotoCoverProps = {
   sizes?: string
   /** Priorité LCP (premières cartes / hero). */
   priority?: boolean
+  /** `loading=eager` sans forcément `fetchPriority=high` (marquee). */
+  eager?: boolean
   /**
    * Clone marquee : fond CSS via `/_next/image` (même URL que la carte réelle → cache navigateur),
    * pas de 2e instance `next/image` / preload full-res.
@@ -77,6 +79,7 @@ export function CatalogItemPhotoCover({
   centerCover = false,
   sizes = '(max-width: 768px) 50vw, 280px',
   priority = false,
+  eager = false,
   decorative = false,
   optimizedWidth = DEFAULT_OPTIMIZED_WIDTH,
 }: CatalogItemPhotoCoverProps) {
@@ -202,7 +205,7 @@ export function CatalogItemPhotoCover({
           alt=""
           className={styles.fallbackImg}
           decoding="async"
-          loading={priority ? 'eager' : 'lazy'}
+          loading={priority || eager ? 'eager' : 'lazy'}
           fetchPriority={priority ? 'high' : 'auto'}
           style={{objectFit: 'cover', objectPosition: objectPos}}
           onLoad={(e) => {
