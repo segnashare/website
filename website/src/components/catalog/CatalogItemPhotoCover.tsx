@@ -50,15 +50,24 @@ function canUseNextImage(url: string): boolean {
   }
 }
 
-/** URL Image Optimization Next — pour CSS background / preload crop BO. */
+/** Déjà redimensionné côté Supabase Storage — éviter le double hop `/_next/image`. */
+function isSupabaseRenderImageUrl(url: string): boolean {
+  try {
+    return new URL(url).pathname.includes('/storage/v1/render/image/')
+  } catch {
+    return false
+  }
+}
+
+/** URL Image Optimization Next — pour CSS background / preload crop BO (URLs non transformées). */
 function nextOptimizedSrc(url: string, width: number, quality = 75): string {
   return `/_next/image?url=${encodeURIComponent(url)}&w=${width}&q=${quality}`
 }
 
 /**
  * Couverture catalogue : paint immédiat + `next/image` (resize Vercel) hors crop BO.
- * Crop BO : image optimisée (`/_next/image`) + moteur `backgroundStyleCmsPhotoEditorMatch`.
- * Clone décoratif : fond CSS sur la même URL optimisée (évite le double fetch marquee).
+ * Crop BO : image optimisée (`/_next/image` ou URL Storage déjà transformée) + moteur crop.
+ * Clone décoratif : fond CSS (évite le double fetch marquee).
  */
 export function CatalogItemPhotoCover({
   imageUrl,
@@ -79,10 +88,15 @@ export function CatalogItemPhotoCover({
 
   const pos = position ?? null
   const useBoCrop = !centerCover && Boolean(pos && !isDefaultItemPhotoPosition(pos))
-  const useOptimizer = !decorative && !useBoCrop && canUseNextImage(imageUrl)
+  const alreadyResized = isSupabaseRenderImageUrl(imageUrl)
+  // Storage transform déjà à ~768px → pas de 2e passage Vercel Image Optimization.
+  const useOptimizer =
+    !decorative && !useBoCrop && !alreadyResized && canUseNextImage(imageUrl)
   const paintUrl =
     canUseNextImage(imageUrl) && (useBoCrop || decorative)
-      ? nextOptimizedSrc(imageUrl, optimizedWidth)
+      ? alreadyResized
+        ? imageUrl
+        : nextOptimizedSrc(imageUrl, optimizedWidth)
       : imageUrl
 
   useEffect(() => {

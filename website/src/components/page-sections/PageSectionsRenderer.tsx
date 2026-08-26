@@ -1,7 +1,5 @@
-import {Suspense} from 'react'
 import type {HomeSection, PageSection} from '@/lib/sanity'
 import {normalizeScrollCardSize} from '@/lib/catalog/scroll-card-size'
-import {CatalogScrollStripSkeleton} from '@/components/catalog/CatalogScrollStripSkeleton'
 import {SectionCatalogPuzzle} from './SectionCatalogPuzzle'
 import {SectionHorizontalScrollCards} from './SectionHorizontalScrollCards'
 import {SectionHelpCenterHub} from './SectionHelpCenterHub'
@@ -187,26 +185,14 @@ export function PageSectionsRenderer({
         }
 
         if (isWebsiteDbCatalogSection(section)) {
+          // Pas de Suspense : sur ISR/CDN un fallback se fige sans jamais streamer les covers.
+          // On await les données dans le HTML prerendu (comme /catalogue).
           return gate(
-            <Suspense
-              fallback={
-                <CatalogScrollStripSkeleton
-                  heading={section.heading?.trim() || undefined}
-                  intro={section.intro?.trim() || undefined}
-                  introCtaLabel={section.introCtaLabel}
-                  introCtaHref={section.introCtaHref}
-                  cardSize={section.cardSize ?? 'small'}
-                  stackedAfterSmall={stackedAfterSmall}
-                  stackedBeforeSmall={stackedBeforeSmall}
-                />
-              }
-            >
-              <SectionWebsiteDbCatalog
-                section={section}
-                stackedAfterSmall={stackedAfterSmall}
-                stackedBeforeSmall={stackedBeforeSmall}
-              />
-            </Suspense>,
+            <SectionWebsiteDbCatalog
+              section={section}
+              stackedAfterSmall={stackedAfterSmall}
+              stackedBeforeSmall={stackedBeforeSmall}
+            />,
           )
         }
 

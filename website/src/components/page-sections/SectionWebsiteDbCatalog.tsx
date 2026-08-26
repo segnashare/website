@@ -163,12 +163,13 @@ export async function SectionWebsiteDbCatalog({
   }
 
   const ids = entries.map((e) => e.itemId!.trim())
-  const [rows, newestIds] = await Promise.all([
-    fetchMarketingCatalogItemsByIds(ids),
+  // Covers dès que les rows sont là — ne pas attendre les badges « New ».
+  const rows = await fetchMarketingCatalogItemsByIds(ids)
+  const byId = new Map(rows.map((r) => [r.id, r]))
+  const [covers, newestIds] = await Promise.all([
+    resolveCoverUrlsForItems(supabase, rows),
     getMarketingCatalogNewestIdSet(),
   ])
-  const byId = new Map(rows.map((r) => [r.id, r]))
-  const covers = await resolveCoverUrlsForItems(supabase, rows)
 
   const browseItems: MarketingCatalogGridItem[] = []
   for (const entry of entries) {

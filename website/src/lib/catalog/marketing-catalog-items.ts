@@ -591,20 +591,35 @@ function parseMarketingCatalogRpcPayload(data: unknown): MarketingCatalogItemRow
 export async function fetchMarketingCatalogItemsByIds(
   itemIds: string[],
 ): Promise<MarketingCatalogItemRow[]> {
-  const supabase = getSupabaseServiceRoleClient()
-  if (!supabase || itemIds.length === 0) return []
-
-  const {data, error} = await supabase.rpc('get_marketing_website_catalog_items_by_ids', {
-    p_item_ids: itemIds,
-  })
-  if (error) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('[marketing-catalog]', error.message)
-    }
-    return []
-  }
-  return parseMarketingCatalogRpcPayload(data)
+  const idsKey = [
+    ...new Set(itemIds.map((id) => id.trim()).filter(Boolean)),
+  ]
+    .sort()
+    .join(',')
+  if (!idsKey) return []
+  return getCachedMarketingCatalogItemsByIdsKey(idsKey)
 }
+
+const getCachedMarketingCatalogItemsByIdsKey = withDataCache(
+  async (idsKey: string): Promise<MarketingCatalogItemRow[]> => {
+    const itemIds = idsKey.split(',').filter(Boolean)
+    const supabase = getSupabaseServiceRoleClient()
+    if (!supabase || itemIds.length === 0) return []
+
+    const {data, error} = await supabase.rpc('get_marketing_website_catalog_items_by_ids', {
+      p_item_ids: itemIds,
+    })
+    if (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[marketing-catalog]', error.message)
+      }
+      return []
+    }
+    return parseMarketingCatalogRpcPayload(data)
+  },
+  ['marketing_catalog_items_by_ids_v1'],
+  {revalidate: SIGNED_URL_CACHE_REVALIDATE_SEC},
+)
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
