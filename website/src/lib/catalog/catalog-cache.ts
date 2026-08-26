@@ -24,6 +24,12 @@ export const CATALOG_CDN_STALE_WHILE_REVALIDATE_SEC = 1_800 // 30 min
 /** ISR pages catalogue qui embarquent des coverUrl signées. */
 export const CATALOG_ISR_REVALIDATE_SEC = 3_600 // 1 h
 
+/**
+ * Tag Data Cache pour purger covers + rows catalogue
+ * (indépendant de Sanity — déclenché depuis le BO après update photo).
+ */
+export const CATALOG_CACHE_TAG = 'marketing-catalog'
+
 export const catalogApiCacheHeaders = {
   'Cache-Control': `public, s-maxage=${CATALOG_CDN_MAX_AGE_SEC}, stale-while-revalidate=${CATALOG_CDN_STALE_WHILE_REVALIDATE_SEC}`,
 } as const

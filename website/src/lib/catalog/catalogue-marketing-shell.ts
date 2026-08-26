@@ -1,7 +1,7 @@
 import {cache} from 'react'
 import {getHomePageData, getMarketingPageBySlug, getWebsiteHeaderNav} from '@/lib/sanity'
 import {SANITY_CACHE_TAG, withDataCache} from '@/lib/sanity-cache'
-import {CATALOG_ISR_REVALIDATE_SEC} from '@/lib/catalog/catalog-cache'
+import {CATALOG_CACHE_TAG, CATALOG_ISR_REVALIDATE_SEC} from '@/lib/catalog/catalog-cache'
 import type {PageSection} from '@/lib/sanity'
 
 function withoutDbCatalogSections(sections: PageSection[] | null | undefined): PageSection[] {
@@ -39,6 +39,6 @@ async function getCatalogueMarketingShellUncached() {
 export const getCatalogueMarketingShell = cache(
   withDataCache(getCatalogueMarketingShellUncached, ['catalogue_marketing_shell_v1'], {
     revalidate: CATALOG_ISR_REVALIDATE_SEC,
-    tags: [SANITY_CACHE_TAG],
+    tags: [CATALOG_CACHE_TAG, SANITY_CACHE_TAG],
   }),
 )

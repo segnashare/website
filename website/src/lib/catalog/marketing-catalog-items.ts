@@ -17,6 +17,7 @@ import {
   type ItemPhotoCoverPosition,
 } from '@/lib/catalog/item-photos'
 import {
+  CATALOG_CACHE_TAG,
   SIGNED_URL_CACHE_REVALIDATE_SEC,
   SIGNED_URL_TTL_SEC,
 } from '@/lib/catalog/catalog-cache'
@@ -118,7 +119,7 @@ const getCachedSignedUrlForStoragePath = withDataCache(
     return createSignedUrlForStoragePath(supabase, rawPath, SIGNED_URL_TTL_SEC)
   },
   ['marketing_catalog_signed_url_v2'],
-  {revalidate: SIGNED_URL_CACHE_REVALIDATE_SEC},
+  {revalidate: SIGNED_URL_CACHE_REVALIDATE_SEC, tags: [CATALOG_CACHE_TAG]},
 )
 
 /** Covers cartes : signed URL + transform Storage (pas le JPEG original). */
@@ -131,7 +132,7 @@ const getCachedCatalogCoverSignedUrlForStoragePath = withDataCache(
     })
   },
   ['marketing_catalog_cover_signed_url_v1'],
-  {revalidate: SIGNED_URL_CACHE_REVALIDATE_SEC},
+  {revalidate: SIGNED_URL_CACHE_REVALIDATE_SEC, tags: [CATALOG_CACHE_TAG]},
 )
 
 async function resolveCachedSignedUrlForStoragePath(rawPath: string): Promise<string | null> {
@@ -617,8 +618,8 @@ const getCachedMarketingCatalogItemsByIdsKey = withDataCache(
     }
     return parseMarketingCatalogRpcPayload(data)
   },
-  ['marketing_catalog_items_by_ids_v1'],
-  {revalidate: SIGNED_URL_CACHE_REVALIDATE_SEC},
+  ['marketing_catalog_items_by_ids_v2'],
+  {revalidate: SIGNED_URL_CACHE_REVALIDATE_SEC, tags: [CATALOG_CACHE_TAG]},
 )
 
 const UUID_RE =
