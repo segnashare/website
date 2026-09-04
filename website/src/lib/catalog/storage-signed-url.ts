@@ -11,6 +11,8 @@ export type StorageImageTransform = {
   height?: number
   quality?: number
   resize?: 'cover' | 'contain' | 'fill'
+  /** Forcer webp : les PNG Photoroom restent ~1 Mo en `origin` et bloquent le marquee. */
+  format?: 'origin' | 'webp'
 }
 
 /** Covers bandeaux / grille — assez pour retina sur carte small/large. */
@@ -18,6 +20,7 @@ export const CATALOG_CARD_COVER_TRANSFORM: StorageImageTransform = {
   width: 768,
   quality: 70,
   resize: 'contain',
+  format: 'webp',
 }
 
 export function normalizeStorageObjectPath(raw: string): string {

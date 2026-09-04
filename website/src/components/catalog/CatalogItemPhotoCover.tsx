@@ -189,7 +189,8 @@ export function CatalogItemPhotoCover({
           fill
           sizes={sizes}
           quality={75}
-          priority={priority}
+          // `eager` seul ne suffit pas sur next/image (lazy par défaut) — bloqué sous marquee transform.
+          priority={priority || eager}
           className={styles.nextImg}
           style={{objectFit: 'cover', objectPosition: objectPos}}
           onLoad={(e) => {

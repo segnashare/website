@@ -131,7 +131,8 @@ const getCachedCatalogCoverSignedUrlForStoragePath = withDataCache(
       transform: CATALOG_CARD_COVER_TRANSFORM,
     })
   },
-  ['marketing_catalog_cover_signed_url_v1'],
+  // v2 : transform `format: webp` — invalide les signed URL PNG lourdes en cache.
+  ['marketing_catalog_cover_signed_url_v2'],
   {revalidate: SIGNED_URL_CACHE_REVALIDATE_SEC, tags: [CATALOG_CACHE_TAG]},
 )
 
