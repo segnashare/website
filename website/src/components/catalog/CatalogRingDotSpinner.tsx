@@ -6,6 +6,8 @@ type Props = {
   dotCount?: 6 | 8
   filledDots?: number
   spinning?: boolean
+  /** `dark` : points gris foncé (placeholder photo). */
+  tone?: 'default' | 'dark'
   'aria-label'?: string
 }
 
@@ -18,6 +20,7 @@ export function CatalogRingDotSpinner({
   dotCount = 6,
   filledDots = 6,
   spinning = true,
+  tone = 'default',
   'aria-label': ariaLabel = 'Chargement',
 }: Props) {
   const step = 360 / dotCount
@@ -25,7 +28,9 @@ export function CatalogRingDotSpinner({
 
   return (
     <span
-      className={[styles.root, className].filter(Boolean).join(' ')}
+      className={[styles.root, tone === 'dark' ? styles.toneDark : '', className]
+        .filter(Boolean)
+        .join(' ')}
       role={spinning ? 'status' : 'presentation'}
       aria-hidden={spinning ? undefined : true}
       aria-live={spinning ? 'polite' : undefined}

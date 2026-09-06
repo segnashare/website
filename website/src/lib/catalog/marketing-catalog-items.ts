@@ -24,6 +24,7 @@ import {
 import {
   CATALOG_CARD_COVER_TRANSFORM,
   createSignedUrlForStoragePath,
+  signedStorageImageIsMissing,
   type StorageSignClient,
 } from '@/lib/catalog/storage-signed-url'
 import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
@@ -112,27 +113,35 @@ export type MarketingCatalogItemRow = {
   condition_score: string | null
 }
 
+async function signStoragePathIfObjectExists(
+  rawPath: string,
+  transform?: {transform: typeof CATALOG_CARD_COVER_TRANSFORM},
+): Promise<string | null> {
+  const supabase = getSupabaseServiceRoleClient()
+  if (!supabase) return null
+  const url = await createSignedUrlForStoragePath(
+    supabase,
+    rawPath,
+    SIGNED_URL_TTL_SEC,
+    transform,
+  )
+  if (!url) return null
+  if (await signedStorageImageIsMissing(url)) return null
+  return url
+}
+
 const getCachedSignedUrlForStoragePath = withDataCache(
-  async (rawPath: string): Promise<string | null> => {
-    const supabase = getSupabaseServiceRoleClient()
-    if (!supabase) return null
-    return createSignedUrlForStoragePath(supabase, rawPath, SIGNED_URL_TTL_SEC)
-  },
-  ['marketing_catalog_signed_url_v2'],
+  async (rawPath: string): Promise<string | null> => signStoragePathIfObjectExists(rawPath),
+  ['marketing_catalog_signed_url_v3'],
   {revalidate: SIGNED_URL_CACHE_REVALIDATE_SEC, tags: [CATALOG_CACHE_TAG]},
 )
 
 /** Covers cartes : signed URL + transform Storage (pas le JPEG original). */
 const getCachedCatalogCoverSignedUrlForStoragePath = withDataCache(
-  async (rawPath: string): Promise<string | null> => {
-    const supabase = getSupabaseServiceRoleClient()
-    if (!supabase) return null
-    return createSignedUrlForStoragePath(supabase, rawPath, SIGNED_URL_TTL_SEC, {
-      transform: CATALOG_CARD_COVER_TRANSFORM,
-    })
-  },
-  // v2 : transform `format: webp` — invalide les signed URL PNG lourdes en cache.
-  ['marketing_catalog_cover_signed_url_v2'],
+  async (rawPath: string): Promise<string | null> =>
+    signStoragePathIfObjectExists(rawPath, {transform: CATALOG_CARD_COVER_TRANSFORM}),
+  // v3 : ignore les chemins Storage qui 404 (signed URL stale / fichier remplacé).
+  ['marketing_catalog_cover_signed_url_v3'],
   {revalidate: SIGNED_URL_CACHE_REVALIDATE_SEC, tags: [CATALOG_CACHE_TAG]},
 )
 
@@ -634,7 +643,7 @@ const getCachedMarketingCatalogItemsByIdsKey = withDataCache(
     }
     return parseMarketingCatalogRpcPayload(data)
   },
-  ['marketing_catalog_items_by_ids_v2'],
+  ['marketing_catalog_items_by_ids_v3'],
   {revalidate: SIGNED_URL_CACHE_REVALIDATE_SEC, tags: [CATALOG_CACHE_TAG]},
 )
 
@@ -865,9 +874,15 @@ export async function resolveItemCoverSignedUrl(
   _supabase: StorageSignClient,
   photos: unknown,
 ): Promise<string | null> {
-  const first = getFirstPhotoStoragePath(photos)
-  if (!first) return null
-  return resolveCachedCatalogCoverSignedUrlForStoragePath(first)
+  const paths = collectPhotoPathsFromItemPhotos(photos)
+  const ordered = paths.length > 0 ? paths : [getFirstPhotoStoragePath(photos)].filter(
+    (p): p is string => Boolean(p),
+  )
+  for (const path of ordered) {
+    const url = await resolveCachedCatalogCoverSignedUrlForStoragePath(path)
+    if (url) return url
+  }
+  return null
 }
 
 export async function resolveItemGallerySignedUrls(

@@ -71,6 +71,30 @@ async function signObjectInBucket(
   return null
 }
 
+/**
+ * `createSignedUrl` ne vérifie pas que l’objet existe : un chemin stale
+ * (`photo_1.jpg` après recadrage Photoroom) produit une URL qui 404 au fetch.
+ * HEAD : 200 + image/* si présent, 400 + JSON `not_found` sinon.
+ */
+export async function signedStorageImageIsMissing(url: string): Promise<boolean> {
+  if (!url || !/^https?:\/\//i.test(url)) return false
+  try {
+    const res = await fetch(url, {
+      method: 'HEAD',
+      cache: 'no-store',
+      redirect: 'follow',
+      signal: AbortSignal.timeout(4_000),
+    })
+    if (res.ok) {
+      const ct = res.headers.get('content-type') ?? ''
+      return ct.includes('application/json')
+    }
+    return res.status === 400 || res.status === 404
+  } catch {
+    return false
+  }
+}
+
 export async function createSignedUrlForStoragePath(
   supabase: StorageSignClient,
   rawPath: string,

@@ -8,13 +8,14 @@ import {backgroundStyleCmsPhotoEditorMatch} from '@/lib/cms/cms-editor-photo-sty
 import type {ItemPhotoCoverPosition} from '@/lib/items/item-photo-frame'
 import {isDefaultItemPhotoPosition} from '@/lib/items/item-photo-frame'
 
+import {CatalogRingDotSpinner} from './CatalogRingDotSpinner'
 import styles from './catalogItemPhotoCover.module.css'
 
 /** Largeurs autorisées par `next.config` images.imageSizes / deviceSizes. */
 const DEFAULT_OPTIMIZED_WIDTH = 384
 
 type CatalogItemPhotoCoverProps = {
-  imageUrl: string
+  imageUrl: string | null | undefined
   position?: ItemPhotoCoverPosition | null
   className?: string
   /** Recadrage simple si pas de cadrage BO (ex. hotspot Sanity). */
@@ -89,18 +90,19 @@ export function CatalogItemPhotoCover({
   const [painted, setPainted] = useState(false)
   const [box, setBox] = useState({w: 0, h: 0})
 
+  const src = imageUrl?.trim() ?? ''
   const pos = position ?? null
-  const useBoCrop = !centerCover && Boolean(pos && !isDefaultItemPhotoPosition(pos))
-  const alreadyResized = isSupabaseRenderImageUrl(imageUrl)
+  const useBoCrop = Boolean(src) && !centerCover && Boolean(pos && !isDefaultItemPhotoPosition(pos))
+  const alreadyResized = Boolean(src) && isSupabaseRenderImageUrl(src)
   // Storage transform déjà à ~768px → pas de 2e passage Vercel Image Optimization.
   const useOptimizer =
-    !decorative && !useBoCrop && !alreadyResized && canUseNextImage(imageUrl)
+    Boolean(src) && !decorative && !useBoCrop && !alreadyResized && canUseNextImage(src)
   const paintUrl =
-    canUseNextImage(imageUrl) && (useBoCrop || decorative)
+    src && canUseNextImage(src) && (useBoCrop || decorative)
       ? alreadyResized
-        ? imageUrl
-        : nextOptimizedSrc(imageUrl, optimizedWidth)
-      : imageUrl
+        ? src
+        : nextOptimizedSrc(src, optimizedWidth)
+      : src
 
   useEffect(() => {
     setNaturalSize(null)
@@ -171,27 +173,31 @@ export function CatalogItemPhotoCover({
 
   const frameClass = [styles.frame, className].filter(Boolean).join(' ')
   const objectPos = objectPosition ?? 'center center'
-  const showSkeleton = !painted && !loadFailed && !fillStyle
+  const showImage = Boolean(src) && !loadFailed
+  const imageReady = painted || Boolean(fillStyle)
+  const showPlaceholder = !imageReady || loadFailed || !src
 
   const onImgReady = (w?: number, h?: number) => {
     setPainted(true)
     if (w && h && w > 0 && h > 0) setNaturalSize({w, h})
   }
 
+  const imgClass = [painted ? null : styles.imgPending]
+
   return (
     <div ref={frameRef} className={frameClass}>
-      {fillStyle ? (
+      {showImage && fillStyle ? (
         <div className={styles.fill} style={fillStyle} aria-hidden />
-      ) : useOptimizer ? (
+      ) : showImage && useOptimizer ? (
         <NextImage
-          src={imageUrl}
+          src={src}
           alt=""
           fill
           sizes={sizes}
           quality={75}
           // `eager` seul ne suffit pas sur next/image (lazy par défaut) — bloqué sous marquee transform.
           priority={priority || eager}
-          className={styles.nextImg}
+          className={[styles.nextImg, ...imgClass].filter(Boolean).join(' ')}
           style={{objectFit: 'cover', objectPosition: objectPos}}
           onLoad={(e) => {
             const img = e.currentTarget
@@ -199,12 +205,12 @@ export function CatalogItemPhotoCover({
           }}
           onError={() => setLoadFailed(true)}
         />
-      ) : (
+      ) : showImage ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={imageUrl}
+          src={src}
           alt=""
-          className={styles.fallbackImg}
+          className={[styles.fallbackImg, ...imgClass].filter(Boolean).join(' ')}
           decoding="async"
           loading={priority || eager ? 'eager' : 'lazy'}
           fetchPriority={priority ? 'high' : 'auto'}
@@ -215,8 +221,16 @@ export function CatalogItemPhotoCover({
           }}
           onError={() => setLoadFailed(true)}
         />
-      )}
-      {showSkeleton ? <div className={styles.skeleton} aria-hidden /> : null}
+      ) : null}
+      {showPlaceholder ? (
+        <div className={styles.placeholder} aria-hidden={!showImage ? undefined : true}>
+          <CatalogRingDotSpinner
+            className={styles.placeholderSpinner}
+            tone="dark"
+            aria-label={loadFailed || !src ? 'Photo indisponible' : 'Chargement de la photo'}
+          />
+        </div>
+      ) : null}
     </div>
   )
 }

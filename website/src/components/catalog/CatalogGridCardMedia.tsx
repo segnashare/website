@@ -31,18 +31,16 @@ export function CatalogGridCardMedia({
 }: CatalogGridCardMediaProps) {
   return (
     <>
-      {item.coverUrl ? (
-        <CatalogItemPhotoCover
-          imageUrl={item.coverUrl}
-          position={item.coverPosition}
-          objectPosition={item.objectPosition}
-          className={mediaClassName}
-          sizes={sizes}
-          priority={priority}
-          eager={eager || priority}
-          decorative={decorative}
-        />
-      ) : null}
+      <CatalogItemPhotoCover
+        imageUrl={item.coverUrl}
+        position={item.coverPosition}
+        objectPosition={item.objectPosition}
+        className={mediaClassName}
+        sizes={sizes}
+        priority={priority}
+        eager={eager || priority}
+        decorative={decorative}
+      />
       {item.isSold ? (
         <div
           aria-hidden

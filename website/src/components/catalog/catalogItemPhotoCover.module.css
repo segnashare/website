@@ -21,58 +21,23 @@
   object-position: center center;
 }
 
-@keyframes catalogPhotoShimmer {
-  0% {
-    transform: translate3d(-155%, 0, 0) skewX(-28deg);
-  }
-  42% {
-    transform: translate3d(35%, 0, 0) skewX(-28deg);
-  }
-  68% {
-    transform: translate3d(88%, 0, 0) skewX(-28deg);
-  }
-  86% {
-    transform: translate3d(112%, 0, 0) skewX(-28deg);
-  }
-  100% {
-    transform: translate3d(122%, 0, 0) skewX(-28deg);
-  }
+.imgPending {
+  opacity: 0;
 }
 
-.skeleton {
+.placeholder {
   position: absolute;
   inset: 0;
   z-index: 1;
-  overflow: hidden;
-  background: #e5e5ea;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #d4d4d4;
   pointer-events: none;
 }
 
-.skeleton::after {
-  content: '';
-  position: absolute;
-  top: -70%;
-  left: -35%;
-  width: 165%;
-  height: 240%;
-  background: linear-gradient(
-    92deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.1) 22%,
-    rgba(255, 255, 255, 0.3) 38%,
-    rgba(255, 255, 255, 0.48) 50%,
-    rgba(255, 255, 255, 0.3) 62%,
-    rgba(255, 255, 255, 0.1) 78%,
-    transparent 100%
-  );
-  filter: blur(14px);
-  opacity: 1;
-  animation: catalogPhotoShimmer 2.85s linear infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .skeleton::after {
-    animation: none;
-    opacity: 0;
-  }
+.placeholderSpinner {
+  width: 36px;
+  height: 36px;
+  transform: scale(1.25);
 }
