@@ -40,13 +40,64 @@ export function queryWithCategorySlugs(
   facets: MarketingCatalogFacetsNav,
   nextSlugs: string[],
 ): CatalogBrowseQuery {
+  const brands = effectiveBrandSlugs(query, facets)
   return {
     ...query,
     page: 1,
     categorySlugs: canonicalizeCategorySlugs(nextSlugs, facets.categories),
-    segmentSlug: brandSlugFromQuery(query, facets),
+    brandSlugs: brands,
+    segmentSlug: brands.length > 0 ? null : brandSlugFromQuery(query, facets),
     subSlug: null,
   }
+}
+
+export function effectiveBrandSlugs(
+  query: CatalogBrowseQuery,
+  facets: MarketingCatalogFacetsNav,
+): string[] {
+  if ((query.brandSlugs ?? []).length > 0) return uniqueSorted(query.brandSlugs)
+  const fromSegment = brandSlugFromQuery(query, facets)
+  return fromSegment ? [fromSegment] : []
+}
+
+export function queryWithBrandSlugs(
+  query: CatalogBrowseQuery,
+  facets: MarketingCatalogFacetsNav,
+  nextSlugs: string[],
+): CatalogBrowseQuery {
+  const brands = uniqueSorted(nextSlugs)
+  return {
+    ...query,
+    page: 1,
+    brandSlugs: brands,
+    categorySlugs: effectiveCategorySlugs(query, facets),
+    segmentSlug: null,
+    subSlug: null,
+  }
+}
+
+export function toggleBrandSlug(stored: readonly string[], slug: string): string[] {
+  const set = new Set(stored)
+  if (set.has(slug)) set.delete(slug)
+  else set.add(slug)
+  return uniqueSorted([...set])
+}
+
+export function toggleCategoryQuery(
+  query: CatalogBrowseQuery,
+  cat: MarketingCatalogCategoryNavOption,
+  facets: MarketingCatalogFacetsNav,
+): CatalogBrowseQuery {
+  const current = effectiveCategorySlugs(query, facets)
+  return queryWithCategorySlugs(query, facets, toggleCategorySlugs(current, cat, facets.categories))
+}
+
+export function toggleBrandQuery(
+  query: CatalogBrowseQuery,
+  brandSlug: string,
+  facets: MarketingCatalogFacetsNav,
+): CatalogBrowseQuery {
+  return queryWithBrandSlugs(query, facets, toggleBrandSlug(effectiveBrandSlugs(query, facets), brandSlug))
 }
 
 /** Si tous les enfants d’un parent sont cochés, on ne stocke que le parent. */

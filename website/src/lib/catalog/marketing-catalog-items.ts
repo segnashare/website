@@ -440,12 +440,19 @@ async function fetchMarketingCatalogBrowseFacetsNavUncached(
   const scoped = await getMarketingCatalogFacetsScopedPayload(scopeKey)
   if (!scoped) return pathNav
 
-  // La liste catégories ne doit pas se réduire à la sélection courante (multi-select).
+  // Les listes catégorie / marque ne doivent pas se réduire à la sélection courante (multi-select).
   let categorySource = scoped.categories
-  if (scope.categoryIds.length > 0) {
-    const withoutCats = facetsScopedRpcPayloadFromScope({...scope, categoryIds: []})
-    const scopedCats = await getMarketingCatalogFacetsScopedPayload(facetsScopedRpcCacheKey(withoutCats))
-    if (scopedCats) categorySource = scopedCats.categories
+  let brandSource = scoped.brands
+  if (scope.categoryIds.length > 0 || scope.brandIds.length > 0) {
+    const rail = await getMarketingCatalogFacetsScopedPayload(
+      facetsScopedRpcCacheKey(
+        facetsScopedRpcPayloadFromScope({...scope, categoryIds: [], brandIds: []}),
+      ),
+    )
+    if (rail) {
+      categorySource = rail.categories
+      brandSource = rail.brands
+    }
   }
 
   if (catalogPerfDetail()) {
@@ -461,7 +468,7 @@ async function fetchMarketingCatalogBrowseFacetsNavUncached(
 
   return {
     categories: mergedCats,
-    brands: navOptionsFromBase(scoped.brands, brandSlug),
+    brands: navOptionsFromBase(brandSource, brandSlug),
     colors: navOptionsFromBase(scoped.colors, labelSlug),
     sizes: navSizeOptionsFromBase(scoped.sizes),
   }

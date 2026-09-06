@@ -10,6 +10,8 @@ export type CatalogBrowseQuery = {
   availabilitySlugs: string[]
   /** Multi-sélection catégories (`?categories=vetements,sacs`). */
   categorySlugs: string[]
+  /** Multi-sélection marques (`?brands=nike,ganni`). */
+  brandSlugs: string[]
   /** Équivalent ancien 1er segment d’URL (`/catalogue/nike` → `?segment=nike`). */
   segmentSlug: string | null
   /** Équivalent 2e segment (`/catalogue/nike/robes` → `?segment=nike&categorie=robes`). */
@@ -87,11 +89,13 @@ export function parseCatalogBrowseQuery(sp: URLSearchParams): CatalogBrowseQuery
   const sizesRaw = firstParam(sp, ['sizes', 'tailles', 'size'])
   const availabilityRaw = firstParam(sp, ['disponibilite', 'availability', 'dispo'])
   const categoriesRaw = firstParam(sp, ['categories'])
+  const brandsRaw = firstParam(sp, ['brands', 'marques'])
 
   const colorSlugs = splitList(colorsRaw)
   const sizeSlugs = splitList(sizesRaw)
   const availabilitySlugs = splitList(availabilityRaw)
   const categorySlugs = splitList(categoriesRaw)
+  const brandSlugs = splitList(brandsRaw)
 
   const segmentRaw = firstParam(sp, ['segment', 'marque'])
   const subRaw = firstParam(sp, ['categorie', 'sous-categorie'])
@@ -116,6 +120,7 @@ export function parseCatalogBrowseQuery(sp: URLSearchParams): CatalogBrowseQuery
     sizeSlugs,
     availabilitySlugs,
     categorySlugs,
+    brandSlugs,
     segmentSlug,
     subSlug,
     newOnly,
@@ -134,6 +139,9 @@ export function normalizeCatalogBrowseQuery(q: Partial<CatalogBrowseQuery> | Cat
     categorySlugs: Array.isArray(q.categorySlugs)
       ? [...new Set(q.categorySlugs.filter((s) => typeof s === 'string' && s.trim()))].sort()
       : [],
+    brandSlugs: Array.isArray(q.brandSlugs)
+      ? [...new Set(q.brandSlugs.filter((s) => typeof s === 'string' && s.trim()))].sort()
+      : [],
     segmentSlug: typeof q.segmentSlug === 'string' && q.segmentSlug.trim() ? q.segmentSlug.trim() : null,
     subSlug: typeof q.subSlug === 'string' && q.subSlug.trim() ? q.subSlug.trim() : null,
     newOnly: Boolean(q.newOnly),
@@ -151,7 +159,8 @@ export function serializeCatalogBrowseQuery(q: CatalogBrowseQuery): URLSearchPar
   if (n.sizeSlugs.length > 0) out.set('sizes', n.sizeSlugs.join(','))
   if (n.availabilitySlugs.length > 0) out.set('disponibilite', n.availabilitySlugs.join(','))
   if (n.categorySlugs.length > 0) out.set('categories', n.categorySlugs.join(','))
-  if (n.segmentSlug) out.set('segment', n.segmentSlug)
+  if (n.brandSlugs.length > 0) out.set('brands', n.brandSlugs.join(','))
+  if (n.segmentSlug && n.brandSlugs.length === 0) out.set('segment', n.segmentSlug)
   if (n.subSlug && n.categorySlugs.length === 0) out.set('categorie', n.subSlug)
   if (n.newOnly) out.set('new', '1')
   if (n.tagSlug) out.set('tag', n.tagSlug)

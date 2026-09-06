@@ -3,15 +3,12 @@ import {mergePathAndQuery} from '@/lib/catalog/catalog-search-params'
 import type {CatalogSortMode} from '@/lib/catalog/marketing-catalog-items'
 import type {MarketingCatalogCategoryNavOption} from '@/lib/catalog/marketing-catalog-items'
 import type {MarketingCatalogFacetsNav} from '@/lib/catalog/marketing-catalog-items'
-import {
-  catalogBrandCategorySecondSegment,
-  type CatalogPathResolved,
-} from '@/lib/catalog/catalog-path-resolve'
 import {DEFAULT_CATALOG_BROWSE_QUERY} from '@/lib/catalog/catalog-browse-defaults'
 import {
-  effectiveCategorySlugs,
+  queryWithBrandSlugs,
   queryWithCategorySlugs,
-  toggleCategorySlugs,
+  toggleBrandQuery,
+  toggleCategoryQuery,
 } from '@/lib/catalog/catalog-category-selection'
 
 const CATALOG_PATH = '/catalogue'
@@ -109,35 +106,20 @@ export function toggleCategoryHref(
   cat: MarketingCatalogCategoryNavOption,
   facets: MarketingCatalogFacetsNav,
 ): string {
-  const current = effectiveCategorySlugs(query, facets)
-  const next = toggleCategorySlugs(current, cat, facets.categories)
-  return mergePathAndQuery(CATALOG_PATH, queryWithCategorySlugs(query, facets, next))
+  return mergePathAndQuery(CATALOG_PATH, toggleCategoryQuery(query, cat, facets))
 }
 
 export function brandItemHref(
-  resolved: CatalogPathResolved,
   brandSlug: string,
   query: CatalogBrowseQuery,
   facets: MarketingCatalogFacetsNav,
 ): string {
-  const cats = effectiveCategorySlugs(query, facets)
-  if (cats.length > 0) {
-    return mergePathAndQuery(CATALOG_PATH, {
-      ...queryWithCategorySlugs(query, facets, cats),
-      segmentSlug: brandSlug,
-    })
-  }
-  const second = catalogBrandCategorySecondSegment(resolved)
-  if (second) return catalogBrowseWithSegments(query, brandSlug, second)
-  return catalogBrowseWithSegments(query, brandSlug, null)
+  return mergePathAndQuery(CATALOG_PATH, toggleBrandQuery(query, brandSlug, facets))
 }
 
 export function marquesResetHref(
   query: CatalogBrowseQuery,
   facets: MarketingCatalogFacetsNav,
 ): string {
-  return mergePathAndQuery(CATALOG_PATH, {
-    ...queryWithCategorySlugs(query, facets, effectiveCategorySlugs(query, facets)),
-    segmentSlug: null,
-  })
+  return mergePathAndQuery(CATALOG_PATH, queryWithBrandSlugs(query, facets, []))
 }

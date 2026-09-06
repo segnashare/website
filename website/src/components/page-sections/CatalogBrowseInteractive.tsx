@@ -10,12 +10,8 @@ import {
   DEFAULT_CATALOG_BROWSE_QUERY,
 } from '@/lib/catalog/catalog-browse-defaults'
 import {
-  brandItemHref,
-  categoriesAllHref,
-  marquesResetHref,
   pageHref,
   toggleAvailabilityHref,
-  toggleCategoryHref,
   toggleColorHref,
   toggleSizeHref,
   withSort,
@@ -24,13 +20,18 @@ import {CATALOG_AVAILABILITY_OPTIONS} from '@/lib/catalog/catalog-availability'
 import {isMarketingCatalogItemAvailable} from '@/lib/catalog/catalog-sold-sort'
 import {buildPaginationRange} from '@/lib/catalog/catalog-pagination-range'
 import {
+  effectiveBrandSlugs,
   effectiveCategorySlugs,
   isCategoryChildChecked,
   isCategoryRootChecked,
+  queryWithBrandSlugs,
+  queryWithCategorySlugs,
+  toggleBrandQuery,
+  toggleCategoryQuery,
 } from '@/lib/catalog/catalog-category-selection'
 import {categoryRoots, childrenOf} from '@/lib/catalog/catalog-category-tree'
 import type {CatalogBrowsePayload} from '@/lib/catalog/catalog-page-loader'
-import {resolveCatalogFromQuery, type CatalogPathResolved} from '@/lib/catalog/catalog-path-resolve'
+import {resolveCatalogFromQuery} from '@/lib/catalog/catalog-path-resolve'
 import {formatCatalogPurchasePriceShort} from '@/lib/catalog/catalog-borrow-price-label'
 import {formatCatalogCardSizeLabel} from '@/lib/catalog/format-catalog-card-size'
 import type {CatalogBrowseQuery} from '@/lib/catalog/catalog-search-params'
@@ -78,23 +79,12 @@ const SORT_OPTIONS: {id: CatalogSortMode; label: string}[] = [
 
 type FilterMenuId = 'categories' | 'brands' | 'colors' | 'sizes' | 'availability' | 'sort'
 
-/** `segment` pointe vers une marque (sinon catégorie / all). */
-function queryLooksLikeBrandFilter(resolved: CatalogPathResolved, query: CatalogBrowseQuery): boolean {
-  if (resolved.kind === 'brand' || resolved.kind === 'intersection') return true
-  if (!query.segmentSlug || query.subSlug) return false
-  return resolved.kind === 'all'
-}
-
 function brandLinkActive(
-  resolved: CatalogPathResolved,
   brand: MarketingCatalogFacetNavOption,
   query: CatalogBrowseQuery,
+  facets: MarketingCatalogFacetsNav,
 ): boolean {
-  if (resolved.kind === 'brand' || resolved.kind === 'intersection') {
-    return resolved.brandSlug === brand.slug
-  }
-  // Fallback optimiste si le fetch n’a pas encore renvoyé `resolved`.
-  return query.segmentSlug === brand.slug && !query.subSlug
+  return effectiveBrandSlugs(query, facets).includes(brand.slug)
 }
 
 function sortLinkActive(query: CatalogBrowseQuery, mode: CatalogSortMode): boolean {
@@ -226,6 +216,7 @@ function FilterDropdown({
   children,
   panelClassName,
   plain,
+  multiselect,
 }: {
   id: FilterMenuId
   label: string
@@ -236,6 +227,7 @@ function FilterDropdown({
   panelClassName?: string
   /** Style texte (barre mobile newsroom) plutôt que pill. */
   plain?: boolean
+  multiselect?: boolean
 }) {
   const triggerClass = plain
     ? `${styles.mobileToolbarBtn} ${active ? styles.mobileToolbarBtnActive : ''}`
@@ -271,7 +263,11 @@ function FilterDropdown({
         </svg>
       </button>
       {open ? (
-        <div className={`${styles.filterPanel} ${panelClassName ?? ''}`} role="listbox">
+        <div
+          className={`${styles.filterPanel} ${panelClassName ?? ''}`}
+          role="listbox"
+          aria-multiselectable={multiselect || undefined}
+        >
           {children}
         </div>
       ) : null}
@@ -481,7 +477,14 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
       }
       setItems(data.items)
       setTotal(data.total)
-      const settled = normalizeCatalogBrowseQuery(data.query)
+      const settled = normalizeCatalogBrowseQuery({
+        ...data.query,
+        categorySlugs: nextQuery.categorySlugs,
+        brandSlugs: nextQuery.brandSlugs,
+        colorSlugs: nextQuery.colorSlugs,
+        sizeSlugs: nextQuery.sizeSlugs,
+        availabilitySlugs: nextQuery.availabilitySlugs,
+      })
       setQuery(settled)
       queryRef.current = settled
       if (data.resolved) setResolved(data.resolved)
@@ -552,6 +555,20 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
     [applyQuery],
   )
 
+  const applyCategoryToggle = useCallback(
+    (cat: MarketingCatalogFacetsNav['categories'][number]) => {
+      void applyQuery(toggleCategoryQuery(queryRef.current, cat, resolveFacetsRef.current))
+    },
+    [applyQuery],
+  )
+
+  const applyBrandToggle = useCallback(
+    (brandSlug: string) => {
+      void applyQuery(toggleBrandQuery(queryRef.current, brandSlug, resolveFacetsRef.current))
+    },
+    [applyQuery],
+  )
+
   const toggleMenu = useCallback((id: FilterMenuId) => {
     setOpenMenu((prev) => (prev === id ? null : id))
   }, [])
@@ -562,9 +579,7 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
     setBrandSearch('')
     setShowMoreKeys({})
     const next = new Set<DrawerSectionId>()
-    const brandLike =
-      Boolean(q.segmentSlug) &&
-      (queryLooksLikeBrandFilter(resolved, q) || facets.brands.some((b) => b.slug === q.segmentSlug))
+    const brandLike = effectiveBrandSlugs(q, facets).length > 0
     if (effectiveCategorySlugs(q, facets).length > 0 || q.subSlug || (q.segmentSlug && !brandLike)) {
       next.add('category')
     }
@@ -576,7 +591,7 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
     setDrawerSections(next)
     setOpenMenu(null)
     setFilterDrawerOpen(true)
-  }, [facets, resolved])
+  }, [facets])
 
   const toggleDrawerSection = useCallback((id: DrawerSectionId) => {
     setDrawerSections((prev) => {
@@ -615,10 +630,7 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
   const safePage = Math.min(query.page, totalPages)
 
-  const brandActive =
-    resolved.kind === 'brand' ||
-    resolved.kind === 'intersection' ||
-    (queryLooksLikeBrandFilter(resolved, query) && Boolean(query.segmentSlug))
+  const brandActive = effectiveBrandSlugs(query, facets).length > 0
   const categoryActive = effectiveCategorySlugs(query, facets).length > 0
   const colorsActive = query.colorSlugs.length > 0
   const sizesActive = query.sizeSlugs.length > 0
@@ -627,10 +639,7 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
   const filtersActive =
     categoryActive || brandActive || colorsActive || sizesActive || availabilityActive || query.newOnly
 
-  const draftBrandActive =
-    Boolean(draftQuery.segmentSlug) &&
-    (queryLooksLikeBrandFilter(resolved, draftQuery) ||
-      facets.brands.some((b) => b.slug === draftQuery.segmentSlug))
+  const draftBrandActive = effectiveBrandSlugs(draftQuery, facets).length > 0
   const draftCategoryActive = effectiveCategorySlugs(draftQuery, facets).length > 0
 
   const filteredBrands = useMemo(() => {
@@ -687,7 +696,7 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
                       <FilterCheckOption
                         key="all-cats"
                         checked={!draftCategoryActive}
-                        onClick={() => patchDraftFromHref(categoriesAllHref(draftQuery, facets))}
+                        onClick={() => setDraftQuery(queryWithCategorySlugs(draftQuery, facets, []))}
                       >
                         Toutes les catégories
                       </FilterCheckOption>,
@@ -699,7 +708,7 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
                               checked={isCategoryRootChecked(root, draftQuery, facets)}
                               className={styles.filterOptionParent}
                               onClick={() =>
-                                patchDraftFromHref(toggleCategoryHref(draftQuery, root, facets))
+                                setDraftQuery(toggleCategoryQuery(draftQuery, root, facets))
                               }
                             >
                               {root.label}
@@ -711,7 +720,7 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
                                     key={c.id}
                                     checked={isCategoryChildChecked(c, draftQuery, facets)}
                                     onClick={() =>
-                                      patchDraftFromHref(toggleCategoryHref(draftQuery, c, facets))
+                                      setDraftQuery(toggleCategoryQuery(draftQuery, c, facets))
                                     }
                                   >
                                     {c.label}
@@ -745,7 +754,7 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
                   </div>
                   <FilterCheckOption
                     checked={!draftBrandActive}
-                    onClick={() => patchDraftFromHref(marquesResetHref(draftQuery, facets))}
+                    onClick={() => setDraftQuery(queryWithBrandSlugs(draftQuery, facets, []))}
                   >
                     Toutes les marques
                   </FilterCheckOption>
@@ -758,10 +767,8 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
                       items={filteredBrands.map((b) => (
                         <FilterCheckOption
                           key={b.id}
-                          checked={brandLinkActive(resolved, b, draftQuery)}
-                          onClick={() =>
-                            patchDraftFromHref(brandItemHref(resolved, b.slug, draftQuery, facets))
-                          }
+                          checked={brandLinkActive(b, draftQuery, facets)}
+                          onClick={() => setDraftQuery(toggleBrandQuery(draftQuery, b.slug, facets))}
                         >
                           {b.label}
                         </FilterCheckOption>
@@ -925,10 +932,11 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
             open={openMenu === 'categories'}
             onToggle={toggleMenu}
             panelClassName={styles.filterPanelWide}
+            multiselect
           >
             <FilterCheckOption
               checked={!categoryActive}
-              onClick={() => navigateQuery(categoriesAllHref(query, facets))}
+              onClick={() => applyQuery(queryWithCategorySlugs(queryRef.current, resolveFacetsRef.current, []))}
             >
               Toutes les catégories
             </FilterCheckOption>
@@ -939,7 +947,7 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
                   <FilterCheckOption
                     checked={isCategoryRootChecked(root, query, facets)}
                     className={styles.filterOptionParent}
-                    onClick={() => navigateQuery(toggleCategoryHref(query, root, facets))}
+                    onClick={() => applyCategoryToggle(root)}
                   >
                     {root.label}
                   </FilterCheckOption>
@@ -949,7 +957,7 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
                         <FilterCheckOption
                           key={c.id}
                           checked={isCategoryChildChecked(c, query, facets)}
-                          onClick={() => navigateQuery(toggleCategoryHref(query, c, facets))}
+                          onClick={() => applyCategoryToggle(c)}
                         >
                           {c.label}
                         </FilterCheckOption>
@@ -968,6 +976,7 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
             open={openMenu === 'brands'}
             onToggle={toggleMenu}
             panelClassName={styles.filterPanelWide}
+            multiselect
           >
             <div className={styles.filterSearchWrap}>
               <input
@@ -982,7 +991,7 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
             </div>
             <FilterCheckOption
               checked={!brandActive}
-              onClick={() => navigateQuery(marquesResetHref(query, facets))}
+              onClick={() => applyQuery(queryWithBrandSlugs(queryRef.current, resolveFacetsRef.current, []))}
             >
               Toutes les marques
             </FilterCheckOption>
@@ -992,8 +1001,8 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
               filteredBrands.map((b) => (
                 <FilterCheckOption
                   key={b.id}
-                  checked={brandLinkActive(resolved, b, query)}
-                  onClick={() => navigateQuery(brandItemHref(resolved, b.slug, query, facets))}
+                  checked={brandLinkActive(b, query, facets)}
+                  onClick={() => applyBrandToggle(b.slug)}
                 >
                   {b.label}
                 </FilterCheckOption>
@@ -1007,6 +1016,7 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
             active={colorsActive}
             open={openMenu === 'colors'}
             onToggle={toggleMenu}
+            multiselect
           >
             {facets.colors.map((c) => (
               <FilterCheckOption
@@ -1026,6 +1036,7 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
             open={openMenu === 'sizes'}
             onToggle={toggleMenu}
             panelClassName={styles.filterPanelSizes}
+            multiselect
           >
             {shoeSizes.length > 0 ? (
               <>
@@ -1066,6 +1077,7 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
             active={availabilityActive}
             open={openMenu === 'availability'}
             onToggle={toggleMenu}
+            multiselect
           >
             {CATALOG_AVAILABILITY_OPTIONS.map((o) => (
               <FilterCheckOption
