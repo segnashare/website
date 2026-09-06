@@ -440,14 +440,22 @@ async function fetchMarketingCatalogBrowseFacetsNavUncached(
   const scoped = await getMarketingCatalogFacetsScopedPayload(scopeKey)
   if (!scoped) return pathNav
 
+  // La liste catégories ne doit pas se réduire à la sélection courante (multi-select).
+  let categorySource = scoped.categories
+  if (scope.categoryIds.length > 0) {
+    const withoutCats = facetsScopedRpcPayloadFromScope({...scope, categoryIds: []})
+    const scopedCats = await getMarketingCatalogFacetsScopedPayload(facetsScopedRpcCacheKey(withoutCats))
+    if (scopedCats) categorySource = scopedCats.categories
+  }
+
   if (catalogPerfDetail()) {
     catalogPerfLog('fetchMarketingCatalogBrowseFacetsNav', {
       rpcMs: Math.round(catalogPerfNow() - t0),
-      scopedCategoryCount: scoped.categories.length,
+      scopedCategoryCount: categorySource.length,
     })
   }
 
-  const mergedCats = mergeCategoriesNavWithScopedPresence(pathNav.categories, scoped.categories)
+  const mergedCats = mergeCategoriesNavWithScopedPresence(pathNav.categories, categorySource)
   const brandSlug = (id: string, label: string) => pathNav.brands.find((b) => b.id === id)?.slug ?? slugifyFr(label)
   const labelSlug = (_id: string, label: string) => slugifyFr(label)
 

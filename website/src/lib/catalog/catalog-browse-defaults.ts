@@ -7,6 +7,7 @@ export const DEFAULT_CATALOG_BROWSE_QUERY: CatalogBrowseQuery = {
   colorSlugs: [],
   sizeSlugs: [],
   availabilitySlugs: [],
+  categorySlugs: [],
   segmentSlug: null,
   subSlug: null,
   newOnly: false,
@@ -18,11 +19,13 @@ export function catalogBrowseQueriesEqual(a: CatalogBrowseQuery, b: CatalogBrows
     colorSlugs: a.colorSlugs ?? [],
     sizeSlugs: a.sizeSlugs ?? [],
     availabilitySlugs: a.availabilitySlugs ?? [],
+    categorySlugs: a.categorySlugs ?? [],
   }
   const bb = {
     colorSlugs: b.colorSlugs ?? [],
     sizeSlugs: b.sizeSlugs ?? [],
     availabilitySlugs: b.availabilitySlugs ?? [],
+    categorySlugs: b.categorySlugs ?? [],
   }
   return (
     a.page === b.page &&
@@ -30,6 +33,7 @@ export function catalogBrowseQueriesEqual(a: CatalogBrowseQuery, b: CatalogBrows
     aa.colorSlugs.join(',') === bb.colorSlugs.join(',') &&
     aa.sizeSlugs.join(',') === bb.sizeSlugs.join(',') &&
     aa.availabilitySlugs.join(',') === bb.availabilitySlugs.join(',') &&
+    [...aa.categorySlugs].sort().join(',') === [...bb.categorySlugs].sort().join(',') &&
     a.segmentSlug === b.segmentSlug &&
     a.subSlug === b.subSlug &&
     Boolean(a.newOnly) === Boolean(b.newOnly) &&

@@ -1,6 +1,7 @@
 import type {CatalogBrowseQuery} from '@/lib/catalog/catalog-search-params'
 import type {CatalogPathResolved} from '@/lib/catalog/catalog-path-types'
 import type {MarketingCatalogFacetsNav} from '@/lib/catalog/marketing-catalog-items'
+import {categoryFilterIdsFromSlugs} from '@/lib/catalog/catalog-category-selection'
 
 export type IdsForCatalogRpcOptions = {
   /** Slugs couleur/taille : résolution sur les facettes globales (rails affichés = facettes filtrées). */
@@ -30,6 +31,10 @@ export function idsForCatalogRpc(
   } else if (resolved.kind === 'intersection') {
     brandIds = [resolved.brandId]
     categoryIds = resolved.categoryFilterIds
+  }
+
+  if ((query.categorySlugs ?? []).length > 0) {
+    categoryIds = categoryFilterIdsFromSlugs(query.categorySlugs, slugSrc.categories)
   }
 
   const colorIds = (query.colorSlugs ?? [])

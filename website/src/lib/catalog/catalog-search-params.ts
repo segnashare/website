@@ -8,6 +8,8 @@ export type CatalogBrowseQuery = {
   sizeSlugs: string[]
   /** `disponible` | `reserve` | `vendu` */
   availabilitySlugs: string[]
+  /** Multi-sélection catégories (`?categories=vetements,sacs`). */
+  categorySlugs: string[]
   /** Équivalent ancien 1er segment d’URL (`/catalogue/nike` → `?segment=nike`). */
   segmentSlug: string | null
   /** Équivalent 2e segment (`/catalogue/nike/robes` → `?segment=nike&categorie=robes`). */
@@ -84,10 +86,12 @@ export function parseCatalogBrowseQuery(sp: URLSearchParams): CatalogBrowseQuery
   const colorsRaw = firstParam(sp, ['colors', 'couleurs', 'color'])
   const sizesRaw = firstParam(sp, ['sizes', 'tailles', 'size'])
   const availabilityRaw = firstParam(sp, ['disponibilite', 'availability', 'dispo'])
+  const categoriesRaw = firstParam(sp, ['categories'])
 
   const colorSlugs = splitList(colorsRaw)
   const sizeSlugs = splitList(sizesRaw)
   const availabilitySlugs = splitList(availabilityRaw)
+  const categorySlugs = splitList(categoriesRaw)
 
   const segmentRaw = firstParam(sp, ['segment', 'marque'])
   const subRaw = firstParam(sp, ['categorie', 'sous-categorie'])
@@ -105,7 +109,18 @@ export function parseCatalogBrowseQuery(sp: URLSearchParams): CatalogBrowseQuery
   const tagRaw = firstParam(sp, ['tag', 'tags'])
   const tagSlug = tagRaw ? slugifyFr(tagRaw.replace(/\+/g, ' ')) : null
 
-  return {page, sort, colorSlugs, sizeSlugs, availabilitySlugs, segmentSlug, subSlug, newOnly, tagSlug}
+  return {
+    page,
+    sort,
+    colorSlugs,
+    sizeSlugs,
+    availabilitySlugs,
+    categorySlugs,
+    segmentSlug,
+    subSlug,
+    newOnly,
+    tagSlug,
+  }
 }
 
 /** Normalise une query (champs manquants / ISR ancien payload). */
@@ -116,6 +131,9 @@ export function normalizeCatalogBrowseQuery(q: Partial<CatalogBrowseQuery> | Cat
     colorSlugs: Array.isArray(q.colorSlugs) ? q.colorSlugs : [],
     sizeSlugs: Array.isArray(q.sizeSlugs) ? q.sizeSlugs : [],
     availabilitySlugs: Array.isArray(q.availabilitySlugs) ? q.availabilitySlugs : [],
+    categorySlugs: Array.isArray(q.categorySlugs)
+      ? [...new Set(q.categorySlugs.filter((s) => typeof s === 'string' && s.trim()))].sort()
+      : [],
     segmentSlug: typeof q.segmentSlug === 'string' && q.segmentSlug.trim() ? q.segmentSlug.trim() : null,
     subSlug: typeof q.subSlug === 'string' && q.subSlug.trim() ? q.subSlug.trim() : null,
     newOnly: Boolean(q.newOnly),
@@ -132,8 +150,9 @@ export function serializeCatalogBrowseQuery(q: CatalogBrowseQuery): URLSearchPar
   if (n.colorSlugs.length > 0) out.set('colors', n.colorSlugs.join(','))
   if (n.sizeSlugs.length > 0) out.set('sizes', n.sizeSlugs.join(','))
   if (n.availabilitySlugs.length > 0) out.set('disponibilite', n.availabilitySlugs.join(','))
+  if (n.categorySlugs.length > 0) out.set('categories', n.categorySlugs.join(','))
   if (n.segmentSlug) out.set('segment', n.segmentSlug)
-  if (n.subSlug) out.set('categorie', n.subSlug)
+  if (n.subSlug && n.categorySlugs.length === 0) out.set('categorie', n.subSlug)
   if (n.newOnly) out.set('new', '1')
   if (n.tagSlug) out.set('tag', n.tagSlug)
   return out

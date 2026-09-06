@@ -2,11 +2,17 @@ import type {CatalogBrowseQuery} from '@/lib/catalog/catalog-search-params'
 import {mergePathAndQuery} from '@/lib/catalog/catalog-search-params'
 import type {CatalogSortMode} from '@/lib/catalog/marketing-catalog-items'
 import type {MarketingCatalogCategoryNavOption} from '@/lib/catalog/marketing-catalog-items'
+import type {MarketingCatalogFacetsNav} from '@/lib/catalog/marketing-catalog-items'
 import {
   catalogBrandCategorySecondSegment,
   type CatalogPathResolved,
 } from '@/lib/catalog/catalog-path-resolve'
 import {DEFAULT_CATALOG_BROWSE_QUERY} from '@/lib/catalog/catalog-browse-defaults'
+import {
+  effectiveCategorySlugs,
+  queryWithCategorySlugs,
+  toggleCategorySlugs,
+} from '@/lib/catalog/catalog-category-selection'
 
 const CATALOG_PATH = '/catalogue'
 
@@ -94,65 +100,44 @@ export function pageHref(base: CatalogBrowseQuery, page: number): string {
   return mergePathAndQuery(CATALOG_PATH, {...base, page})
 }
 
-export function categoriesAllHref(resolved: CatalogPathResolved, query: CatalogBrowseQuery): string {
-  if (resolved.kind === 'intersection' || resolved.kind === 'brand') {
-    return catalogBrowseWithSegments(query, resolved.brandSlug, null)
-  }
-  return mergePathAndQuery(CATALOG_PATH, {...query, page: 1, segmentSlug: null, subSlug: null})
+export function categoriesAllHref(query: CatalogBrowseQuery, facets: MarketingCatalogFacetsNav): string {
+  return mergePathAndQuery(CATALOG_PATH, queryWithCategorySlugs(query, facets, []))
 }
 
-export function categoryItemHref(
-  resolved: CatalogPathResolved,
-  cat: MarketingCatalogCategoryNavOption,
-  categories: MarketingCatalogCategoryNavOption[],
+export function toggleCategoryHref(
   query: CatalogBrowseQuery,
+  cat: MarketingCatalogCategoryNavOption,
+  facets: MarketingCatalogFacetsNav,
 ): string {
-  let segmentSlug: string | null = null
-  let subSlug: string | null = null
-
-  if (cat.parentId == null) {
-    const brandSlug = resolved.kind === 'brand' || resolved.kind === 'intersection' ? resolved.brandSlug : null
-    if (brandSlug) {
-      segmentSlug = brandSlug
-      subSlug = cat.slug
-    } else {
-      segmentSlug = cat.slug
-    }
-  } else {
-    const parent = categories.find((c) => c.id === cat.parentId)
-    if (resolved.kind === 'brand' || resolved.kind === 'intersection') {
-      segmentSlug = resolved.brandSlug
-      subSlug = cat.slug
-    } else if (parent) {
-      segmentSlug = parent.slug
-      subSlug = cat.slug
-    } else {
-      segmentSlug = cat.slug
-    }
-  }
-
-  return catalogBrowseWithSegments(query, segmentSlug, subSlug)
+  const current = effectiveCategorySlugs(query, facets)
+  const next = toggleCategorySlugs(current, cat, facets.categories)
+  return mergePathAndQuery(CATALOG_PATH, queryWithCategorySlugs(query, facets, next))
 }
 
-export function brandItemHref(resolved: CatalogPathResolved, brandSlug: string, query: CatalogBrowseQuery): string {
+export function brandItemHref(
+  resolved: CatalogPathResolved,
+  brandSlug: string,
+  query: CatalogBrowseQuery,
+  facets: MarketingCatalogFacetsNav,
+): string {
+  const cats = effectiveCategorySlugs(query, facets)
+  if (cats.length > 0) {
+    return mergePathAndQuery(CATALOG_PATH, {
+      ...queryWithCategorySlugs(query, facets, cats),
+      segmentSlug: brandSlug,
+    })
+  }
   const second = catalogBrandCategorySecondSegment(resolved)
   if (second) return catalogBrowseWithSegments(query, brandSlug, second)
   return catalogBrowseWithSegments(query, brandSlug, null)
 }
 
-export function marquesResetHref(resolved: CatalogPathResolved, query: CatalogBrowseQuery): string {
-  if (resolved.kind === 'all') return mergePathAndQuery(CATALOG_PATH, {...query, page: 1, segmentSlug: null, subSlug: null})
-  if (resolved.kind === 'brand') {
-    return mergePathAndQuery(CATALOG_PATH, {...query, page: 1, segmentSlug: null, subSlug: null})
-  }
-  if (resolved.kind === 'category') {
-    const seg =
-      resolved.segments.shape === 'parent_child' ? resolved.segments.parentSlug : resolved.segments.slug
-    const sub = resolved.segments.shape === 'parent_child' ? resolved.segments.childSlug : null
-    return catalogBrowseWithSegments(query, seg, sub)
-  }
-  if (resolved.kind === 'intersection') {
-    return catalogBrowseWithSegments(query, null, resolved.categorySlug)
-  }
-  return CATALOG_PATH
+export function marquesResetHref(
+  query: CatalogBrowseQuery,
+  facets: MarketingCatalogFacetsNav,
+): string {
+  return mergePathAndQuery(CATALOG_PATH, {
+    ...queryWithCategorySlugs(query, facets, effectiveCategorySlugs(query, facets)),
+    segmentSlug: null,
+  })
 }
