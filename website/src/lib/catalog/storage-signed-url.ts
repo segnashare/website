@@ -42,12 +42,13 @@ export function orderedBucketsForStoragePath(normalizedPath: string): readonly s
 
 export type StorageSignClient = {
   storage: {
-    from: (bucket: string) => {
-      createSignedUrl: (
+    /** Syntaxe méthode : paramètres bivariants, compatible client Supabase + `{format:'webp'}`. */
+    from(bucket: string): {
+      createSignedUrl(
         path: string,
         expiresIn: number,
         options?: {transform?: StorageImageTransform},
-      ) => Promise<{data?: {signedUrl?: string} | null; error?: {message?: string} | null}>
+      ): Promise<{data?: {signedUrl?: string} | null; error?: {message?: string} | null}>
     }
   }
 }
