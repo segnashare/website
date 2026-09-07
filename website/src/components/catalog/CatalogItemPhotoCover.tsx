@@ -8,7 +8,6 @@ import {backgroundStyleCmsPhotoEditorMatch} from '@/lib/cms/cms-editor-photo-sty
 import type {ItemPhotoCoverPosition} from '@/lib/items/item-photo-frame'
 import {isDefaultItemPhotoPosition} from '@/lib/items/item-photo-frame'
 
-import {CatalogRingDotSpinner} from './CatalogRingDotSpinner'
 import styles from './catalogItemPhotoCover.module.css'
 
 /** Largeurs autorisées par `next.config` images.imageSizes / deviceSizes. */
@@ -222,15 +221,7 @@ export function CatalogItemPhotoCover({
           onError={() => setLoadFailed(true)}
         />
       ) : null}
-      {showPlaceholder ? (
-        <div className={styles.placeholder} aria-hidden={!showImage ? undefined : true}>
-          <CatalogRingDotSpinner
-            className={styles.placeholderSpinner}
-            tone="dark"
-            aria-label={loadFailed || !src ? 'Photo indisponible' : 'Chargement de la photo'}
-          />
-        </div>
-      ) : null}
+      {showPlaceholder ? <div className={styles.placeholder} aria-hidden /> : null}
     </div>
   )
 }
