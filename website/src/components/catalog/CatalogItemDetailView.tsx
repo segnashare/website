@@ -756,14 +756,20 @@ export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks 
             <div ref={lightboxTrackRef} className={styles.lightboxTrack} onScroll={onLightboxScroll}>
               {slots.map((slot, i) => (
                 <div key={`${slot.url}-lb-${i}`} className={styles.lightboxSlide}>
-                  <CatalogItemPhotoCover
-                    imageUrl={slot.url}
-                    position={slot.position}
-                    centerCover
-                    objectPosition="center center"
-                    sizes="100vw"
-                    priority={i === 0}
-                  />
+                  <div className={styles.lightboxPhoto}>
+                    <div className={styles.lightboxPhotoInner}>
+                      <CatalogItemPhotoCover
+                        imageUrl={slot.url}
+                        position={slot.position}
+                        centerCover
+                        objectFit="contain"
+                        objectPosition="center center"
+                        sizes="(max-width: 768px) 100vw, 80vw"
+                        optimizedWidth={1920}
+                        priority={i === 0}
+                      />
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>

@@ -24,6 +24,8 @@ type CatalogItemPhotoCoverProps = {
    * Utile pour les grands cadres (modal) où le crop catalogue affiche surtout le haut.
    */
   centerCover?: boolean
+  /** Lightbox plein écran : photo entière, sans crop. */
+  objectFit?: 'cover' | 'contain'
   /** `next/image` sizes — défaut carte catalogue. */
   sizes?: string
   /** Priorité LCP (premières cartes / hero). */
@@ -77,6 +79,7 @@ export function CatalogItemPhotoCover({
   className = '',
   objectPosition,
   centerCover = false,
+  objectFit = 'cover',
   sizes = '(max-width: 768px) 50vw, 280px',
   priority = false,
   eager = false,
@@ -197,7 +200,7 @@ export function CatalogItemPhotoCover({
           // `eager` seul ne suffit pas sur next/image (lazy par défaut) — bloqué sous marquee transform.
           priority={priority || eager}
           className={[styles.nextImg, ...imgClass].filter(Boolean).join(' ')}
-          style={{objectFit: 'cover', objectPosition: objectPos}}
+          style={{objectFit, objectPosition: objectPos}}
           onLoad={(e) => {
             const img = e.currentTarget
             onImgReady(img.naturalWidth, img.naturalHeight)
@@ -213,7 +216,7 @@ export function CatalogItemPhotoCover({
           decoding="async"
           loading={priority || eager ? 'eager' : 'lazy'}
           fetchPriority={priority ? 'high' : 'auto'}
-          style={{objectFit: 'cover', objectPosition: objectPos}}
+          style={{objectFit, objectPosition: objectPos}}
           onLoad={(e) => {
             const img = e.currentTarget
             onImgReady(img.naturalWidth, img.naturalHeight)
