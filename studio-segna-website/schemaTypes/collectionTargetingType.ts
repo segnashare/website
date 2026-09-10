@@ -75,6 +75,13 @@ export const collectionTargetingLookType = defineType({
       description: 'Ne garder que les pièces avec le badge Nouveau (~20 % les plus récentes).',
     }),
     defineField({
+      name: 'archiveOnly',
+      title: 'Badge Archive',
+      type: 'boolean',
+      initialValue: false,
+      description: 'Ne garder que les pièces avec le badge Archive.',
+    }),
+    defineField({
       name: 'categorySlugs',
       title: 'Catégories',
       type: 'array',
@@ -116,11 +123,15 @@ export const collectionTargetingLookType = defineType({
       subtitle: 'subtitle',
       media: 'image',
       newOnly: 'newOnly',
+      archiveOnly: 'archiveOnly',
     },
-    prepare({title, subtitle, media, newOnly}) {
+    prepare({title, subtitle, media, newOnly, archiveOnly}) {
       return {
         title: title || 'Ciblage',
-        subtitle: [newOnly ? 'Nouveau' : null, subtitle].filter(Boolean).join(' · ') || 'Sans filtre',
+        subtitle:
+          [newOnly ? 'Nouveau' : null, archiveOnly ? 'Archive' : null, subtitle]
+            .filter(Boolean)
+            .join(' · ') || 'Sans filtre',
         media,
       }
     },

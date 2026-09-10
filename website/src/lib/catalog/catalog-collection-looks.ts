@@ -18,6 +18,7 @@ export type CollectionTargetingLookView = {
   materialSlugs: string[]
   tagSlugs: string[]
   newOnly: boolean
+  archiveOnly: boolean
 }
 
 function sorted(slugs: readonly string[]): string[] {
@@ -40,6 +41,7 @@ export function queryFromCollectionLook(
     tagSlugs,
     tagSlug: tagSlugs[0] ?? null,
     newOnly: Boolean(look.newOnly),
+    archiveOnly: Boolean(look.archiveOnly),
     lookSlug: look.slug,
     segmentSlug: null,
     subSlug: null,
@@ -57,6 +59,7 @@ export function lookFiltersMatchQuery(look: CollectionTargetingLookView, query: 
   const queryTags = query.tagSlugs.length > 0 ? query.tagSlugs : query.tagSlug ? [query.tagSlug] : []
   return (
     Boolean(look.newOnly) === Boolean(query.newOnly) &&
+    Boolean(look.archiveOnly) === Boolean(query.archiveOnly) &&
     slugsEqual(look.categorySlugs, query.categorySlugs) &&
     slugsEqual(look.brandSlugs, query.brandSlugs) &&
     slugsEqual(look.colorSlugs, query.colorSlugs) &&

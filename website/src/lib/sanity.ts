@@ -718,6 +718,7 @@ export type CollectionTargetingLook = {
   subtitle?: string
   image?: SanityImage
   newOnly?: boolean
+  archiveOnly?: boolean
   categorySlugs?: string[]
   brandSlugs?: string[]
   colorSlugs?: string[]
@@ -1226,6 +1227,7 @@ const collectionTargetingGroq = `collectionTargeting[]{
   "slug": slug.current,
   subtitle,
   newOnly,
+  archiveOnly,
   categorySlugs,
   brandSlugs,
   colorSlugs,

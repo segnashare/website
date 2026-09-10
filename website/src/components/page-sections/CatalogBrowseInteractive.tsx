@@ -505,6 +505,7 @@ export function CatalogBrowseInteractive({
         tagSlugs: nextQuery.tagSlugs,
         tagSlug: nextQuery.tagSlug,
         newOnly: nextQuery.newOnly,
+        archiveOnly: nextQuery.archiveOnly,
         lookSlug: nextQuery.lookSlug,
       })
       setQuery(settled)
@@ -665,6 +666,7 @@ export function CatalogBrowseInteractive({
     sizesActive ||
     availabilityActive ||
     query.newOnly ||
+    query.archiveOnly ||
     (query.materialSlugs?.length ?? 0) > 0 ||
     (query.tagSlugs?.length ?? 0) > 0 ||
     Boolean(query.tagSlug)

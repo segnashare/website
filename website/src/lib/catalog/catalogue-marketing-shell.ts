@@ -79,6 +79,7 @@ function mapCollectionTargetingLooks(
       materialSlugs: asSlugList(row.materialSlugs),
       tagSlugs: asSlugList(row.tagSlugs),
       newOnly: Boolean(row.newOnly),
+      archiveOnly: Boolean(row.archiveOnly),
     })
   }
   return out

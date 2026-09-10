@@ -8,6 +8,7 @@ import {catalogListingPath, resolveCatalogFromQuery} from '@/lib/catalog/catalog
 import {idsForCatalogRpc} from '@/lib/catalog/catalog-facet-scope-ids'
 import {catalogPerfEnabled, catalogPerfLog, catalogPerfNow} from '@/lib/catalog/catalog-perf'
 import {
+  getMarketingCatalogArchiveItemIds,
   getMarketingCatalogItemIdsByTagSlugs,
   getMarketingCatalogNewItemIds,
 } from '@/lib/catalog/catalog-selection-ids'
@@ -277,6 +278,11 @@ async function fetchMarketingCatalogPageByAvailability(
   return {items: sortMarketingCatalogSoldLast(items), total}
 }
 
+function intersectIdPools(a: string[], b: string[]): string[] {
+  const keep = new Set(b)
+  return a.filter((id) => keep.has(id))
+}
+
 /** Charge le catalogue depuis `/catalogue` + query (`segment`, `categorie`, filtres). */
 export async function loadCatalogBrowse(query: CatalogBrowseQuery): Promise<CatalogBrowsePayload | null> {
   const t0 = catalogPerfNow()
@@ -302,17 +308,16 @@ export async function loadCatalogBrowse(query: CatalogBrowseQuery): Promise<Cata
     (query.tagSlugs?.length ?? 0) > 0 ? query.tagSlugs : query.tagSlug ? [query.tagSlug] : []
 
   let selectionPool: string[] | null = null
-  if (query.newOnly && tagSlugs.length > 0) {
-    const [newIds, taggedIds] = await Promise.all([
-      getMarketingCatalogNewItemIds(),
-      getMarketingCatalogItemIdsByTagSlugs(tagSlugs),
-    ])
-    const tagged = new Set(taggedIds)
-    selectionPool = newIds.filter((id) => tagged.has(id))
-  } else if (query.newOnly) {
+  if (query.newOnly) {
     selectionPool = await getMarketingCatalogNewItemIds()
-  } else if (tagSlugs.length > 0) {
-    selectionPool = await getMarketingCatalogItemIdsByTagSlugs(tagSlugs)
+  }
+  if (query.archiveOnly) {
+    const archiveIds = await getMarketingCatalogArchiveItemIds()
+    selectionPool = selectionPool ? intersectIdPools(selectionPool, archiveIds) : archiveIds
+  }
+  if (tagSlugs.length > 0) {
+    const taggedIds = await getMarketingCatalogItemIdsByTagSlugs(tagSlugs)
+    selectionPool = selectionPool ? intersectIdPools(selectionPool, taggedIds) : taggedIds
   }
 
   const tItems0 = catalogPerfNow()
@@ -366,7 +371,13 @@ export async function loadCatalogBrowse(query: CatalogBrowseQuery): Promise<Cata
       gridCoversMs: Math.round(tEnd - tAfterRows),
       rowCount: rows.length,
       availabilityFilter: hasAvailabilityFilter,
-      selection: query.newOnly ? 'new' : query.tagSlug ? `tag:${query.tagSlug}` : null,
+      selection: query.archiveOnly
+        ? 'archive'
+        : query.newOnly
+          ? 'new'
+          : query.tagSlug
+            ? `tag:${query.tagSlug}`
+            : null,
     })
   }
 

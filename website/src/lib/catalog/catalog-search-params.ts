@@ -18,6 +18,8 @@ export type CatalogBrowseQuery = {
   subSlug: string | null
   /** Filtre sélection « New » (badge nouveautés, ~20 % plus récents). */
   newOnly: boolean
+  /** Filtre badge Archive (`items.is_archive`). */
+  archiveOnly: boolean
   /** Filtre tag catalogue (`tags.slug`, ex. `summer2026`). */
   tagSlug: string | null
   /** Multi-sélection tags (`?tags=summer,resort`). */
@@ -116,6 +118,10 @@ export function parseCatalogBrowseQuery(sp: URLSearchParams): CatalogBrowseQuery
     newRaw === 'nouveautes' ||
     newRaw === 'new'
 
+  const archiveRaw = firstParam(sp, ['archive', 'archives'])
+  const archiveOnly =
+    archiveRaw === '1' || archiveRaw === 'true' || archiveRaw === 'yes' || archiveRaw === 'archive'
+
   const tagRaw = firstParam(sp, ['tag'])
   const tagsRaw = firstParam(sp, ['tags'])
   const tagSlugs = [
@@ -143,6 +149,7 @@ export function parseCatalogBrowseQuery(sp: URLSearchParams): CatalogBrowseQuery
     segmentSlug,
     subSlug,
     newOnly,
+    archiveOnly,
     tagSlug,
     tagSlugs,
     materialSlugs,
@@ -167,6 +174,7 @@ export function normalizeCatalogBrowseQuery(q: Partial<CatalogBrowseQuery> | Cat
     segmentSlug: typeof q.segmentSlug === 'string' && q.segmentSlug.trim() ? q.segmentSlug.trim() : null,
     subSlug: typeof q.subSlug === 'string' && q.subSlug.trim() ? q.subSlug.trim() : null,
     newOnly: Boolean(q.newOnly),
+    archiveOnly: Boolean(q.archiveOnly),
     tagSlug: typeof q.tagSlug === 'string' && q.tagSlug.trim() ? q.tagSlug.trim() : null,
     tagSlugs: Array.isArray(q.tagSlugs)
       ? [...new Set(q.tagSlugs.filter((s) => typeof s === 'string' && s.trim()))].sort()
@@ -194,6 +202,7 @@ export function serializeCatalogBrowseQuery(q: CatalogBrowseQuery): URLSearchPar
   if (n.segmentSlug && n.brandSlugs.length === 0) out.set('segment', n.segmentSlug)
   if (n.subSlug && n.categorySlugs.length === 0) out.set('categorie', n.subSlug)
   if (n.newOnly) out.set('new', '1')
+  if (n.archiveOnly) out.set('archive', '1')
   const tags = n.tagSlugs.length > 0 ? n.tagSlugs : n.tagSlug ? [n.tagSlug] : []
   if (tags.length === 1) out.set('tag', tags[0]!)
   else if (tags.length > 1) out.set('tags', tags.join(','))

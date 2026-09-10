@@ -120,3 +120,51 @@ export async function getMarketingCatalogItemIdsByTagSlugs(tagSlugs: readonly st
 export async function getMarketingCatalogNewItemIds(): Promise<string[]> {
   return getMarketingCatalogNewestIds()
 }
+
+async function fetchMarketingCatalogArchiveItemIdsUncached(): Promise<string[]> {
+  const supabase = getSupabaseServiceRoleClient()
+  if (!supabase) return []
+
+  const {data: corpUsers, error: corpErr} = await supabase
+    .from('users')
+    .select('id')
+    .eq('status', 'corporate_inventory')
+  if (corpErr && process.env.NODE_ENV === 'development') {
+    console.error('[marketing-catalog] archive corp users', corpErr.message)
+  }
+  const corpIds = (corpUsers ?? []).map((u) => u.id).filter(Boolean)
+
+  let listQuery = supabase
+    .from('items')
+    .select('id')
+    .is('deleted_at', null)
+    .eq('is_archive', true)
+    .in('status', [...MARKETING_CATALOG_ITEM_STATUSES])
+    .order('created_at', {ascending: false})
+    .limit(2000)
+
+  if (corpIds.length > 0) {
+    listQuery = listQuery.not('owner_user_id', 'in', `(${corpIds.join(',')})`)
+  }
+
+  const {data, error} = await listQuery
+  if (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[marketing-catalog] archive list', error.message)
+    }
+    return []
+  }
+
+  return (data ?? []).map((r) => r.id).filter((id): id is string => typeof id === 'string')
+}
+
+const getCachedMarketingCatalogArchiveItemIds = withDataCache(
+  fetchMarketingCatalogArchiveItemIdsUncached,
+  ['marketing_catalog_archive_item_ids_v1'],
+  {revalidate: catalogDataRevalidateSec()},
+)
+
+/** IDs « Archive » (même flag que le badge carte). */
+export async function getMarketingCatalogArchiveItemIds(): Promise<string[]> {
+  return getCachedMarketingCatalogArchiveItemIds()
+}
