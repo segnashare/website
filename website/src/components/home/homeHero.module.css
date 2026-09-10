@@ -15,14 +15,25 @@
   margin-bottom: var(--page-section-stack-gap);
 }
 
-/* HomeStagedHero : le wrapper réutilise `.hero` (100vh) ; en pile mobile ça laissait un vide blanc énorme sous le visu. */
+/* HomeStagedHero / hero photo mobile : le wrapper réutilise `.hero` (100vh) ; en pile ça laissait un vide blanc énorme sous le visu. */
 /* Nav : 1200px (au lieu de 1024) pour afficher la barre hamburger avant que les liens + CTA desktop ne wrappent. */
 @media (max-width: 1200px) {
-  .hero.heroStagedStack {
+  .hero.heroStagedStack,
+  .hero.heroPhotoStack {
     min-height: unset;
     /* `overflow-x: visible` laissait parfois un débordement (slots / Framer) → bande blanche à droite. */
     overflow-x: clip;
     overflow-y: visible;
+  }
+
+  /* Texte plus dans l’image : le voile servi au desktop n’est plus nécessaire. */
+  .heroPhotoStack .overlay {
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      transparent 58%,
+      rgb(0 0 0 / 0.14) 100%
+    );
   }
 }
 
@@ -671,7 +682,8 @@
 
 @media (min-width: 1201px) {
   .mobileHeader,
-  .mobileTitleWrap {
+  .mobileTitleWrap,
+  .heroPhotoStack .mobilePhotoCopy {
     display: none;
   }
 

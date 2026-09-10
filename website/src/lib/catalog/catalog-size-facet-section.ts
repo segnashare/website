@@ -1,5 +1,6 @@
 import {
   aggregateApparelSizeFacets,
+  compareApparelSizeFacets,
   type ApparelSizeFacetLike,
 } from '@/lib/catalog/apparel-size-referential'
 
@@ -57,8 +58,7 @@ export function splitMarketingCatalogSizeFacets<T extends CatalogSizeFacetLike>(
     )
   }
 
-  const cmp = (a: T, b: T) => a.label.localeCompare(b.label, 'fr', {numeric: true, sensitivity: 'base'})
-  shoeSizes.sort(cmp)
-  apparelSizes.sort(cmp)
+  shoeSizes.sort((a, b) => a.label.localeCompare(b.label, 'fr', {numeric: true, sensitivity: 'base'}))
+  apparelSizes.sort(compareApparelSizeFacets)
   return {shoeSizes, apparelSizes}
 }

@@ -19,6 +19,11 @@
   --segna-type-h2-leading: 1.06;
   --segna-type-h2-tracking: -0.03em;
 
+  --segna-type-h3-size: clamp(1.65rem, 2.9vw, 2.35rem);
+  --segna-type-h3-weight: 800;
+  --segna-type-h3-leading: 1.1;
+  --segna-type-h3-tracking: -0.03em;
+
   /** Écart vertical entre blocs modulaires (sections) — aussi sous le hero. */
   --page-section-stack-gap: clamp(2.75rem, 6vw, 5.5rem);
 }

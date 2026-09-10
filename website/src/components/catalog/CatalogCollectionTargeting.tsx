@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import {
+  displayCollectionLookTitle,
   queryFromCollectionLook,
   selectedCollectionLook,
   type CollectionTargetingLookView,
@@ -26,7 +27,7 @@ export function CatalogCollectionTargeting({looks, query, onSelectLook}: Props) 
     <section className={styles.root} aria-label="Cibler la collection">
       {selected ? (
         <header className={styles.heading}>
-          <h3 className={styles.title}>{selected.title}</h3>
+          <h3 className={styles.title}>{displayCollectionLookTitle(selected.title)}</h3>
           {subtitle ? (
             <p className={styles.subtitle} key={selected.slug}>
               {subtitle}
@@ -52,7 +53,7 @@ export function CatalogCollectionTargeting({looks, query, onSelectLook}: Props) 
                   {look.imageUrl ? (
                     <Image
                       src={look.imageUrl}
-                      alt={look.imageAlt || look.title}
+                      alt={look.imageAlt || displayCollectionLookTitle(look.title)}
                       fill
                       sizes="(max-width: 48rem) 29vw, 25vw"
                       className={styles.photoImg}
@@ -62,7 +63,7 @@ export function CatalogCollectionTargeting({looks, query, onSelectLook}: Props) 
                     <span className={styles.photoFallback} aria-hidden />
                   )}
                 </span>
-                <span className={styles.label}>{look.title}</span>
+                <span className={styles.label}>{displayCollectionLookTitle(look.title)}</span>
               </button>
             )
           })}

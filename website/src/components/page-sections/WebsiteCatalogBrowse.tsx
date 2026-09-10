@@ -13,6 +13,7 @@ import {
   type SetStateAction,
 } from 'react'
 import {buildPaginationRange} from '@/lib/catalog/catalog-pagination-range'
+import {compareApparelSizeFacets} from '@/lib/catalog/apparel-size-referential'
 import {splitMarketingCatalogSizeFacets} from '@/lib/catalog/catalog-size-facet-section'
 import {formatCatalogPurchasePriceLabel} from '@/lib/catalog/catalog-borrow-price-label'
 import {
@@ -67,7 +68,7 @@ function uniqSizeOptionsFromItems(items: MarketingCatalogGridItem[]): CatalogSiz
       m.set(id, {id, label, ...(code ? {code} : {})})
     }
   }
-  return [...m.values()].sort((a, b) => a.label.localeCompare(b.label, 'fr', {numeric: true, sensitivity: 'base'}))
+  return [...m.values()].sort(compareApparelSizeFacets)
 }
 
 function uniqOptionsFromItems(

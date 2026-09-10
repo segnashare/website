@@ -87,3 +87,16 @@ export function collectionLookSlugFromTitle(title: string, fallback: string): st
   const slug = slugifyFr(title)
   return slug && slug !== 'x' ? slug : fallback
 }
+
+/** Titre affiché : pas de suffixe « | New », pas de tout-en-capitales (ARCHIVE → Archive). */
+export function displayCollectionLookTitle(title: string): string {
+  const stripped = title.replace(/\s*\|\s*New\s*$/i, '').trim()
+  if (!stripped) return title.trim()
+  const letters = stripped.replace(/[^A-Za-zÀ-ÿ]/g, '')
+  if (letters && letters === letters.toUpperCase()) {
+    return stripped
+      .toLocaleLowerCase('fr-FR')
+      .replace(/(^|[\s/|])(\S)/g, (_, sep: string, ch: string) => sep + ch.toLocaleUpperCase('fr-FR'))
+  }
+  return stripped
+}

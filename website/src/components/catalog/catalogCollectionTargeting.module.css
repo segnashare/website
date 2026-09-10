@@ -13,10 +13,11 @@
 .title {
   margin: 0;
   font-family: var(--font-playfair-display), Georgia, serif;
-  font-size: clamp(1.35rem, 2.4vw, 1.85rem);
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
+  font-size: var(--segna-type-h3-size);
+  font-weight: var(--segna-type-h3-weight);
+  letter-spacing: var(--segna-type-h3-tracking);
+  line-height: var(--segna-type-h3-leading);
+  text-transform: none;
   color: #111;
 }
 
@@ -106,9 +107,9 @@
   padding: 0.75rem 0.45rem 0.85rem;
   border-top: 1px solid #ece8e2;
   font-family: var(--font-playfair-display), Georgia, serif;
-  font-size: 1rem;
-  font-weight: 500;
-  letter-spacing: -0.01em;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   line-height: 1.2;
   text-transform: none;
   color: #8a847c;

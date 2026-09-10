@@ -13,7 +13,7 @@ export function CatalogCardBadges({isNew, isSold, isArchive, className}: Props) 
   return (
     <div className={[styles.badges, className].filter(Boolean).join(' ')} aria-hidden>
       {isArchive ? <span className={styles.badgeArchive}>Archive</span> : null}
-      {isNew ? <span className={styles.badgeNew}>New</span> : null}
+      {isNew && !isArchive ? <span className={styles.badgeNew}>New</span> : null}
       {isSold ? <span className={styles.badgeSold}>Sold</span> : null}
     </div>
   )

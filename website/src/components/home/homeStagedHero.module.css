@@ -680,4 +680,17 @@
   .stagedHeroContentLayer .infoItem:first-child .infoIconImg {
     filter: brightness(0);
   }
+
+  /*
+   * Hero photo (accueil) : même pile que le multi-états, mais image d’abord puis cadre blanc.
+   * Le header fixe recouvre le visu, plus le bloc texte — pas besoin du padding-top 5.35rem.
+   */
+  .stagedHeroRoot.photoHeroRoot .stagedHeroBackdrop {
+    order: 1;
+  }
+
+  .stagedHeroRoot.photoHeroRoot .stagedHeroContentLayer {
+    order: 2;
+    padding-top: 0;
+  }
 }

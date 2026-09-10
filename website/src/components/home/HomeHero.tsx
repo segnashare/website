@@ -18,6 +18,7 @@ import {JoinClubCtaLink} from './JoinClubCtaLink'
 import {MobileMainMenu} from './MobileMainMenu'
 import {useNavScrollElevated} from './useNavScrollElevated'
 import styles from './homeHero.module.css'
+import staged from './homeStagedHero.module.css'
 
 type HomeHeroProps = {
   homePage: HomePageData
@@ -76,22 +77,28 @@ export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeH
   const navRootClass = `${styles.navChromeRoot} ${navElevated ? styles.navChromeRootScrolled : ''}`
 
   return (
-    <div className={`${styles.hero} ${styles.heroWithSectionSpacing}`}>
-      {backgroundImageUrl ? (
-        <div className={styles.backgroundLayer}>
-          <Image
-            src={backgroundImageUrl}
-            alt={homePage.heroImage?.alt ?? heroTitlePlainText(homePage.heroTitle)}
-            fill
-            priority
-            sizes="100vw"
-            style={{objectFit: 'cover'}}
-          />
+    <div
+      className={`${styles.hero} ${styles.heroPhotoStack} ${styles.heroWithSectionSpacing} ${staged.stagedHeroRoot} ${staged.photoHeroRoot}`}
+    >
+      <div className={staged.stagedHeroBackdrop}>
+        <div className={staged.stagedHeroBackdropInset}>
+          {backgroundImageUrl ? (
+            <div className={styles.backgroundLayer}>
+              <Image
+                src={backgroundImageUrl}
+                alt={homePage.heroImage?.alt ?? heroTitlePlainText(homePage.heroTitle)}
+                fill
+                priority
+                sizes="100vw"
+                style={{objectFit: 'cover'}}
+              />
+            </div>
+          ) : null}
+          <div className={styles.overlay} />
         </div>
-      ) : null}
-      <div className={styles.overlay} />
+      </div>
 
-      <div className={styles.contentLayer}>
+      <div className={`${styles.contentLayer} ${staged.stagedHeroContentLayer}`}>
         <div className={navRootClass}>
           <div className={styles.desktopNavSpacer} aria-hidden />
           <header className={styles.desktopHeader}>
@@ -175,19 +182,25 @@ export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeH
           </div>
         </section>
 
-        <section className={styles.mobileTitleWrap}>
-          <div className={styles.heroTitleStack}>
-            <h1 className={styles.mobileTitle}>{homePage.heroTitle}</h1>
-            {heroSubtitle ? <p className={styles.heroSubtitle}>{heroSubtitle}</p> : null}
-            <HeroTrustpilotRating />
-            <HomeHeroActionBlock
-              nav={catalogSearchNav}
-              surface="single"
-              placeholder={catalogSearchPlaceholder}
-              searchButtonLabel={catalogSearchButtonLabel}
-              inputId="home-hero-search-mobile"
-              action={heroAction}
-            />
+        <section className={`${styles.mobilePhotoCopy} ${staged.stagedHeroLower}`}>
+          <div className={`${styles.heroTitleStack} ${staged.stagedHeroColumn}`}>
+            <div className={staged.stagedHeroTitleWrap}>
+              <h1 className={`${styles.mobileTitle} ${staged.stagedHeroTitle}`}>{homePage.heroTitle}</h1>
+              {heroSubtitle ? (
+                <p className={`${styles.heroSubtitle} ${staged.stagedHeroSubtitle}`}>{heroSubtitle}</p>
+              ) : null}
+              <HeroTrustpilotRating />
+            </div>
+            <div className={staged.stagedHeroMeta}>
+              <HomeHeroActionBlock
+                nav={catalogSearchNav}
+                surface="staged"
+                placeholder={catalogSearchPlaceholder}
+                searchButtonLabel={catalogSearchButtonLabel}
+                inputId="home-hero-search-mobile"
+                action={heroAction}
+              />
+            </div>
           </div>
         </section>
 
