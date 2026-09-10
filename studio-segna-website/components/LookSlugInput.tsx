@@ -1,5 +1,5 @@
 import {useEffect} from 'react'
-import {Stack, Text} from '@sanity/ui'
+import {Box, Button, Flex, Stack, Text, TextInput} from '@sanity/ui'
 import {set, unset, useFormValue, type ObjectInputProps} from 'sanity'
 
 type SlugValue = {_type?: 'slug'; current?: string}
@@ -15,30 +15,46 @@ export function slugifyLookTitle(raw: string): string {
     .slice(0, 64)
 }
 
-/** Identifiant `?look=` déduit du titre du ciblage (pas du document Collection). */
+/** Identifiant `?look=` — Generate lit le titre du ciblage, pas celui de la page. */
 export function LookSlugInput(props: ObjectInputProps<SlugValue>) {
   const {path, value, onChange, readOnly} = props
-  const titleRaw = useFormValue([...path.slice(0, -1), 'title'])
-  const title = typeof titleRaw === 'string' ? titleRaw : ''
+  const parent = useFormValue(path.slice(0, -1)) as {title?: unknown} | undefined
+  const title = typeof parent?.title === 'string' ? parent.title : ''
   const next = slugifyLookTitle(title)
   const current = typeof value?.current === 'string' ? value.current.trim() : ''
 
   useEffect(() => {
-    if (readOnly) return
-    if (!next) {
-      if (current) onChange(unset())
-      return
-    }
-    if (current !== next) {
-      onChange(set({_type: 'slug', current: next}))
-    }
+    if (readOnly || !next || current) return
+    onChange(set({_type: 'slug', current: next}))
   }, [current, next, onChange, readOnly])
 
+  const apply = (slug: string) => {
+    if (readOnly) return
+    const trimmed = slugifyLookTitle(slug) || slug.trim().toLowerCase()
+    onChange(trimmed ? set({_type: 'slug', current: trimmed}) : unset())
+  }
+
   return (
-    <Stack space={2}>
+    <Stack space={3}>
       <Text size={1} muted>
-        {next ? `URL : ?look=${next}` : 'Renseigne le titre — l’identifiant se remplit tout seul.'}
+        Généré depuis le titre de cet onglet (ex. Tout Voir → tout-voir).
       </Text>
+      <Flex gap={2} align="center">
+        <Box flex={1}>
+          <TextInput
+            value={current}
+            readOnly={readOnly}
+            placeholder={next || 'tout-voir'}
+            onChange={(event) => apply(event.currentTarget.value)}
+          />
+        </Box>
+        <Button
+          text="Generate"
+          mode="ghost"
+          disabled={readOnly || !next}
+          onClick={() => apply(next)}
+        />
+      </Flex>
     </Stack>
   )
 }

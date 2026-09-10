@@ -22,7 +22,7 @@ export const collectionTargetingLookType = defineType({
       name: 'slug',
       title: 'Identifiant URL',
       type: 'slug',
-      description: 'Déduit du titre de ce ciblage (pas besoin de Generate).',
+      description: 'Clique Generate après le titre, ou laisse-le se remplir tout seul.',
       components: {input: LookSlugInput},
       options: {
         maxLength: 64,
