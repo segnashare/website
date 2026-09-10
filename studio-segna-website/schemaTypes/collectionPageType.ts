@@ -20,7 +20,7 @@ export const collectionPageType = defineType({
       title: 'Ciblage collection',
       type: 'array',
       description:
-        'Frame en haut de /catalogue : chaque entrée a un titre, une photo, un sous-titre (affiché à la sélection) et des filtres. Ajoutez « Tout voir » sans filtres, puis Nouveautés, etc.',
+        'Frame en haut de /catalogue. Sans aucun filtre (catégories, Nouveau, Archive, etc.), l’onglet affiche tout le catalogue. Ajoutez « Tout voir » ainsi, puis des ciblages plus précis.',
       of: [defineArrayMember({type: 'collectionTargetingLook'})],
       validation: (rule) =>
         rule.custom((looks) => {

@@ -1,34 +1,81 @@
 .root {
-  width: 100%;
+  width: auto;
   box-sizing: border-box;
-  padding: clamp(0.65rem, 1.8vw, 1.15rem) 0 0.15rem;
+  margin-inline: calc(-1 * var(--catalog-page-pad, 0px));
+  padding: clamp(0.85rem, 2vw, 1.35rem) 0 0;
 }
 
-.frame {
+.heading {
+  margin: 0 0 clamp(0.85rem, 1.8vw, 1.25rem);
+  padding-inline: var(--catalog-page-pad, 0px);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-playfair-display), Georgia, serif;
+  font-size: clamp(1.35rem, 2.4vw, 1.85rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: #111;
+}
+
+.subtitle {
+  margin: 0.4rem 0 0;
+  max-width: 38rem;
+  font-size: 0.95rem;
+  font-weight: 400;
+  line-height: 1.45;
+  color: #111;
+}
+
+.stage {
+  width: 100%;
+}
+
+.mosaic {
   display: flex;
-  gap: clamp(0.45rem, 1.1vw, 0.85rem);
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 0;
   overflow-x: auto;
-  overflow-y: hidden;
-  scroll-snap-type: x proximity;
-  -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding: 0 0 0.85rem;
 }
 
-.frame::-webkit-scrollbar {
+.mosaic::-webkit-scrollbar {
   display: none;
 }
 
 .card {
-  flex: 0 0 auto;
-  width: clamp(8.5rem, 22vw, 13.5rem);
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
   margin: 0;
   padding: 0;
   border: 0;
   background: none;
   cursor: pointer;
-  scroll-snap-align: start;
   text-align: left;
+  color: inherit;
+}
+
+@media (max-width: 47.99rem) {
+  .mosaic {
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+  }
+
+  .card {
+    flex: 0 0 calc(100% / 3.5);
+    min-width: calc(100% / 3.5);
+    scroll-snap-align: start;
+  }
+}
+
+.card:focus-visible {
+  outline: 2px solid #14110f;
+  outline-offset: 2px;
 }
 
 .photo {
@@ -37,18 +84,12 @@
   width: 100%;
   aspect-ratio: 3 / 4;
   overflow: hidden;
+  border-radius: 0;
   background: #f4f1ec;
 }
 
 .photoImg {
   object-fit: cover;
-  opacity: 0.72;
-  transition: opacity 0.2s ease;
-}
-
-.card:hover .photoImg,
-.cardActive .photoImg {
-  opacity: 1;
 }
 
 .photoFallback {
@@ -57,61 +98,33 @@
   background: linear-gradient(160deg, #ece7e0, #d8d0c6);
 }
 
-.tabs {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: clamp(1rem, 2.4vw, 1.85rem);
-  overflow-x: auto;
-  scrollbar-width: none;
-  border-bottom: 1px solid #ece8e2;
-  padding: 0 0 0.05rem;
-}
-
-.tabs::-webkit-scrollbar {
-  display: none;
-}
-
-.tab {
-  flex: 0 0 auto;
+.label {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
   margin: 0;
-  padding: 0.7rem 0 0.85rem;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  background: none;
-  font: inherit;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  padding: 0.75rem 0.45rem 0.85rem;
+  border-top: 1px solid #ece8e2;
+  font-family: var(--font-playfair-display), Georgia, serif;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  text-transform: none;
   color: #8a847c;
-  cursor: pointer;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.tab:hover {
+.card:hover .label {
   color: #18181b;
 }
 
-.tabActive {
+.cardActive .label {
   color: #111;
-  border-bottom-color: #111;
-}
-
-.subtitle,
-.subtitleSlot {
-  margin: 0.85rem 0 0;
-  min-height: 1.35rem;
-  font-size: 0.92rem;
-  line-height: 1.45;
-  color: #6b6560;
-}
-
-@media (min-width: 900px) {
-  .card {
-    width: clamp(10.5rem, 14vw, 15rem);
-  }
-
-  .tab {
-    font-size: 0.74rem;
-  }
+  border-top-width: 2px;
+  border-top-color: #111;
+  margin-top: -1px;
+  padding-top: calc(0.75rem - 1px);
 }

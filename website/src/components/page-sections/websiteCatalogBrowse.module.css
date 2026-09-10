@@ -1,11 +1,79 @@
 /* Bloc liste + pagination : air avant le footer du site. */
 .catalogPageRoot {
+  --catalog-page-pad: clamp(1rem, 3.5vw, 2.5rem);
   padding-bottom: clamp(2.75rem, 7vw, 5rem);
-  padding-inline: clamp(1rem, 3.5vw, 2.5rem);
+  padding-inline: var(--catalog-page-pad);
   box-sizing: border-box;
 }
 
-/* ——— Barre filtres (pills alignées boutique app) ——— */
+/* IoM-style : compteur + Filtres + Trier par, sans barre sous le toolbar. */
+.catalogToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem 1.15rem;
+  margin-top: 0;
+  margin-bottom: clamp(1rem, 2vw, 1.45rem);
+  padding-top: 0.85rem;
+  padding-bottom: 0.2rem;
+  position: relative;
+  z-index: 5;
+}
+
+.catalogToolbarActions {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 1.15rem;
+  margin-left: auto;
+}
+
+.catalogToolbarBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.25rem 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #14110f;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.catalogToolbarBtn:hover {
+  color: #000;
+}
+
+.catalogToolbarBtnActive,
+.catalogToolbarBtnOpen {
+  font-weight: 700;
+}
+
+.catalogToolbarIcon {
+  display: block;
+  width: 0.95rem;
+  height: 0.95rem;
+  flex-shrink: 0;
+}
+
+.catalogToolbarChevron {
+  width: 0.85rem;
+  height: 0.85rem;
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition: transform 0.15s ease;
+}
+
+.catalogToolbarChevronOpen {
+  transform: rotate(180deg);
+}
+
+/* ——— Barre filtres (pills alignées boutique app / newsroom) ——— */
 .filterBar {
   display: flex;
   flex-wrap: wrap;
@@ -170,31 +238,38 @@
 }
 
 .filterSearchWrap {
-  padding: 0.25rem 0.25rem 0.55rem;
+  padding: 0.15rem 0.2rem 0.75rem;
 }
 
 .filterSearch {
   display: block;
   width: 100%;
   margin: 0;
-  padding: 0.5rem 0.65rem;
-  font-size: 0.8rem;
+  padding: 0.72rem 0.85rem;
+  font-size: 0.9rem;
   font-family: inherit;
   line-height: 1.35;
-  color: #2a2826;
-  background: #f4f2ef;
-  border: none;
-  border-radius: 6px;
+  color: #111;
+  background: #fff;
+  border: 1px solid #111;
+  border-radius: 0;
   box-sizing: border-box;
+  appearance: none;
 }
 
 .filterSearch::placeholder {
-  color: #9a9590;
+  color: #111;
+  opacity: 0.45;
 }
 
 .filterSearch:focus {
-  outline: 1px solid #c9c4be;
-  outline-offset: 1px;
+  outline: none;
+  border-color: #111;
+}
+
+.filterSearch::-webkit-search-decoration,
+.filterSearch::-webkit-search-cancel-button {
+  -webkit-appearance: none;
 }
 
 .filterOption {
@@ -327,22 +402,6 @@
   pointer-events: none;
 }
 
-.browseLoadingOverlay {
-  position: absolute;
-  inset: 0;
-  z-index: 4;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  pointer-events: none;
-  padding-top: min(28vh, 12rem);
-}
-
-.browseLoadingSpinner {
-  width: 28px;
-  height: 28px;
-}
-
 /* —— Mobile : Filtres | Trier (même système que newsroom) —— */
 .mobileToolbar {
   display: none;
@@ -415,7 +474,7 @@
   top: 0;
   right: 0;
   bottom: 0;
-  width: min(100%, 22.5rem);
+  width: min(100%, 26rem);
   display: flex;
   flex-direction: column;
   background: #fff;
@@ -443,9 +502,12 @@
 
 .filterDrawerTitle {
   margin: 0;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #18181b;
+  font-family: var(--font-playfair-display), Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  text-transform: none;
+  color: #111;
 }
 
 .filterDrawerClose {
@@ -501,12 +563,13 @@
 
 .filterAccordionTitle {
   margin: 0;
-  font-family: var(--font-playfair-display), Georgia, 'Times New Roman', serif;
-  font-size: 1.05rem;
-  font-weight: 600;
+  font-family: var(--font-playfair-display), Georgia, serif;
+  font-size: 1.15rem;
+  font-weight: 500;
   letter-spacing: -0.015em;
-  color: #18181b;
-  line-height: 1.25;
+  text-transform: none;
+  color: #111;
+  line-height: 1.2;
 }
 
 .filterAccordionChevron {
@@ -545,8 +608,11 @@
 }
 
 .filterDrawerFooter {
+  position: sticky;
+  bottom: 0;
   padding: 0.85rem 1.1rem max(1rem, env(safe-area-inset-bottom));
   border-top: 1px solid #e4e4e7;
+  background: #fff;
   display: grid;
   gap: 0.5rem;
 }
@@ -555,11 +621,12 @@
   width: 100%;
   margin: 0;
   border: 0;
-  border-radius: 999px;
-  padding: 0.9rem 1rem;
+  border-radius: 0;
+  padding: 1rem 1rem;
   font: inherit;
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   background: #18181b;
   color: #fff;
   cursor: pointer;
@@ -580,7 +647,7 @@
 
 @media (max-width: 640px) {
   .catalogPageRoot {
-    padding-inline: clamp(0.7rem, 3vw, 1rem);
+    --catalog-page-pad: clamp(0.7rem, 3vw, 1rem);
   }
 
   .mobileToolbar {
@@ -870,6 +937,10 @@ button.paginationNum {
   border-radius: 12px;
   overflow: hidden;
   background: #ece8e2;
+}
+
+.catalogPageRoot .cardMedia {
+  border-radius: 0;
 }
 
 .cardImage {

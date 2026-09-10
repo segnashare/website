@@ -186,7 +186,7 @@ export function CatalogFacetSlugsInput(props: ArrayOfPrimitivesInputProps) {
           Options via {baseUrl}
         </Text>
       ) : null}
-      {options.length > 8 ? (
+      {options.length > 8 || facet === 'categories' ? (
         <TextInput
           value={search}
           onChange={(e) => setSearch(e.currentTarget.value)}
@@ -210,7 +210,7 @@ export function CatalogFacetSlugsInput(props: ArrayOfPrimitivesInputProps) {
         </Text>
       ) : (
         <Text size={1} muted>
-          Aucun filtre — ce ciblage n’applique pas ce critère.
+          Aucune sélection — on prend tout (ce critère n’est pas filtré).
         </Text>
       )}
       <Stack space={2} style={{maxHeight: 280, overflowY: 'auto'}}>

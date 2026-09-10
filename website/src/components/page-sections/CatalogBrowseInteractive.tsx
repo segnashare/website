@@ -2,7 +2,6 @@
 
 import {CatalogGridCardMedia} from '@/components/catalog/CatalogGridCardMedia'
 import {CatalogItemDetailModal} from '@/components/catalog/CatalogItemDetailModal'
-import {CatalogRingDotSpinner} from '@/components/catalog/CatalogRingDotSpinner'
 import {prefetchCatalogItemDetailClient} from '@/lib/catalog/catalog-item-detail-client-fetch'
 import {fetchCatalogBrowseClient, syncCatalogBrowseUrl} from '@/lib/catalog/catalog-browse-client-fetch'
 import {
@@ -81,7 +80,7 @@ const SORT_OPTIONS: {id: CatalogSortMode; label: string}[] = [
   {id: 'price_desc', label: 'Prix : décroissant'},
 ]
 
-type FilterMenuId = 'categories' | 'brands' | 'colors' | 'sizes' | 'availability' | 'sort'
+type FilterMenuId = 'sort'
 
 function brandLinkActive(
   brand: MarketingCatalogFacetNavOption,
@@ -219,7 +218,6 @@ function FilterDropdown({
   onToggle,
   children,
   panelClassName,
-  plain,
   multiselect,
 }: {
   id: FilterMenuId
@@ -229,33 +227,23 @@ function FilterDropdown({
   onToggle: (id: FilterMenuId) => void
   children: ReactNode
   panelClassName?: string
-  /** Style texte (barre mobile newsroom) plutôt que pill. */
-  plain?: boolean
   multiselect?: boolean
 }) {
-  const triggerClass = plain
-    ? `${styles.mobileToolbarBtn} ${active ? styles.mobileToolbarBtnActive : ''}`
-    : `${styles.filterTrigger} ${active ? styles.filterTriggerActive : ''} ${open ? styles.filterTriggerOpen : ''}`
-
   return (
     <div className={styles.filterDropdown}>
       <button
         type="button"
-        className={triggerClass}
+        className={`${styles.catalogToolbarBtn} ${active ? styles.catalogToolbarBtnActive : ''} ${open ? styles.catalogToolbarBtnOpen : ''}`}
         aria-expanded={open}
         aria-haspopup="listbox"
         onClick={() => onToggle(id)}
       >
         <span>{label}</span>
         <svg
-          className={
-            plain
-              ? `${styles.mobileToolbarChevron} ${open ? styles.mobileToolbarChevronOpen : ''}`
-              : `${styles.filterChevron} ${open ? styles.filterChevronOpen : ''}`
-          }
+          className={`${styles.catalogToolbarChevron} ${open ? styles.catalogToolbarChevronOpen : ''}`}
           viewBox="0 0 24 24"
-          width={plain ? 14 : 16}
-          height={plain ? 14 : 16}
+          width={14}
+          height={14}
           fill="none"
           stroke="currentColor"
           strokeWidth="2"
@@ -281,10 +269,12 @@ function FilterDropdown({
 
 function FilterIcon() {
   return (
-    <svg className={styles.mobileToolbarIcon} viewBox="0 0 16 16" aria-hidden>
+    <svg className={styles.catalogToolbarIcon} viewBox="0 0 24 24" fill="none" aria-hidden>
       <path
-        fill="currentColor"
-        d="M1.5 3.25a.75.75 0 0 1 .75-.75h11.5a.75.75 0 0 1 0 1.5H2.25a.75.75 0 0 1-.75-.75Zm2 4.5a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5a.75.75 0 0 1-.75-.75Zm2 4.5a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 0 1.5h-3.5a.75.75 0 0 1-.75-.75Z"
+        d="M4 7h16M7 12h10M10 17h4"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
       />
     </svg>
   )
@@ -449,11 +439,11 @@ export function CatalogBrowseInteractive({
   const [draftQuery, setDraftQuery] = useState<CatalogBrowseQuery>(() =>
     normalizeCatalogBrowseQuery(initialPayload.query),
   )
+  const [draftTotal, setDraftTotal] = useState(initialPayload.total)
   const [drawerSections, setDrawerSections] = useState<Set<DrawerSectionId>>(new Set())
   const [showMoreKeys, setShowMoreKeys] = useState<Record<string, boolean>>({})
   const [portalReady, setPortalReady] = useState(false)
-  const filterBarRef = useRef<HTMLDivElement | null>(null)
-  const mobileToolbarRef = useRef<HTMLDivElement | null>(null)
+  const toolbarRef = useRef<HTMLDivElement | null>(null)
   const fetchGenRef = useRef(0)
   const queryRef = useRef(query)
   queryRef.current = query
@@ -472,7 +462,7 @@ export function CatalogBrowseInteractive({
     const optimisticResolved =
       resolveCatalogFromQuery(resolveFacetsRef.current, nextQuery) ?? ({kind: 'all'} as const)
     const gen = ++fetchGenRef.current
-    // UI immédiate : checks / URL / resolved — la grille reste affichée (fond gris soft + spinner).
+    // UI immédiate : checks / URL / resolved — la grille reste affichée, légèrement atténuée.
     setLoading(true)
     setQuery(nextQuery)
     queryRef.current = nextQuery
@@ -540,9 +530,7 @@ export function CatalogBrowseInteractive({
     if (!openMenu) return
     const onPointerDown = (e: PointerEvent) => {
       const target = e.target as Node
-      const inDesktop = filterBarRef.current?.contains(target)
-      const inMobile = mobileToolbarRef.current?.contains(target)
-      if (!inDesktop && !inMobile) setOpenMenu(null)
+      if (!toolbarRef.current?.contains(target)) setOpenMenu(null)
     }
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpenMenu(null)
@@ -578,20 +566,6 @@ export function CatalogBrowseInteractive({
     [applyQuery],
   )
 
-  const applyCategoryToggle = useCallback(
-    (cat: MarketingCatalogFacetsNav['categories'][number]) => {
-      void applyQuery(toggleCategoryQuery(queryRef.current, cat, resolveFacetsRef.current))
-    },
-    [applyQuery],
-  )
-
-  const applyBrandToggle = useCallback(
-    (brandSlug: string) => {
-      void applyQuery(toggleBrandQuery(queryRef.current, brandSlug, resolveFacetsRef.current))
-    },
-    [applyQuery],
-  )
-
   const toggleMenu = useCallback((id: FilterMenuId) => {
     setOpenMenu((prev) => (prev === id ? null : id))
   }, [])
@@ -599,6 +573,7 @@ export function CatalogBrowseInteractive({
   const openFilterDrawer = useCallback(() => {
     const q = normalizeCatalogBrowseQuery(queryRef.current)
     setDraftQuery(q)
+    setDraftTotal(total)
     setBrandSearch('')
     setShowMoreKeys({})
     const next = new Set<DrawerSectionId>()
@@ -614,7 +589,30 @@ export function CatalogBrowseInteractive({
     setDrawerSections(next)
     setOpenMenu(null)
     setFilterDrawerOpen(true)
-  }, [facets])
+  }, [facets, total])
+
+  useEffect(() => {
+    if (!filterDrawerOpen) return
+    if (catalogBrowseQueriesEqual({...draftQuery, page: 1}, {...query, page: 1})) {
+      setDraftTotal(total)
+      return
+    }
+    let cancelled = false
+    const handle = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const data = await fetchCatalogBrowseClient({...draftQuery, page: 1})
+          if (!cancelled) setDraftTotal(data.total)
+        } catch {
+          /* garde le dernier décompte connu */
+        }
+      })()
+    }, 280)
+    return () => {
+      cancelled = true
+      window.clearTimeout(handle)
+    }
+  }, [draftQuery, filterDrawerOpen, query, total])
 
   const toggleDrawerSection = useCallback((id: DrawerSectionId) => {
     setDrawerSections((prev) => {
@@ -680,7 +678,6 @@ export function CatalogBrowseInteractive({
     return facets.brands.filter((b) => normalizeForSearch(b.label).includes(needle))
   }, [brandSearch, facets.brands])
 
-  const sortLabel = SORT_OPTIONS.find((o) => o.id === query.sort)?.label ?? 'Trier'
   const itemCountLabel = loading
     ? '…'
     : `${total.toLocaleString('fr-FR')} pièce${total === 1 ? '' : 's'}`
@@ -721,32 +718,26 @@ export function CatalogBrowseInteractive({
                   open={drawerSections.has('category')}
                   onToggle={toggleDrawerSection}
                 >
-                  <ShowMoreList
-                    expanded={Boolean(showMoreKeys.category)}
-                    onExpand={() => expandShowMore('category')}
-                    items={[
-                      <FilterCheckOption
-                        key="all-cats"
-                        checked={!draftCategoryActive}
-                        className={styles.filterOptionParent}
-                        onClick={() => setDraftQuery(queryWithCategorySlugs(draftQuery, facets, []))}
-                      >
-                        Voir tout
-                      </FilterCheckOption>,
-                      ...orderedCategories(facets.categories).map((cat) => (
-                        <FilterCheckOption
-                          key={cat.id}
-                          checked={isCategoryChecked(cat, draftQuery, facets)}
-                          className={styles.filterOptionParent}
-                          onClick={() =>
-                            setDraftQuery(toggleCategoryQuery(draftQuery, cat, facets))
-                          }
-                        >
-                          {cat.label}
-                        </FilterCheckOption>
-                      )),
-                    ]}
-                  />
+                  <FilterCheckOption
+                    key="all-cats"
+                    checked={!draftCategoryActive}
+                    className={styles.filterOptionParent}
+                    onClick={() => setDraftQuery(queryWithCategorySlugs(draftQuery, facets, []))}
+                  >
+                    Voir tout
+                  </FilterCheckOption>
+                  {orderedCategories(facets.categories).map((cat) => (
+                    <FilterCheckOption
+                      key={cat.id}
+                      checked={isCategoryChecked(cat, draftQuery, facets)}
+                      className={styles.filterOptionParent}
+                      onClick={() =>
+                        setDraftQuery(toggleCategoryQuery(draftQuery, cat, facets))
+                      }
+                    >
+                      {cat.label}
+                    </FilterCheckOption>
+                  ))}
                 </FilterAccordion>
 
                 <FilterAccordion
@@ -886,7 +877,7 @@ export function CatalogBrowseInteractive({
               </div>
               <footer className={styles.filterDrawerFooter}>
                 <button type="button" className={styles.filterDrawerApply} onClick={applyFilterDrawer}>
-                  Voir les résultats
+                  Voir {draftTotal.toLocaleString('fr-FR')} pièce{draftTotal === 1 ? '' : 's'}
                 </button>
                 <button type="button" className={styles.filterDrawerReset} onClick={resetFilterDrawer}>
                   Réinitialiser
@@ -910,202 +901,26 @@ export function CatalogBrowseInteractive({
         onSelectLook={(look) => void applyQuery(applyLookFromTargeting(look, queryRef.current))}
       />
 
-      <div className={styles.mobileToolbar} ref={mobileToolbarRef}>
-        <button
-          type="button"
-          className={`${styles.mobileToolbarBtn} ${filtersActive ? styles.mobileToolbarBtnActive : ''}`}
-          onClick={openFilterDrawer}
+      <div className={styles.catalogToolbar} ref={toolbarRef}>
+        <span
+          className={`${styles.filterCount} ${loading ? styles.filterCountPending : ''}`}
+          aria-live="polite"
+          aria-busy={loading || undefined}
         >
-          <FilterIcon />
-          Filtres
-        </button>
-        <FilterDropdown
-          id="sort"
-          label={sortLabel}
-          active={sortActive}
-          open={openMenu === 'sort'}
-          onToggle={toggleMenu}
-          panelClassName={styles.filterPanelAlignEnd}
-          plain
-        >
-          {SORT_OPTIONS.map((o) => (
-            <FilterCheckOption
-              key={o.id}
-              checked={sortLinkActive(query, o.id)}
-              onClick={() => {
-                navigateQuery(withSort({...query, page: 1}, o.id))
-                setOpenMenu(null)
-              }}
-            >
-              {o.label}
-            </FilterCheckOption>
-          ))}
-        </FilterDropdown>
-      </div>
-
-      <div className={styles.filterBar} ref={filterBarRef}>
-        <div className={styles.filterBarLeft}>
-          <FilterDropdown
-            id="categories"
-            label="Catégorie"
-            active={categoryActive}
-            open={openMenu === 'categories'}
-            onToggle={toggleMenu}
-            panelClassName={styles.filterPanelWide}
-            multiselect
+          {itemCountLabel}
+        </span>
+        <div className={styles.catalogToolbarActions}>
+          <button
+            type="button"
+            className={`${styles.catalogToolbarBtn} ${filtersActive ? styles.catalogToolbarBtnActive : ''}`}
+            onClick={openFilterDrawer}
           >
-            <FilterCheckOption
-              checked={!categoryActive}
-              className={styles.filterOptionParent}
-              onClick={() => applyQuery(queryWithCategorySlugs(queryRef.current, resolveFacetsRef.current, []))}
-            >
-              Voir tout
-            </FilterCheckOption>
-            {orderedCategories(facets.categories).map((cat) => (
-              <FilterCheckOption
-                key={cat.id}
-                checked={isCategoryChecked(cat, query, facets)}
-                className={styles.filterOptionParent}
-                onClick={() => applyCategoryToggle(cat)}
-              >
-                {cat.label}
-              </FilterCheckOption>
-            ))}
-          </FilterDropdown>
-
-          <FilterDropdown
-            id="brands"
-            label="Marques"
-            active={brandActive}
-            open={openMenu === 'brands'}
-            onToggle={toggleMenu}
-            panelClassName={styles.filterPanelWide}
-            multiselect
-          >
-            <div className={styles.filterSearchWrap}>
-              <input
-                type="search"
-                value={brandSearch}
-                onChange={(e) => setBrandSearch(e.target.value)}
-                placeholder="Rechercher une marque"
-                className={styles.filterSearch}
-                autoComplete="off"
-                spellCheck={false}
-              />
-            </div>
-            <FilterCheckOption
-              checked={!brandActive}
-              onClick={() => applyQuery(queryWithBrandSlugs(queryRef.current, resolveFacetsRef.current, []))}
-            >
-              Toutes les marques
-            </FilterCheckOption>
-            {filteredBrands.length === 0 ? (
-              <p className={styles.filterEmpty}>Aucune marque ne correspond.</p>
-            ) : (
-              filteredBrands.map((b) => (
-                <FilterCheckOption
-                  key={b.id}
-                  checked={brandLinkActive(b, query, facets)}
-                  onClick={() => applyBrandToggle(b.slug)}
-                >
-                  {b.label}
-                </FilterCheckOption>
-              ))
-            )}
-          </FilterDropdown>
-
-          <FilterDropdown
-            id="colors"
-            label="Couleur"
-            active={colorsActive}
-            open={openMenu === 'colors'}
-            onToggle={toggleMenu}
-            multiselect
-          >
-            {facets.colors.map((c) => (
-              <FilterCheckOption
-                key={c.id}
-                checked={query.colorSlugs.includes(c.slug)}
-                onClick={() => navigateQuery(toggleColorHref({...query, page: 1}, c.slug))}
-              >
-                {c.label}
-              </FilterCheckOption>
-            ))}
-          </FilterDropdown>
-
-          <FilterDropdown
-            id="sizes"
-            label="Taille"
-            active={sizesActive}
-            open={openMenu === 'sizes'}
-            onToggle={toggleMenu}
-            panelClassName={styles.filterPanelSizes}
-            multiselect
-          >
-            {shoeSizes.length > 0 ? (
-              <>
-                <p className={styles.filterSectionLabel}>Pointures</p>
-                {shoeSizes.map((s) => (
-                  <FilterCheckOption
-                    key={s.id}
-                    checked={query.sizeSlugs.includes(s.slug)}
-                    onClick={() => navigateQuery(toggleSizeHref({...query, page: 1}, s.slug))}
-                  >
-                    {s.label}
-                  </FilterCheckOption>
-                ))}
-              </>
-            ) : null}
-            {apparelSizes.length > 0 ? (
-              <>
-                <p className={styles.filterSectionLabel}>Vêtements</p>
-                {apparelSizes.map((s) => (
-                  <FilterCheckOption
-                    key={s.id}
-                    checked={query.sizeSlugs.includes(s.slug)}
-                    onClick={() => navigateQuery(toggleSizeHref({...query, page: 1}, s.slug))}
-                  >
-                    {s.label}
-                  </FilterCheckOption>
-                ))}
-              </>
-            ) : null}
-            {shoeSizes.length === 0 && apparelSizes.length === 0 ? (
-              <p className={styles.filterEmpty}>Aucune taille disponible.</p>
-            ) : null}
-          </FilterDropdown>
-
-          <FilterDropdown
-            id="availability"
-            label="Disponibilité"
-            active={availabilityActive}
-            open={openMenu === 'availability'}
-            onToggle={toggleMenu}
-            multiselect
-          >
-            {CATALOG_AVAILABILITY_OPTIONS.map((o) => (
-              <FilterCheckOption
-                key={o.id}
-                checked={query.availabilitySlugs.includes(o.id)}
-                onClick={() => navigateQuery(toggleAvailabilityHref({...query, page: 1}, o.id))}
-              >
-                {o.label}
-              </FilterCheckOption>
-            ))}
-          </FilterDropdown>
-        </div>
-
-        <div className={styles.filterBarRight}>
-          <span
-            className={`${styles.filterCount} ${loading ? styles.filterCountPending : ''}`}
-            aria-live="polite"
-            aria-busy={loading || undefined}
-          >
-            {itemCountLabel}
-          </span>
+            <FilterIcon />
+            Filtres
+          </button>
           <FilterDropdown
             id="sort"
-            label={sortLabel}
+            label="Trier par"
             active={sortActive}
             open={openMenu === 'sort'}
             onToggle={toggleMenu}
@@ -1115,7 +930,10 @@ export function CatalogBrowseInteractive({
               <FilterCheckOption
                 key={o.id}
                 checked={sortLinkActive(query, o.id)}
-                onClick={() => navigateQuery(withSort({...query, page: 1}, o.id))}
+                onClick={() => {
+                  navigateQuery(withSort({...query, page: 1}, o.id))
+                  setOpenMenu(null)
+                }}
               >
                 {o.label}
               </FilterCheckOption>
@@ -1132,11 +950,6 @@ export function CatalogBrowseInteractive({
             <GridCard key={it.id} it={it} onOpen={setOpenItemId} />
           ))}
         </div>
-        {loading ? (
-          <div className={styles.browseLoadingOverlay}>
-            <CatalogRingDotSpinner className={styles.browseLoadingSpinner} aria-label="Mise à jour du catalogue" />
-          </div>
-        ) : null}
       </div>
 
       {totalPages > 1 ? (

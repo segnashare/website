@@ -72,20 +72,22 @@ export const collectionTargetingLookType = defineType({
       title: 'Badge Nouveau',
       type: 'boolean',
       initialValue: false,
-      description: 'Ne garder que les pièces avec le badge Nouveau (~20 % les plus récentes).',
+      description:
+        'Désactivé : toutes les pièces. Activé : seulement celles avec le badge Nouveau (~20 % les plus récentes).',
     }),
     defineField({
       name: 'archiveOnly',
       title: 'Badge Archive',
       type: 'boolean',
       initialValue: false,
-      description: 'Ne garder que les pièces avec le badge Archive.',
+      description: 'Désactivé : toutes les pièces. Activé : seulement celles avec le badge Archive.',
     }),
     defineField({
       name: 'categorySlugs',
       title: 'Catégories',
       type: 'array',
       of: [defineArrayMember({type: 'string'})],
+      description: 'Sélection multiple parmi les catégories pièce. Vide = toutes.',
       components: {input: CatalogFacetSlugsInput},
     }),
     defineField({
@@ -93,6 +95,7 @@ export const collectionTargetingLookType = defineType({
       title: 'Marques',
       type: 'array',
       of: [defineArrayMember({type: 'string'})],
+      description: 'Vide = toutes les marques.',
       components: {input: CatalogFacetSlugsInput},
     }),
     defineField({
@@ -100,6 +103,7 @@ export const collectionTargetingLookType = defineType({
       title: 'Matériaux',
       type: 'array',
       of: [defineArrayMember({type: 'string'})],
+      description: 'Vide = tous les matériaux.',
       components: {input: CatalogFacetSlugsInput},
     }),
     defineField({
@@ -107,6 +111,7 @@ export const collectionTargetingLookType = defineType({
       title: 'Couleurs',
       type: 'array',
       of: [defineArrayMember({type: 'string'})],
+      description: 'Vide = toutes les couleurs.',
       components: {input: CatalogFacetSlugsInput},
     }),
     defineField({
@@ -114,6 +119,7 @@ export const collectionTargetingLookType = defineType({
       title: 'Tags',
       type: 'array',
       of: [defineArrayMember({type: 'string'})],
+      description: 'Vide = tous les tags.',
       components: {input: CatalogFacetSlugsInput},
     }),
   ],

@@ -48,7 +48,7 @@ export const marketingPageType = defineType({
       type: 'array',
       hidden: ({document}) => !isCatalogueMarketingPage(document),
       description:
-        'Frame en haut de /catalogue : titre, photo, sous-titre à la sélection, puis filtres (catégories, Nouveau, marques, matériaux, couleurs, tags).',
+        'Frame en haut de /catalogue. Sans aucun filtre, l’onglet affiche tout le catalogue.',
       of: [defineArrayMember({type: 'collectionTargetingLook'})],
       validation: (rule) =>
         rule.custom((looks, context) => {

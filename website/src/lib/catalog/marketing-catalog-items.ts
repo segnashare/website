@@ -52,7 +52,10 @@ export type MarketingCatalogFacets = {
 
 export type MarketingCatalogFacetNavOption = MarketingCatalogFacetOption & {slug: string}
 
-export type MarketingCatalogCategoryNavOption = MarketingCatalogFacetNavOption & {sortOrder: number}
+export type MarketingCatalogCategoryNavOption = MarketingCatalogFacetNavOption & {
+  sortOrder: number
+  parentId: string | null
+}
 
 export type MarketingCatalogFacetsNav = {
   categories: MarketingCatalogCategoryNavOption[]
@@ -296,7 +299,7 @@ async function fetchMarketingCatalogPathResolveNavUncached(): Promise<MarketingC
 
   const [{data: brandRows}, {data: catRows}] = await Promise.all([
     supabase.from('item_brands').select('id, slug'),
-    supabase.from('item_categories').select('id, name, slug, sort_order').order('sort_order', {ascending: true}),
+    supabase.from('item_categories').select('id, name, slug').order('name', {ascending: true}),
   ])
   const tAfterTables = catalogPerfNow()
 
@@ -335,6 +338,8 @@ async function fetchMarketingCatalogPathResolveNavUncached(): Promise<MarketingC
       const id = typeof (row as {id?: unknown}).id === 'string' ? (row as {id: string}).id : null
       const name = typeof (row as {name?: unknown}).name === 'string' ? (row as {name: string}).name.trim() : ''
       if (!id || !name) continue
+      const parentRaw = (row as {parent_category_id?: unknown}).parent_category_id
+      const parentId = typeof parentRaw === 'string' && parentRaw.trim() ? parentRaw.trim() : null
       const rawSort = (row as {sort_order?: unknown}).sort_order
       const sortOrder = typeof rawSort === 'number' && Number.isFinite(rawSort) ? rawSort : 0
       categoryNavRaw.push({
@@ -342,6 +347,7 @@ async function fetchMarketingCatalogPathResolveNavUncached(): Promise<MarketingC
         label: name,
         slug: categorySlug(id, name),
         sortOrder,
+        parentId,
       })
     }
   }
@@ -367,7 +373,7 @@ async function fetchMarketingCatalogPathResolveNavUncached(): Promise<MarketingC
 
 const fetchMarketingCatalogPathResolveNavCrossRequest = withDataCache(
   fetchMarketingCatalogPathResolveNavUncached,
-  ['marketing_catalog_path_nav_v6'],
+  ['marketing_catalog_path_nav_v7'],
   {revalidate: catalogDataRevalidateSec()},
 )
 

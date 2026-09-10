@@ -11,12 +11,30 @@ export function orderedCategories(
   })
 }
 
-/** Identifiants à envoyer au RPC (liste plate : la catégorie elle-même). */
+/** Identifiants à envoyer au RPC : la catégorie et toutes ses sous-catégories. */
 export function collectDescendantCategoryIds(
   rootId: string,
-  _categories: Pick<MarketingCatalogCategoryNavOption, 'id'>[],
+  categories: Pick<MarketingCatalogCategoryNavOption, 'id' | 'parentId'>[],
 ): string[] {
-  return [rootId]
+  const childrenByParent = new Map<string, string[]>()
+  for (const cat of categories) {
+    if (!cat.parentId) continue
+    const list = childrenByParent.get(cat.parentId)
+    if (list) list.push(cat.id)
+    else childrenByParent.set(cat.parentId, [cat.id])
+  }
+  const out: string[] = []
+  const stack = [rootId]
+  const seen = new Set<string>()
+  while (stack.length > 0) {
+    const id = stack.pop()!
+    if (seen.has(id)) continue
+    seen.add(id)
+    out.push(id)
+    const kids = childrenByParent.get(id)
+    if (kids) stack.push(...kids)
+  }
+  return out
 }
 
 export function categoryRoots(categories: MarketingCatalogCategoryNavOption[]): MarketingCatalogCategoryNavOption[] {
