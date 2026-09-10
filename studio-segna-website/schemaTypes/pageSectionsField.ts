@@ -1,12 +1,13 @@
 import {defineArrayMember, defineField} from '@sanity/types'
 
 /** Sections modulaires partagées entre accueil, newsroom, etc. */
-export const pageSectionsField = () =>
+export const pageSectionsField = (opts?: {description?: string}) =>
   defineField({
     name: 'sections',
     title: 'Sections (contenu modulaire)',
     type: 'array',
     description:
+      opts?.description ??
       'Blocs sous le hero. Pour Best-sellers / pieces du moment : utilisez « Bandeau / grille catalogue (pièces BO) » en mode sélection (recherche dans le catalogue), pas le « Bandeau défilant (cartes) » (images Sanity manuelles). Réordonnez par glisser-déposer. Publiez pour voir sur le site.',
     of: [
       defineArrayMember({type: 'helpCenterHubSection'}),

@@ -8,7 +8,7 @@ import {CatalogItemPhotoCover} from './CatalogItemPhotoCover'
 type CatalogGridCardMediaProps = {
   item: Pick<
     MarketingCatalogGridItem,
-    'coverUrl' | 'coverPosition' | 'objectPosition' | 'isNew' | 'isSold'
+    'coverUrl' | 'coverPosition' | 'objectPosition' | 'isNew' | 'isSold' | 'isArchive'
   >
   mediaClassName?: string
   priority?: boolean
@@ -53,7 +53,7 @@ export function CatalogGridCardMedia({
           }}
         />
       ) : null}
-      <CatalogCardBadges isNew={item.isNew} isSold={item.isSold} />
+      <CatalogCardBadges isNew={item.isNew} isSold={item.isSold} isArchive={item.isArchive} />
     </>
   )
 }

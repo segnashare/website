@@ -13,6 +13,9 @@ export const DEFAULT_CATALOG_BROWSE_QUERY: CatalogBrowseQuery = {
   subSlug: null,
   newOnly: false,
   tagSlug: null,
+  tagSlugs: [],
+  materialSlugs: [],
+  lookSlug: null,
 }
 
 export function catalogBrowseQueriesEqual(a: CatalogBrowseQuery, b: CatalogBrowseQuery): boolean {
@@ -22,6 +25,8 @@ export function catalogBrowseQueriesEqual(a: CatalogBrowseQuery, b: CatalogBrows
     availabilitySlugs: a.availabilitySlugs ?? [],
     categorySlugs: a.categorySlugs ?? [],
     brandSlugs: a.brandSlugs ?? [],
+    tagSlugs: a.tagSlugs?.length ? a.tagSlugs : a.tagSlug ? [a.tagSlug] : [],
+    materialSlugs: a.materialSlugs ?? [],
   }
   const bb = {
     colorSlugs: b.colorSlugs ?? [],
@@ -29,6 +34,8 @@ export function catalogBrowseQueriesEqual(a: CatalogBrowseQuery, b: CatalogBrows
     availabilitySlugs: b.availabilitySlugs ?? [],
     categorySlugs: b.categorySlugs ?? [],
     brandSlugs: b.brandSlugs ?? [],
+    tagSlugs: b.tagSlugs?.length ? b.tagSlugs : b.tagSlug ? [b.tagSlug] : [],
+    materialSlugs: b.materialSlugs ?? [],
   }
   return (
     a.page === b.page &&
@@ -41,6 +48,8 @@ export function catalogBrowseQueriesEqual(a: CatalogBrowseQuery, b: CatalogBrows
     a.segmentSlug === b.segmentSlug &&
     a.subSlug === b.subSlug &&
     Boolean(a.newOnly) === Boolean(b.newOnly) &&
-    (a.tagSlug ?? null) === (b.tagSlug ?? null)
+    [...aa.tagSlugs].sort().join(',') === [...bb.tagSlugs].sort().join(',') &&
+    [...aa.materialSlugs].sort().join(',') === [...bb.materialSlugs].sort().join(',') &&
+    (a.lookSlug ?? null) === (b.lookSlug ?? null)
   )
 }

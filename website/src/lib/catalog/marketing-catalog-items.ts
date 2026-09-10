@@ -52,7 +52,7 @@ export type MarketingCatalogFacets = {
 
 export type MarketingCatalogFacetNavOption = MarketingCatalogFacetOption & {slug: string}
 
-export type MarketingCatalogCategoryNavOption = MarketingCatalogFacetNavOption & {parentId: string | null}
+export type MarketingCatalogCategoryNavOption = MarketingCatalogFacetNavOption & {sortOrder: number}
 
 export type MarketingCatalogFacetsNav = {
   categories: MarketingCatalogCategoryNavOption[]
@@ -82,6 +82,8 @@ export type MarketingCatalogGridItem = {
   isNew?: boolean
   /** Pièce vendue (`sold`) — badge Sold, reste en catalogue en fin de liste. */
   isSold?: boolean
+  /** Pièce d’archive / créateur. */
+  isArchive?: boolean
   coverUrl: string | null
   /** Cadrage BO / app (`items.photos` → `position`). */
   coverPosition?: ItemPhotoCoverPosition | null
@@ -111,6 +113,7 @@ export type MarketingCatalogItemRow = {
   brand_label: string | null
   condition_label: string | null
   condition_score: string | null
+  is_archive?: boolean
 }
 
 async function signStoragePathIfObjectExists(
@@ -293,7 +296,7 @@ async function fetchMarketingCatalogPathResolveNavUncached(): Promise<MarketingC
 
   const [{data: brandRows}, {data: catRows}] = await Promise.all([
     supabase.from('item_brands').select('id, slug'),
-    supabase.from('item_categories').select('id, name, parent_category_id'),
+    supabase.from('item_categories').select('id, name, slug, sort_order').order('sort_order', {ascending: true}),
   ])
   const tAfterTables = catalogPerfNow()
 
@@ -313,8 +316,10 @@ async function fetchMarketingCatalogPathResolveNavUncached(): Promise<MarketingC
     for (const row of catRows) {
       if (row && typeof row === 'object' && typeof (row as {id?: unknown}).id === 'string') {
         const id = (row as {id: string}).id
+        const dbSlug = typeof (row as {slug?: unknown}).slug === 'string' ? (row as {slug: string}).slug.trim() : ''
         const name = typeof (row as {name?: unknown}).name === 'string' ? (row as {name: string}).name : ''
-        if (name.trim()) categorySlugById.set(id, slugifyFr(name.trim()))
+        if (dbSlug) categorySlugById.set(id, slugifyFr(dbSlug))
+        else if (name.trim()) categorySlugById.set(id, slugifyFr(name.trim()))
       }
     }
   }
@@ -330,20 +335,19 @@ async function fetchMarketingCatalogPathResolveNavUncached(): Promise<MarketingC
       const id = typeof (row as {id?: unknown}).id === 'string' ? (row as {id: string}).id : null
       const name = typeof (row as {name?: unknown}).name === 'string' ? (row as {name: string}).name.trim() : ''
       if (!id || !name) continue
-      const rawParent = (row as {parent_category_id?: unknown}).parent_category_id
-      const parentId =
-        typeof rawParent === 'string' && rawParent.trim() ? rawParent.trim() : null
+      const rawSort = (row as {sort_order?: unknown}).sort_order
+      const sortOrder = typeof rawSort === 'number' && Number.isFinite(rawSort) ? rawSort : 0
       categoryNavRaw.push({
         id,
         label: name,
         slug: categorySlug(id, name),
-        parentId,
+        sortOrder,
       })
     }
   }
 
   const out: MarketingCatalogFacetsNav = {
-    categories: withUniqueSlugs(categoryNavRaw),
+    categories: withUniqueSlugs(categoryNavRaw).sort((a, b) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label, 'fr')),
     brands: navOptionsFromBase(base.brands, brandSlug),
     colors: navOptionsFromBase(base.colors, labelSlug),
     sizes: navSizeOptionsFromBase(base.sizes),
@@ -363,7 +367,7 @@ async function fetchMarketingCatalogPathResolveNavUncached(): Promise<MarketingC
 
 const fetchMarketingCatalogPathResolveNavCrossRequest = withDataCache(
   fetchMarketingCatalogPathResolveNavUncached,
-  ['marketing_catalog_path_nav_v3'],
+  ['marketing_catalog_path_nav_v6'],
   {revalidate: catalogDataRevalidateSec()},
 )
 
@@ -569,6 +573,7 @@ export async function gridItemsFromRows(
       status: r.status,
       isNew: badges.isNew,
       isSold: badges.isSold,
+      isArchive: badges.isArchive,
       coverUrl: covers.get(r.id) ?? null,
       coverPosition: getFirstPhotoCoverMeta(r.photos)?.position ?? null,
     }
@@ -643,7 +648,7 @@ const getCachedMarketingCatalogItemsByIdsKey = withDataCache(
     }
     return parseMarketingCatalogRpcPayload(data)
   },
-  ['marketing_catalog_items_by_ids_v3'],
+  ['marketing_catalog_items_by_ids_v4'],
   {revalidate: SIGNED_URL_CACHE_REVALIDATE_SEC, tags: [CATALOG_CACHE_TAG]},
 )
 

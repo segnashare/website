@@ -711,12 +711,34 @@ export type NewsroomPageData = {
   seo?: SeoMetadata | null
 }
 
+export type CollectionTargetingLook = {
+  _key: string
+  title?: string
+  slug?: string
+  subtitle?: string
+  image?: SanityImage
+  newOnly?: boolean
+  categorySlugs?: string[]
+  brandSlugs?: string[]
+  colorSlugs?: string[]
+  materialSlugs?: string[]
+  tagSlugs?: string[]
+}
+
+/** Singleton CMS « Collection » (`/catalogue`). */
+export type CollectionPageData = {
+  _id: string
+  collectionTargeting?: CollectionTargetingLook[]
+  sections?: PageSection[]
+  seo?: SeoMetadata | null
+}
+
 /** Page marketing dynamique : URL = `/${slug.current}`. */
 export type MarketingPageData = {
   _id: string
   title?: string
   slug?: {current?: string}
-  heroTitle: string
+  heroTitle?: string
   heroSubtitle?: string
   heroPresentation?: 'single_photo' | 'multi_state'
   heroStageTransitionMs?: number
@@ -724,6 +746,7 @@ export type MarketingPageData = {
   heroImage?: SanityImage
   heroCtaLabel?: string
   heroCtaHref?: string
+  collectionTargeting?: CollectionTargetingLook[]
   sections?: PageSection[]
   seo?: SeoMetadata | null
 }
@@ -1197,6 +1220,33 @@ const documentPageSectionsGroq = `sections[]{
         helpArticlePaths
       }`
 
+const collectionTargetingGroq = `collectionTargeting[]{
+  _key,
+  title,
+  "slug": slug.current,
+  subtitle,
+  newOnly,
+  categorySlugs,
+  brandSlugs,
+  colorSlugs,
+  materialSlugs,
+  tagSlugs,
+  image{
+    ...,
+    alt,
+    asset->{
+      _id,
+      _ref,
+      url,
+      metadata {
+        dimensions { width, height, aspectRatio }
+      }
+    },
+    hotspot,
+    crop
+  }
+}`
+
 const homePageProjection = `{
   seo,
   heroPresentation,
@@ -1354,6 +1404,18 @@ async function getWebsiteFooterUncached(): Promise<WebsiteFooterData | null> {
   return sanityClient.fetch(`*[_type == "websiteFooter"]|order(_updatedAt desc)[0]${websiteFooterProjection}`)
 }
 
+async function getCollectionPageDataUncached(): Promise<CollectionPageData | null> {
+  const page = await sanityClient.fetch<CollectionPageData | null>(
+    `*[_type == "collectionPage"]|order(_updatedAt desc)[0]{
+      _id,
+      seo,
+      ${collectionTargetingGroq},
+      ${documentPageSectionsGroq}
+    }`,
+  )
+  return enrichDocumentSectionsWithFaq(page)
+}
+
 async function getNewsroomPageDataUncached(): Promise<NewsroomPageData | null> {
   const page = await sanityClient.fetch<NewsroomPageData | null>(
     `*[_type == "newsroomPage"]|order(_updatedAt desc)[0]{
@@ -1399,7 +1461,7 @@ async function getNewsroomPageDataUncached(): Promise<NewsroomPageData | null> {
 
 async function getMarketingPageSlugsUncached(): Promise<string[]> {
   const slugs = await sanityClient.fetch<string[] | null>(
-    `*[_type == "marketingPage" && defined(slug.current)].slug.current`,
+    `*[_type == "marketingPage" && defined(slug.current) && slug.current != "catalogue"].slug.current`,
   )
   const fromCms = (slugs ?? []).filter((s): s is string => Boolean(s && String(s).trim()))
   return [...new Set(fromCms)]
@@ -1425,8 +1487,12 @@ export const getNewsroomPageData = cache(
   withDataCache(getNewsroomPageDataUncached, ['sanity_newsroom_page_v3'], sanityCacheOptions),
 )
 
+export const getCollectionPageData = cache(
+  withDataCache(getCollectionPageDataUncached, ['sanity_collection_page_v1'], sanityCacheOptions),
+)
+
 export const getMarketingPageSlugs = cache(
-  withDataCache(getMarketingPageSlugsUncached, ['sanity_marketing_slugs_v1'], sanityCacheOptions),
+  withDataCache(getMarketingPageSlugsUncached, ['sanity_marketing_slugs_v2'], sanityCacheOptions),
 )
 
 export type CatalogBrandEditorial = {
@@ -1474,6 +1540,7 @@ async function getMarketingPageBySlugUncached(slug: string): Promise<MarketingPa
       heroPresentation,
       heroStageTransitionMs,
       ${homeHeroStatesGroq},
+      ${collectionTargetingGroq},
       ${documentPageSectionsGroq}
     }`,
     {slug: normalized},
@@ -1578,7 +1645,7 @@ const getCatalogBrandEditorialBySlugCrossRequest = withDataCache(
 
 const getMarketingPageBySlugCrossRequest = withDataCache(
   getMarketingPageBySlugUncached,
-  ['sanity_marketing_page_v2'],
+  ['sanity_marketing_page_v4'],
   sanityCacheOptions,
 )
 

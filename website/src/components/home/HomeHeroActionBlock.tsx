@@ -25,6 +25,7 @@ export function HomeHeroActionBlock({
   action,
 }: Props) {
   const {layout, primaryCta, secondaryCta, ctaPosition, showSearch} = action
+  const onPhoto = surface === 'single' ? staged.heroActionOnPhoto : ''
 
   const search = showSearch ? (
     <HomeCatalogQuickSearch
@@ -49,16 +50,20 @@ export function HomeHeroActionBlock({
   ) : null
 
   if (layout === 'search_only' && search) {
-    return <div className={staged.heroSearchRow}>{search}</div>
+    return <div className={`${staged.heroSearchRow} ${onPhoto}`.trim()}>{search}</div>
   }
 
   if (layout === 'single_cta' && primaryButton) {
-    return <div className={`${staged.heroSearchRow} ${staged.heroActionRowCtasOnly}`}>{primaryButton}</div>
+    return (
+      <div className={`${staged.heroSearchRow} ${staged.heroActionRowCtasOnly} ${onPhoto}`.trim()}>
+        {primaryButton}
+      </div>
+    )
   }
 
   if (layout === 'dual_cta' && (primaryButton || secondaryButton)) {
     return (
-      <div className={`${staged.heroSearchRow} ${staged.heroActionRowCtasOnly}`}>
+      <div className={`${staged.heroSearchRow} ${staged.heroActionRowCtasOnly} ${onPhoto}`.trim()}>
         {primaryButton}
         {secondaryButton}
       </div>
@@ -68,9 +73,9 @@ export function HomeHeroActionBlock({
   if (layout === 'cta_and_search' && search && primaryButton) {
     return (
       <div
-        className={`${staged.heroSearchRow} ${
+        className={`${staged.heroSearchRow} ${onPhoto} ${
           ctaPosition === 'left' ? staged.heroActionRowCtaLeft : staged.heroActionRowCtaRight
-        }`}
+        }`.trim()}
       >
         {ctaPosition === 'left' ? primaryButton : null}
         <div className={styles.heroSearchField}>{search}</div>
@@ -80,7 +85,7 @@ export function HomeHeroActionBlock({
   }
 
   if (search) {
-    return <div className={staged.heroSearchRow}>{search}</div>
+    return <div className={`${staged.heroSearchRow} ${onPhoto}`.trim()}>{search}</div>
   }
 
   return null

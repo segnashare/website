@@ -7,9 +7,11 @@ import {
   DocumentsIcon,
   EarthGlobeIcon,
   HomeIcon,
+  ImagesIcon,
   MarkerIcon,
 } from '@sanity/icons'
 import type {StructureResolver} from 'sanity/structure'
+import {COLLECTION_PAGE_ID} from './schemaTypes/collectionPageType'
 
 const WEBSITE_SETTINGS_ID = 'websiteSiteSettings'
 const WEBSITE_HEADER_NAV_ID = 'websiteHeaderNav'
@@ -85,15 +87,30 @@ export const deskStructure: StructureResolver = (S) => {
                         .title("Pages d'accueil")
                         .icon(HomeIcon)
                         .id('desk-main-home-list'),
+                      S.listItem()
+                        .title('Collection')
+                        .icon(ImagesIcon)
+                        .id('desk-main-collection-page')
+                        .child(
+                          S.document()
+                            .schemaType('collectionPage')
+                            .documentId(COLLECTION_PAGE_ID)
+                            .title('Collection'),
+                        ),
                       S.documentTypeListItem('newsroomPage')
                         .title('Newsroom')
                         .icon(DocumentIcon)
                         .id('desk-main-newsroom-list'),
                       S.divider(),
-                      S.documentTypeListItem('marketingPage')
+                      S.listItem()
                         .title('Pages marketing (site)')
                         .icon(DocumentsIcon)
-                        .id('desk-main-marketing-pages-list'),
+                        .id('desk-main-marketing-pages-list')
+                        .child(
+                          S.documentTypeList('marketingPage')
+                            .title('Pages marketing (site)')
+                            .filter('_type == "marketingPage" && slug.current != "catalogue"'),
+                        ),
                     ]),
                 ),
               S.divider(),

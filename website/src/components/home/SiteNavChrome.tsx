@@ -125,8 +125,8 @@ export function SiteNavChrome({
               {secondaryLabel}
             </CtaHrefLink>
           ) : null}
-          <AccountNavButton className={styles.navCartLink} />
-          <CartNavLink className={styles.navCartLink} />
+          <AccountNavButton className={styles.navCartLink} tone={onLightSurface ? 'dark' : 'auto'} />
+          <CartNavLink className={styles.navCartLink} tone={onLightSurface ? 'dark' : 'auto'} />
           <JoinClubCtaLink href={primaryHref} className={styles.downloadButton}>
             {primaryLabel}
           </JoinClubCtaLink>

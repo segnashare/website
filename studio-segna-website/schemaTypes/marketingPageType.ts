@@ -1,8 +1,9 @@
 import {defineArrayMember, defineField, defineType} from '@sanity/types'
+import {isCatalogueMarketingPage} from './lib/marketingPageSlug'
 import {pageSectionsField} from './pageSectionsField'
 
 /** Routes système (hors pages marketing). */
-const RESERVED_SLUGS = ['newsroom', 'aide', 'api', 'signup', 'signin', 'panier', 'abonnement']
+const RESERVED_SLUGS = ['newsroom', 'aide', 'api', 'signup', 'signin', 'panier', 'abonnement', 'catalogue']
 
 export const marketingPageType = defineType({
   name: 'marketingPage',
@@ -42,24 +43,57 @@ export const marketingPageType = defineType({
       type: 'seoMetadata',
     }),
     defineField({
+      name: 'collectionTargeting',
+      title: 'Ciblage collection',
+      type: 'array',
+      hidden: ({document}) => !isCatalogueMarketingPage(document),
+      description:
+        'Frame en haut de /catalogue : titre, photo, sous-titre à la sélection, puis filtres (catégories, Nouveau, marques, matériaux, couleurs, tags).',
+      of: [defineArrayMember({type: 'collectionTargetingLook'})],
+      validation: (rule) =>
+        rule.custom((looks, context) => {
+          if (!isCatalogueMarketingPage(context.document)) return true
+          if (!Array.isArray(looks) || looks.length === 0) return true
+          const slugs = looks
+            .map((row) => {
+              if (!row || typeof row !== 'object') return ''
+              const slug = (row as {slug?: {current?: string}}).slug
+              return typeof slug?.current === 'string' ? slug.current.trim().toLowerCase() : ''
+            })
+            .filter(Boolean)
+          if (new Set(slugs).size !== slugs.length) {
+            return 'Chaque ciblage doit avoir un identifiant URL unique.'
+          }
+          return true
+        }),
+    }),
+    defineField({
       name: 'heroTitle',
       title: 'Hero — titre',
       type: 'text',
       rows: 2,
+      hidden: ({document}) => isCatalogueMarketingPage(document),
       description: 'Entrée = passage à la ligne dans le titre affiché sur le site.',
-      validation: (rule) => rule.required(),
+      validation: (rule) =>
+        rule.custom((value, context) => {
+          if (isCatalogueMarketingPage(context.document)) return true
+          if (typeof value === 'string' && value.trim()) return true
+          return 'Indiquez un titre de hero.'
+        }),
     }),
     defineField({
       name: 'heroSubtitle',
       title: 'Hero — sous-titre',
       type: 'text',
       rows: 3,
+      hidden: ({document}) => isCatalogueMarketingPage(document),
     }),
     defineField({
       name: 'heroPresentation',
       title: 'Hero — type (plein écran)',
       type: 'string',
       initialValue: 'single_photo',
+      hidden: ({document}) => isCatalogueMarketingPage(document),
       description:
         'Même système que l’accueil : photo plein écran, ou multi-états (couleurs + images + cadres). Le hero occupe toute la largeur du navigateur.',
       options: {
@@ -77,12 +111,12 @@ export const marketingPageType = defineType({
       description:
         'Durée du mouvement des images entre deux états. La couleur de fond change sans fondu.',
       initialValue: 650,
-      hidden: ({parent}) => parent?.heroPresentation !== 'multi_state',
-      // Ne pas utiliser rule.min/max seuls : Sanity valide aussi les champs masqués,
-      // ce qui bloquait la publication en mode « Photo plein écran » (valeur absente).
+      hidden: ({document, parent}) =>
+        isCatalogueMarketingPage(document) || parent?.heroPresentation !== 'multi_state',
       validation: (rule) =>
         rule.custom((value, context) => {
           const parent = context.parent as {heroPresentation?: string}
+          if (isCatalogueMarketingPage(context.document)) return true
           if (parent?.heroPresentation !== 'multi_state') return true
           const n = typeof value === 'number' ? value : Number(value)
           if (!Number.isFinite(n)) return 'Indiquez une durée en ms (ex. 650)'
@@ -100,10 +134,12 @@ export const marketingPageType = defineType({
       ],
       description:
         'Identique à la page d’accueil : couleur, durée, images et mise en page des cadres. Vous pouvez aussi réutiliser un préréglage du « Référentiel — États hero » via « Réutiliser un préréglage ».',
-      hidden: ({parent}) => parent?.heroPresentation !== 'multi_state',
+      hidden: ({document, parent}) =>
+        isCatalogueMarketingPage(document) || parent?.heroPresentation !== 'multi_state',
       validation: (rule) =>
         rule.custom((states, context) => {
           const parent = context.parent as {heroPresentation?: string}
+          if (isCatalogueMarketingPage(context.document)) return true
           if (parent?.heroPresentation !== 'multi_state') return true
           if (!Array.isArray(states) || states.length < 1) {
             return 'Ajoutez au moins un état'
@@ -116,7 +152,8 @@ export const marketingPageType = defineType({
       title: 'Hero — image (mode photo plein écran)',
       type: 'image',
       options: {hotspot: true},
-      hidden: ({parent}) => parent?.heroPresentation === 'multi_state',
+      hidden: ({document, parent}) =>
+        isCatalogueMarketingPage(document) || parent?.heroPresentation === 'multi_state',
       fields: [
         defineField({
           name: 'alt',
@@ -129,11 +166,13 @@ export const marketingPageType = defineType({
       name: 'heroCtaLabel',
       title: 'Hero — libellé du bouton (optionnel)',
       type: 'string',
+      hidden: ({document}) => isCatalogueMarketingPage(document),
     }),
     defineField({
       name: 'heroCtaHref',
       title: 'Hero — lien du bouton (optionnel)',
       type: 'string',
+      hidden: ({document}) => isCatalogueMarketingPage(document),
       description: 'URL absolue ou chemin interne (ex. /newsroom). Laissez vide si vous n’utilisez pas le bouton personnalisé du hero.',
       validation: (rule) =>
         rule.custom((value) => {

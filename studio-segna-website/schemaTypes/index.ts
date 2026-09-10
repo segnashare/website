@@ -9,7 +9,9 @@ import {homeHeroStagedStateType} from './homeHeroStagedStateType'
 import {homeHeroStatePresetType} from './homeHeroStatePresetType'
 import {homeHeroStatePresetRefType} from './homeHeroStatePresetRefType'
 import {homePageType} from './homePageType'
+import {collectionPageType} from './collectionPageType'
 import {marketingPageType} from './marketingPageType'
+import {collectionTargetingLookType} from './collectionTargetingType'
 import {newsroomPageType} from './newsroomPageType'
 import {postType} from './postType'
 import {authorType} from './authorType'
@@ -83,6 +85,8 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   homeHeroStatePresetType,
   homeHeroStatePresetRefType,
   homePageType,
+  collectionPageType,
+  collectionTargetingLookType,
   marketingPageType,
   newsroomPageType,
 ]

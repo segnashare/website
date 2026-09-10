@@ -37,7 +37,7 @@ function rowToBrowseItem(
   extras?: Partial<
     Pick<
       MarketingCatalogGridItem,
-      'displayTitle' | 'displaySubtitle' | 'objectPosition' | 'coverPosition' | 'isNew' | 'isSold' | 'status'
+      'displayTitle' | 'displaySubtitle' | 'objectPosition' | 'coverPosition' | 'isNew' | 'isSold' | 'isArchive' | 'status'
     >
   >,
 ): MarketingCatalogGridItem {
@@ -194,6 +194,7 @@ export async function SectionWebsiteDbCatalog({
         displaySubtitle,
         isNew: badges.isNew,
         isSold: badges.isSold,
+        isArchive: badges.isArchive,
       }),
     )
   }

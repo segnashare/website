@@ -8,9 +8,13 @@ import {catalogListingPath, resolveCatalogFromQuery} from '@/lib/catalog/catalog
 import {idsForCatalogRpc} from '@/lib/catalog/catalog-facet-scope-ids'
 import {catalogPerfEnabled, catalogPerfLog, catalogPerfNow} from '@/lib/catalog/catalog-perf'
 import {
-  getMarketingCatalogItemIdsByTagSlug,
+  getMarketingCatalogItemIdsByTagSlugs,
   getMarketingCatalogNewItemIds,
 } from '@/lib/catalog/catalog-selection-ids'
+import {
+  fetchMarketingCatalogMaterials,
+  materialIdsFromSlugs,
+} from '@/lib/catalog/catalog-materials'
 import {
   fetchMarketingCatalogBrowseFacetsNav,
   fetchMarketingCatalogItemsByIds,
@@ -40,6 +44,7 @@ type ScopeIds = {
   brandIds: string[]
   colorIds: string[]
   sizeIds: string[]
+  materialIds: string[]
 }
 
 /**
@@ -102,8 +107,15 @@ async function fetchMarketingCatalogPageFromIdPool(
     listQuery = listQuery.in('item_couleur_id', params.colorIds)
   }
   if (params.sizeIds.length > 0) {
-    countQuery = countQuery.in('item_size_id', params.sizeIds)
-    listQuery = listQuery.in('item_size_id', params.sizeIds)
+    countQuery = countQuery.overlaps('item_size_ids', params.sizeIds)
+    listQuery = listQuery.overlaps('item_size_ids', params.sizeIds)
+  }
+  if (params.materialIds.length === 1) {
+    countQuery = countQuery.eq('item_materiaux_id', params.materialIds[0]!)
+    listQuery = listQuery.eq('item_materiaux_id', params.materialIds[0]!)
+  } else if (params.materialIds.length > 1) {
+    countQuery = countQuery.in('item_materiaux_id', params.materialIds)
+    listQuery = listQuery.in('item_materiaux_id', params.materialIds)
   }
 
   const usePriceSort = params.sort === 'price_asc' || params.sort === 'price_desc'
@@ -159,7 +171,10 @@ async function fetchMarketingCatalogPageByAvailability(
     availabilitySlugs: string[]
   } & ScopeIds,
 ): Promise<{items: MarketingCatalogItemRow[]; total: number}> {
-  const statuses = itemStatusesForAvailability(params.availabilitySlugs)
+  const statuses =
+    params.availabilitySlugs.length > 0
+      ? itemStatusesForAvailability(params.availabilitySlugs)
+      : [...MARKETING_CATALOG_ITEM_STATUSES]
   if (statuses.length === 0) {
     return fetchMarketingCatalogItemsPage({
       limit: params.limit,
@@ -204,8 +219,15 @@ async function fetchMarketingCatalogPageByAvailability(
     listQuery = listQuery.in('item_couleur_id', params.colorIds)
   }
   if (params.sizeIds.length > 0) {
-    countQuery = countQuery.in('item_size_id', params.sizeIds)
-    listQuery = listQuery.in('item_size_id', params.sizeIds)
+    countQuery = countQuery.overlaps('item_size_ids', params.sizeIds)
+    listQuery = listQuery.overlaps('item_size_ids', params.sizeIds)
+  }
+  if (params.materialIds.length === 1) {
+    countQuery = countQuery.eq('item_materiaux_id', params.materialIds[0]!)
+    listQuery = listQuery.eq('item_materiaux_id', params.materialIds[0]!)
+  } else if (params.materialIds.length > 1) {
+    countQuery = countQuery.in('item_materiaux_id', params.materialIds)
+    listQuery = listQuery.in('item_materiaux_id', params.materialIds)
   }
 
   if (params.sort === 'price_asc') {
@@ -271,20 +293,32 @@ export async function loadCatalogBrowse(query: CatalogBrowseQuery): Promise<Cata
   const {categoryIds, brandIds, colorIds, sizeIds} = idsForCatalogRpc(resolved, query, facets, {
     slugFacetSource: pathNav,
   })
+  const materials = await fetchMarketingCatalogMaterials()
+  const materialIds = materialIdsFromSlugs(query.materialSlugs ?? [], materials)
   const pageSize = 30
   const offset = (query.page - 1) * pageSize
   const hasAvailabilityFilter = query.availabilitySlugs.length > 0
+  const tagSlugs =
+    (query.tagSlugs?.length ?? 0) > 0 ? query.tagSlugs : query.tagSlug ? [query.tagSlug] : []
 
   let selectionPool: string[] | null = null
-  if (query.newOnly) {
+  if (query.newOnly && tagSlugs.length > 0) {
+    const [newIds, taggedIds] = await Promise.all([
+      getMarketingCatalogNewItemIds(),
+      getMarketingCatalogItemIdsByTagSlugs(tagSlugs),
+    ])
+    const tagged = new Set(taggedIds)
+    selectionPool = newIds.filter((id) => tagged.has(id))
+  } else if (query.newOnly) {
     selectionPool = await getMarketingCatalogNewItemIds()
-  } else if (query.tagSlug) {
-    selectionPool = await getMarketingCatalogItemIdsByTagSlug(query.tagSlug)
+  } else if (tagSlugs.length > 0) {
+    selectionPool = await getMarketingCatalogItemIdsByTagSlugs(tagSlugs)
   }
 
   const tItems0 = catalogPerfNow()
   let rows: MarketingCatalogItemRow[]
   let total: number
+  const scope = {categoryIds, brandIds, colorIds, sizeIds, materialIds}
 
   if (selectionPool) {
     const page = await fetchMarketingCatalogPageFromIdPool(supabase, selectionPool, {
@@ -292,23 +326,17 @@ export async function loadCatalogBrowse(query: CatalogBrowseQuery): Promise<Cata
       limit: pageSize,
       offset,
       availabilitySlugs: query.availabilitySlugs,
-      categoryIds,
-      brandIds,
-      colorIds,
-      sizeIds,
+      ...scope,
     })
     rows = page.items
     total = page.total
-  } else if (hasAvailabilityFilter) {
+  } else if (hasAvailabilityFilter || materialIds.length > 0) {
     const page = await fetchMarketingCatalogPageByAvailability(supabase, {
       sort: query.sort,
       limit: pageSize,
       offset,
       availabilitySlugs: query.availabilitySlugs,
-      categoryIds,
-      brandIds,
-      colorIds,
-      sizeIds,
+      ...scope,
     })
     rows = page.items
     total = page.total

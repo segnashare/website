@@ -1,23 +1,9 @@
 import {NextResponse} from 'next/server'
 import {searchMarketingCatalogItems} from '@/lib/catalog/marketing-catalog-items'
-
-/** Origines autorisées pour le picker Sanity Studio (CORS). */
-const CORS_ORIGINS = [
-  'http://localhost:3333',
-  'https://segna-website.sanity.studio',
-  'https://www.segnashare.com',
-  'https://segnashare.com',
-]
+import {studioPickerCorsHeaders} from '@/lib/catalog/studio-picker-cors'
 
 function corsHeaders(req: Request): HeadersInit {
-  const origin = req.headers.get('origin') ?? ''
-  const allow = CORS_ORIGINS.includes(origin) ? origin : CORS_ORIGINS[0]!
-  return {
-    'Access-Control-Allow-Origin': allow,
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    Vary: 'Origin',
-  }
+  return studioPickerCorsHeaders(req)
 }
 
 export async function OPTIONS(req: Request) {

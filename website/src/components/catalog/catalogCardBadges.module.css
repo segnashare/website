@@ -10,6 +10,7 @@
   pointer-events: none;
 }
 
+.badgeArchive,
 .badgeNew,
 .badgeSold {
   display: inline-flex;
@@ -25,6 +26,14 @@
   font-family: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
   font-weight: 600;
   color: #14110f;
+}
+
+.badgeArchive {
+  background: #14110f;
+  color: #fff;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .badgeNew {
@@ -45,6 +54,7 @@
     gap: 0.22rem;
   }
 
+  .badgeArchive,
   .badgeNew {
     font-size: 0.7rem;
     padding: 0.22rem 0.4rem;

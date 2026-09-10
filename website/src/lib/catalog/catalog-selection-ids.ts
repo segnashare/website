@@ -98,6 +98,24 @@ export async function getMarketingCatalogItemIdsByTagSlug(tagSlug: string): Prom
   return getCachedMarketingCatalogItemIdsByTagSlug(tagSlug)
 }
 
+/** Union des pièces liées à au moins un des tags (ordre du premier tag, puis suivants). */
+export async function getMarketingCatalogItemIdsByTagSlugs(tagSlugs: readonly string[]): Promise<string[]> {
+  const unique = [...new Set(tagSlugs.map((s) => s.trim().toLowerCase()).filter(Boolean))]
+  if (unique.length === 0) return []
+  if (unique.length === 1) return getMarketingCatalogItemIdsByTagSlug(unique[0]!)
+  const lists = await Promise.all(unique.map((slug) => getMarketingCatalogItemIdsByTagSlug(slug)))
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const list of lists) {
+    for (const id of list) {
+      if (seen.has(id)) continue
+      seen.add(id)
+      out.push(id)
+    }
+  }
+  return out
+}
+
 /** IDs « New » (même pool que le badge carte), ordre `created_at` desc. */
 export async function getMarketingCatalogNewItemIds(): Promise<string[]> {
   return getMarketingCatalogNewestIds()

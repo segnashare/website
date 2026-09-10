@@ -2,6 +2,7 @@ const SINGLETON_DOCUMENT_TYPES = new Set([
   'websiteSiteSettings',
   'websiteHeaderNav',
   'websiteFooter',
+  'collectionPage',
 ])
 
 /** Types pour lesquels on propose « Dupliquer » avec titre / slug adaptés. */

@@ -22,15 +22,19 @@ import {buildPaginationRange} from '@/lib/catalog/catalog-pagination-range'
 import {
   effectiveBrandSlugs,
   effectiveCategorySlugs,
-  isCategoryChildChecked,
-  isCategoryRootChecked,
+  isCategoryChecked,
   queryWithBrandSlugs,
   queryWithCategorySlugs,
   toggleBrandQuery,
   toggleCategoryQuery,
 } from '@/lib/catalog/catalog-category-selection'
-import {categoryRoots, childrenOf} from '@/lib/catalog/catalog-category-tree'
+import {orderedCategories} from '@/lib/catalog/catalog-category-tree'
 import type {CatalogBrowsePayload} from '@/lib/catalog/catalog-page-loader'
+import {selectedCollectionLook, type CollectionTargetingLookView} from '@/lib/catalog/catalog-collection-looks'
+import {
+  applyLookFromTargeting,
+  CatalogCollectionTargeting,
+} from '@/components/catalog/CatalogCollectionTargeting'
 import {resolveCatalogFromQuery} from '@/lib/catalog/catalog-path-resolve'
 import {formatCatalogPurchasePriceShort} from '@/lib/catalog/catalog-borrow-price-label'
 import {formatCatalogCardSizeLabel} from '@/lib/catalog/format-catalog-card-size'
@@ -425,7 +429,13 @@ function PaginationControls({
   )
 }
 
-export function CatalogBrowseInteractive({payload: initialPayload}: {payload: CatalogBrowsePayload}) {
+export function CatalogBrowseInteractive({
+  payload: initialPayload,
+  targetingLooks = [],
+}: {
+  payload: CatalogBrowsePayload
+  targetingLooks?: CollectionTargetingLookView[]
+}) {
   const [resolved, setResolved] = useState(initialPayload.resolved)
   const [facets, setFacets] = useState<MarketingCatalogFacetsNav>(initialPayload.facets)
   const [items, setItems] = useState(initialPayload.items)
@@ -447,11 +457,18 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
   const fetchGenRef = useRef(0)
   const queryRef = useRef(query)
   queryRef.current = query
+  const targetingLooksRef = useRef(targetingLooks)
+  targetingLooksRef.current = targetingLooks
   /** Facettes complètes pour résoudre marque/catégorie côté client (évite les facettes scopées). */
   const resolveFacetsRef = useRef(initialPayload.facets)
 
   const applyQuery = useCallback(async (rawQuery: CatalogBrowseQuery) => {
-    const nextQuery = normalizeCatalogBrowseQuery(rawQuery)
+    let nextQuery = normalizeCatalogBrowseQuery(rawQuery)
+    const matchedLook = selectedCollectionLook(targetingLooksRef.current, nextQuery)
+    const matchedSlug = matchedLook?.slug ?? null
+    if ((nextQuery.lookSlug ?? null) !== matchedSlug) {
+      nextQuery = {...nextQuery, lookSlug: matchedSlug}
+    }
     const optimisticResolved =
       resolveCatalogFromQuery(resolveFacetsRef.current, nextQuery) ?? ({kind: 'all'} as const)
     const gen = ++fetchGenRef.current
@@ -484,6 +501,11 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
         colorSlugs: nextQuery.colorSlugs,
         sizeSlugs: nextQuery.sizeSlugs,
         availabilitySlugs: nextQuery.availabilitySlugs,
+        materialSlugs: nextQuery.materialSlugs,
+        tagSlugs: nextQuery.tagSlugs,
+        tagSlug: nextQuery.tagSlug,
+        newOnly: nextQuery.newOnly,
+        lookSlug: nextQuery.lookSlug,
       })
       setQuery(settled)
       queryRef.current = settled
@@ -637,7 +659,15 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
   const availabilityActive = query.availabilitySlugs.length > 0
   const sortActive = query.sort !== 'recent'
   const filtersActive =
-    categoryActive || brandActive || colorsActive || sizesActive || availabilityActive || query.newOnly
+    categoryActive ||
+    brandActive ||
+    colorsActive ||
+    sizesActive ||
+    availabilityActive ||
+    query.newOnly ||
+    (query.materialSlugs?.length ?? 0) > 0 ||
+    (query.tagSlugs?.length ?? 0) > 0 ||
+    Boolean(query.tagSlug)
 
   const draftBrandActive = effectiveBrandSlugs(draftQuery, facets).length > 0
   const draftCategoryActive = effectiveCategorySlugs(draftQuery, facets).length > 0
@@ -696,41 +726,23 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
                       <FilterCheckOption
                         key="all-cats"
                         checked={!draftCategoryActive}
+                        className={styles.filterOptionParent}
                         onClick={() => setDraftQuery(queryWithCategorySlugs(draftQuery, facets, []))}
                       >
-                        Toutes les catégories
+                        Voir tout
                       </FilterCheckOption>,
-                      ...categoryRoots(facets.categories).map((root) => {
-                        const subs = childrenOf(root.id, facets.categories)
-                        return (
-                          <div key={root.id} className={styles.filterOptionGroup}>
-                            <FilterCheckOption
-                              checked={isCategoryRootChecked(root, draftQuery, facets)}
-                              className={styles.filterOptionParent}
-                              onClick={() =>
-                                setDraftQuery(toggleCategoryQuery(draftQuery, root, facets))
-                              }
-                            >
-                              {root.label}
-                            </FilterCheckOption>
-                            {subs.length > 0 ? (
-                              <div className={styles.filterOptionSub}>
-                                {subs.map((c) => (
-                                  <FilterCheckOption
-                                    key={c.id}
-                                    checked={isCategoryChildChecked(c, draftQuery, facets)}
-                                    onClick={() =>
-                                      setDraftQuery(toggleCategoryQuery(draftQuery, c, facets))
-                                    }
-                                  >
-                                    {c.label}
-                                  </FilterCheckOption>
-                                ))}
-                              </div>
-                            ) : null}
-                          </div>
-                        )
-                      }),
+                      ...orderedCategories(facets.categories).map((cat) => (
+                        <FilterCheckOption
+                          key={cat.id}
+                          checked={isCategoryChecked(cat, draftQuery, facets)}
+                          className={styles.filterOptionParent}
+                          onClick={() =>
+                            setDraftQuery(toggleCategoryQuery(draftQuery, cat, facets))
+                          }
+                        >
+                          {cat.label}
+                        </FilterCheckOption>
+                      )),
                     ]}
                   />
                 </FilterAccordion>
@@ -890,6 +902,12 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
         <CatalogBrowseRouteSync onRouteSearch={syncFromBrowserUrl} />
       </Suspense>
 
+      <CatalogCollectionTargeting
+        looks={targetingLooks}
+        query={query}
+        onSelectLook={(look) => void applyQuery(applyLookFromTargeting(look, queryRef.current))}
+      />
+
       <div className={styles.mobileToolbar} ref={mobileToolbarRef}>
         <button
           type="button"
@@ -936,37 +954,21 @@ export function CatalogBrowseInteractive({payload: initialPayload}: {payload: Ca
           >
             <FilterCheckOption
               checked={!categoryActive}
+              className={styles.filterOptionParent}
               onClick={() => applyQuery(queryWithCategorySlugs(queryRef.current, resolveFacetsRef.current, []))}
             >
-              Toutes les catégories
+              Voir tout
             </FilterCheckOption>
-            {categoryRoots(facets.categories).map((root) => {
-              const subs = childrenOf(root.id, facets.categories)
-              return (
-                <div key={root.id} className={styles.filterOptionGroup}>
-                  <FilterCheckOption
-                    checked={isCategoryRootChecked(root, query, facets)}
-                    className={styles.filterOptionParent}
-                    onClick={() => applyCategoryToggle(root)}
-                  >
-                    {root.label}
-                  </FilterCheckOption>
-                  {subs.length > 0 ? (
-                    <div className={styles.filterOptionSub}>
-                      {subs.map((c) => (
-                        <FilterCheckOption
-                          key={c.id}
-                          checked={isCategoryChildChecked(c, query, facets)}
-                          onClick={() => applyCategoryToggle(c)}
-                        >
-                          {c.label}
-                        </FilterCheckOption>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-              )
-            })}
+            {orderedCategories(facets.categories).map((cat) => (
+              <FilterCheckOption
+                key={cat.id}
+                checked={isCategoryChecked(cat, query, facets)}
+                className={styles.filterOptionParent}
+                onClick={() => applyCategoryToggle(cat)}
+              >
+                {cat.label}
+              </FilterCheckOption>
+            ))}
           </FilterDropdown>
 
           <FilterDropdown

@@ -102,14 +102,16 @@ export async function getMarketingCatalogNewestIdSet(): Promise<Set<string>> {
 export type CatalogCardBadgesFlags = {
   isNew: boolean
   isSold: boolean
+  isArchive: boolean
 }
 
 export function resolveCatalogCardBadges(
-  item: {id: string; status?: string | null},
+  item: {id: string; status?: string | null; is_archive?: boolean; isArchive?: boolean},
   newestIds: Set<string>,
 ): CatalogCardBadgesFlags {
   return {
     isNew: newestIds.has(item.id),
     isSold: isMarketingCatalogItemSold(item.status),
+    isArchive: item.isArchive === true || item.is_archive === true,
   }
 }

@@ -33,27 +33,11 @@ function matchesPrefix(label: string, slug: string, queryFolded: string): boolea
   return lf.startsWith(queryFolded) || sf.startsWith(queryFolded)
 }
 
-/** Ancien libellé « Parent — Enfant » : sert encore au matching (ex. taper « jeans »). */
-function categoryCompositeLabel(
-  c: HomeCatalogSearchNav['categories'][number],
-  all: HomeCatalogSearchNav['categories'],
-): string {
-  if (!c.parentId) return c.label
-  const p = all.find((x) => x.id === c.parentId)
-  return p ? `${p.label} — ${c.label}` : c.label
-}
-
 function categoryMatchesQuery(
   c: HomeCatalogSearchNav['categories'][number],
-  all: HomeCatalogSearchNav['categories'],
   queryFolded: string,
 ): boolean {
-  if (matchesPrefix(c.label, c.slug, queryFolded)) return true
-  const composite = categoryCompositeLabel(c, all)
-  if (matchesPrefix(composite, c.slug, queryFolded)) return true
-  if (!c.parentId) return false
-  const p = all.find((x) => x.id === c.parentId)
-  return p ? matchesPrefix(p.label, c.slug, queryFolded) : false
+  return matchesPrefix(c.label, c.slug, queryFolded)
 }
 
 function SearchLoupeIcon() {
@@ -98,7 +82,7 @@ export function HomeCatalogQuickSearch({
       }))
 
     const catHits: Suggestion[] = nav.categories
-      .filter((c) => categoryMatchesQuery(c, nav.categories, t))
+      .filter((c) => categoryMatchesQuery(c, t))
       .slice(0, MAX_EACH)
       .map((c) => ({
         kind: 'category' as const,

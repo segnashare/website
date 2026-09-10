@@ -15,13 +15,10 @@ const CATALOG_PATHNAME = '/catalogue'
 const RESERVED_SEGMENTS = new Set(['piece', 'api'])
 
 function categoryFilterIdsForNode(
-  cat: {id: string; parentId: string | null},
+  cat: {id: string},
   categories: MarketingCatalogFacetsNav['categories'],
 ): string[] {
-  if (cat.parentId == null) {
-    return collectDescendantCategoryIds(cat.id, categories)
-  }
-  return [cat.id]
+  return collectDescendantCategoryIds(cat.id, categories)
 }
 
 /** Second segment pour `catalogBrowsePath(marque, ?)` (feuille ou catégorie seule). */
@@ -57,16 +54,14 @@ export function resolveCatalogOneSegment(
 
 function resolveCategoryParentChild(
   facets: MarketingCatalogFacetsNav,
-  parentSlug: string,
+  _parentSlug: string,
   childSlug: string,
 ): CatalogPathResolved | null {
-  const parent = categoryBySlug(facets.categories, parentSlug)
-  if (!parent || parent.parentId != null) return null
   const child = categoryBySlug(facets.categories, childSlug)
-  if (!child || child.parentId !== parent.id) return null
+  if (!child) return null
   return {
     kind: 'category',
-    segments: {shape: 'parent_child', parentSlug: parent.slug, childSlug: child.slug},
+    segments: {shape: 'single', slug: child.slug},
     categoryFilterIds: [child.id],
   }
 }
@@ -131,7 +126,6 @@ export function catalogCategoryRootLinkActive(
   root: MarketingCatalogFacetsNav['categories'][number],
   categories: MarketingCatalogFacetsNav['categories'],
 ): boolean {
-  if (root.parentId != null) return false
   return catalogCategoryRootNavOpen(resolved, root.slug, categories)
 }
 
@@ -139,7 +133,6 @@ export function catalogCategoryChildLinkActive(
   resolved: CatalogPathResolved,
   cat: MarketingCatalogFacetsNav['categories'][number],
 ): boolean {
-  if (cat.parentId == null) return false
   if (resolved.kind === 'category' && resolved.segments.shape === 'parent_child') {
     return resolved.segments.childSlug === cat.slug
   }

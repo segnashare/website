@@ -38,10 +38,11 @@
   z-index: 1;
   background: linear-gradient(
     180deg,
-    rgb(0 0 0 / 0.25) 0%,
-    rgb(0 0 0 / 0.35) 52%,
-    rgb(0 0 0 / 0.5) 100%
+    rgb(0 0 0 / 0.1) 0%,
+    rgb(0 0 0 / 0.14) 52%,
+    rgb(0 0 0 / 0.22) 100%
   );
+  pointer-events: none;
 }
 
 .contentLayer {
@@ -53,30 +54,6 @@
 /* Wrapper spacer + barres nav (HomeHero, SiteNavChrome) ; l’état scroll desktop est sur .navChromeRootScrolled. */
 .navChromeRoot {
   width: 100%;
-}
-
-.introOverlay {
-  position: fixed;
-  inset: 0;
-  z-index: 140;
-  display: grid;
-  place-items: center;
-  background: #000;
-  pointer-events: none;
-}
-
-.introWord {
-  margin: 0;
-  font-family: var(--font-playfair-display), Georgia, serif;
-  font-weight: 800;
-  font-size: clamp(3.2rem, 8vw, 6.2rem);
-  line-height: 1;
-  letter-spacing: -0.03em;
-  color: #fff;
-}
-
-.introLetter {
-  display: inline-block;
 }
 
 .desktopNavSpacer {
@@ -270,14 +247,14 @@
   align-items: flex-start;
   gap: clamp(0.75rem, 2vw, 1.1rem);
   width: 100%;
-  max-width: min(40rem, 100%);
+  max-width: min(56rem, 100%);
 }
 
 .heroTitle {
   margin: 0;
   font-family: var(--font-playfair-display), Georgia, serif;
   font-weight: var(--segna-type-h1-weight);
-  max-width: 11ch;
+  max-width: 100%;
   font-size: var(--segna-type-h1-size-single);
   line-height: var(--segna-type-h1-leading);
   letter-spacing: var(--segna-type-h1-tracking);
@@ -407,7 +384,7 @@
   font-size: var(--segna-type-h1-size-single);
   line-height: var(--segna-type-h1-leading);
   letter-spacing: var(--segna-type-h1-tracking);
-  max-width: 12ch;
+  max-width: 100%;
   color: #fff;
   white-space: pre-line;
 }
@@ -817,6 +794,10 @@
 
 .surfaceLight .brand {
   color: #111;
+}
+
+.surfaceLight .brandLogo {
+  filter: brightness(0);
 }
 
 @media (max-width: 1200px) {

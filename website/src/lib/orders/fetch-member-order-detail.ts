@@ -243,7 +243,7 @@ export async function fetchMemberOrderDetail(
       supabase
         .from('cart_items')
         .select(
-          'id,item_id,items(id,title,price_points,photos,item_custom_brand_label,item_size_id,item_brands(label))',
+          'id,item_id,items(id,title,price_points,photos,item_custom_brand_label,item_size_id,item_size_range_key,item_brands(label))',
         )
         .eq('cart_id', cartId)
         .is('deleted_at', null)
@@ -286,6 +286,7 @@ export async function fetchMemberOrderDetail(
     photos?: unknown
     item_custom_brand_label?: string | null
     item_size_id?: string | null
+    item_size_range_key?: string | null
     item_brands?: {label?: string | null} | null
   } | null
 
@@ -335,7 +336,8 @@ export async function fetchMemberOrderDetail(
       itemId: row.item_id,
       brand,
       title,
-      sizeLabel: sizeId ? sizeLabelById.get(sizeId) ?? null : null,
+      sizeLabel:
+        item?.item_size_range_key?.trim() || (sizeId ? sizeLabelById.get(sizeId) ?? null : null),
       priceCents: catalogPurchasePriceCents(pricePoints),
       photoUrl,
     })

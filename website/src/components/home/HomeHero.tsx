@@ -4,7 +4,6 @@ import {useEffect, useMemo, useState} from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {usePathname} from 'next/navigation'
-import {motion} from 'framer-motion'
 import type {HomeCatalogSearchNav} from '@/lib/catalog/home-catalog-search-nav'
 import {heroTitlePlainText} from '@/lib/hero-title'
 import type {HomePageData} from '@/lib/sanity'
@@ -19,7 +18,6 @@ import {JoinClubCtaLink} from './JoinClubCtaLink'
 import {MobileMainMenu} from './MobileMainMenu'
 import {useNavScrollElevated} from './useNavScrollElevated'
 import styles from './homeHero.module.css'
-import {useHydrationSafeReducedMotion} from './useHydrationSafeReducedMotion'
 
 type HomeHeroProps = {
   homePage: HomePageData
@@ -29,9 +27,7 @@ type HomeHeroProps = {
 
 export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeHeroProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isIntroComplete, setIsIntroComplete] = useState(false)
   const pathname = usePathname() || '/'
-  const shouldReduceMotion = useHydrationSafeReducedMotion()
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
@@ -44,19 +40,6 @@ export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeH
   useEffect(() => {
     setIsMenuOpen(false)
   }, [pathname])
-
-  useEffect(() => {
-    if (shouldReduceMotion) {
-      setIsIntroComplete(true)
-      return
-    }
-
-    const timer = window.setTimeout(() => {
-      setIsIntroComplete(true)
-    }, 2600)
-
-    return () => window.clearTimeout(timer)
-  }, [shouldReduceMotion])
 
   const navItems = homePage.navItems ?? []
 
@@ -89,8 +72,6 @@ export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeH
   const catalogSearchButtonLabel = homePage.heroStagedSearchButtonLabel?.trim() || 'Rechercher'
   const heroSubtitle = homePage.heroSubtitle?.trim()
   const heroAction = homeHeroActionFromPage(homePage)
-  const introLetters = 'Segna'.split('')
-  const contentAnimationState = shouldReduceMotion || isIntroComplete ? 'visible' : 'hidden'
   const navElevated = useNavScrollElevated()
   const navRootClass = `${styles.navChromeRoot} ${navElevated ? styles.navChromeRootScrolled : ''}`
 
@@ -110,60 +91,10 @@ export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeH
       ) : null}
       <div className={styles.overlay} />
 
-      <motion.div
-        className={styles.introOverlay}
-        initial={{y: 0}}
-        animate={isIntroComplete ? {y: '-100%'} : {y: 0}}
-        transition={{duration: shouldReduceMotion ? 0 : 1.05, ease: [0.22, 1, 0.36, 1]}}
-        aria-hidden={isIntroComplete}
-      >
-        <motion.h1
-          className={styles.introWord}
-          initial="hidden"
-          animate="visible"
-          variants={{
-            hidden: {},
-            visible: {
-              transition: {
-                delayChildren: 0.18,
-                staggerChildren: 0.16,
-              },
-            },
-          }}
-        >
-          {introLetters.map((letter, index) => (
-            <motion.span
-              key={`${letter}-${index}`}
-              className={styles.introLetter}
-              variants={{
-                hidden: {opacity: 0, y: 18},
-                visible: {opacity: 1, y: 0},
-              }}
-              transition={{duration: 0.55, ease: 'easeOut'}}
-            >
-              {letter}
-            </motion.span>
-          ))}
-        </motion.h1>
-      </motion.div>
-
       <div className={styles.contentLayer}>
         <div className={navRootClass}>
           <div className={styles.desktopNavSpacer} aria-hidden />
-          <motion.header
-            className={styles.desktopHeader}
-            initial="hidden"
-            animate={contentAnimationState}
-            variants={{
-              hidden: {opacity: 0},
-              visible: {opacity: 1},
-            }}
-            transition={{
-              duration: shouldReduceMotion ? 0 : 0.85,
-              ease: [0.16, 1, 0.3, 1],
-              delay: shouldReduceMotion ? 0 : 1.62,
-            }}
-          >
+          <header className={styles.desktopHeader}>
             <div className={styles.desktopBrand}>
               <Link href="/" className={styles.desktopLogoLink} aria-label="Accueil — Segna">
                 <span className={styles.brandWrap}>{brandMark}</span>
@@ -193,22 +124,9 @@ export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeH
                 {primaryLabel}
               </JoinClubCtaLink>
             </nav>
-          </motion.header>
+          </header>
 
-          <motion.header
-            className={styles.mobileHeader}
-            initial="hidden"
-            animate={contentAnimationState}
-            variants={{
-              hidden: {opacity: 0},
-              visible: {opacity: 1},
-            }}
-            transition={{
-              duration: shouldReduceMotion ? 0 : 0.85,
-              ease: [0.16, 1, 0.3, 1],
-              delay: shouldReduceMotion ? 0 : 1.62,
-            }}
-          >
+          <header className={styles.mobileHeader}>
             <button
               type="button"
               onClick={() => setIsMenuOpen((value) => !value)}
@@ -238,170 +156,38 @@ export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeH
                 {primaryLabel}
               </JoinClubCtaLink>
             </div>
-          </motion.header>
+          </header>
         </div>
 
         <section className={styles.heroContent}>
           <div className={styles.heroTitleStack}>
-            <motion.h1
-              className={styles.heroTitle}
-              initial="hidden"
-              animate={contentAnimationState}
-              variants={{
-                hidden: {
-                  opacity: 0,
-                  y: 90,
-                },
-                visible: {
-                  opacity: 1,
-                  y: 0,
-                },
-              }}
-              transition={{
-                duration: shouldReduceMotion ? 0 : 0.92,
-                ease: [0.16, 1, 0.3, 1],
-                delay: shouldReduceMotion ? 0 : 1.2,
-              }}
-            >
-              {homePage.heroTitle}
-            </motion.h1>
-            {heroSubtitle ? (
-              <motion.p
-                className={styles.heroSubtitle}
-                initial="hidden"
-                animate={contentAnimationState}
-                variants={{
-                  hidden: {opacity: 0, y: 24},
-                  visible: {opacity: 1, y: 0},
-                }}
-                transition={{
-                  duration: shouldReduceMotion ? 0 : 0.72,
-                  ease: [0.16, 1, 0.3, 1],
-                  delay: shouldReduceMotion ? 0 : 1.32,
-                }}
-              >
-                {heroSubtitle}
-              </motion.p>
-            ) : null}
-            <motion.div
-              initial="hidden"
-              animate={contentAnimationState}
-              variants={{
-                hidden: {opacity: 0, y: 20},
-                visible: {opacity: 1, y: 0},
-              }}
-              transition={{
-                duration: shouldReduceMotion ? 0 : 0.68,
-                ease: [0.16, 1, 0.3, 1],
-                delay: shouldReduceMotion ? 0 : 1.35,
-              }}
-            >
-              <HeroTrustpilotRating />
-            </motion.div>
-            <motion.div
-              initial="hidden"
-              animate={contentAnimationState}
-              variants={{
-                hidden: {opacity: 0, y: 28},
-                visible: {opacity: 1, y: 0},
-              }}
-              transition={{
-                duration: shouldReduceMotion ? 0 : 0.75,
-                ease: [0.16, 1, 0.3, 1],
-                delay: shouldReduceMotion ? 0 : 1.38,
-              }}
-            >
-              <HomeHeroActionBlock
-                nav={catalogSearchNav}
-                surface="single"
-                placeholder={catalogSearchPlaceholder}
-                searchButtonLabel={catalogSearchButtonLabel}
-                inputId="home-hero-search"
-                action={heroAction}
-              />
-            </motion.div>
+            <h1 className={styles.heroTitle}>{homePage.heroTitle}</h1>
+            {heroSubtitle ? <p className={styles.heroSubtitle}>{heroSubtitle}</p> : null}
+            <HeroTrustpilotRating />
+            <HomeHeroActionBlock
+              nav={catalogSearchNav}
+              surface="single"
+              placeholder={catalogSearchPlaceholder}
+              searchButtonLabel={catalogSearchButtonLabel}
+              inputId="home-hero-search"
+              action={heroAction}
+            />
           </div>
         </section>
 
         <section className={styles.mobileTitleWrap}>
           <div className={styles.heroTitleStack}>
-            <motion.h1
-              className={styles.mobileTitle}
-              initial="hidden"
-              animate={contentAnimationState}
-              variants={{
-                hidden: {
-                  opacity: 0,
-                  y: 90,
-                },
-                visible: {
-                  opacity: 1,
-                  y: 0,
-                },
-              }}
-              transition={{
-                duration: shouldReduceMotion ? 0 : 0.92,
-                ease: [0.16, 1, 0.3, 1],
-                delay: shouldReduceMotion ? 0 : 1.2,
-              }}
-            >
-              {homePage.heroTitle}
-            </motion.h1>
-            {heroSubtitle ? (
-              <motion.p
-                className={styles.heroSubtitle}
-                initial="hidden"
-                animate={contentAnimationState}
-                variants={{
-                  hidden: {opacity: 0, y: 24},
-                  visible: {opacity: 1, y: 0},
-                }}
-                transition={{
-                  duration: shouldReduceMotion ? 0 : 0.72,
-                  ease: [0.16, 1, 0.3, 1],
-                  delay: shouldReduceMotion ? 0 : 1.32,
-                }}
-              >
-                {heroSubtitle}
-              </motion.p>
-            ) : null}
-            <motion.div
-              initial="hidden"
-              animate={contentAnimationState}
-              variants={{
-                hidden: {opacity: 0, y: 20},
-                visible: {opacity: 1, y: 0},
-              }}
-              transition={{
-                duration: shouldReduceMotion ? 0 : 0.68,
-                ease: [0.16, 1, 0.3, 1],
-                delay: shouldReduceMotion ? 0 : 1.35,
-              }}
-            >
-              <HeroTrustpilotRating />
-            </motion.div>
-            <motion.div
-              initial="hidden"
-              animate={contentAnimationState}
-              variants={{
-                hidden: {opacity: 0, y: 28},
-                visible: {opacity: 1, y: 0},
-              }}
-              transition={{
-                duration: shouldReduceMotion ? 0 : 0.75,
-                ease: [0.16, 1, 0.3, 1],
-                delay: shouldReduceMotion ? 0 : 1.38,
-              }}
-            >
-              <HomeHeroActionBlock
-                nav={catalogSearchNav}
-                surface="single"
-                placeholder={catalogSearchPlaceholder}
-                searchButtonLabel={catalogSearchButtonLabel}
-                inputId="home-hero-search-mobile"
-                action={heroAction}
-              />
-            </motion.div>
+            <h1 className={styles.mobileTitle}>{homePage.heroTitle}</h1>
+            {heroSubtitle ? <p className={styles.heroSubtitle}>{heroSubtitle}</p> : null}
+            <HeroTrustpilotRating />
+            <HomeHeroActionBlock
+              nav={catalogSearchNav}
+              surface="single"
+              placeholder={catalogSearchPlaceholder}
+              searchButtonLabel={catalogSearchButtonLabel}
+              inputId="home-hero-search-mobile"
+              action={heroAction}
+            />
           </div>
         </section>
 

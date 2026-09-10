@@ -20,6 +20,12 @@ export type CatalogBrowseQuery = {
   newOnly: boolean
   /** Filtre tag catalogue (`tags.slug`, ex. `summer2026`). */
   tagSlug: string | null
+  /** Multi-sélection tags (`?tags=summer,resort`). */
+  tagSlugs: string[]
+  /** Multi-sélection matériaux (`?materiaux=soie,laine`). */
+  materialSlugs: string[]
+  /** Ciblage éditorial CMS (`?look=nouveautes`). */
+  lookSlug: string | null
 }
 
 const SORT_TO_QUERY: Record<CatalogSortMode, string> = {
@@ -110,8 +116,21 @@ export function parseCatalogBrowseQuery(sp: URLSearchParams): CatalogBrowseQuery
     newRaw === 'nouveautes' ||
     newRaw === 'new'
 
-  const tagRaw = firstParam(sp, ['tag', 'tags'])
-  const tagSlug = tagRaw ? slugifyFr(tagRaw.replace(/\+/g, ' ')) : null
+  const tagRaw = firstParam(sp, ['tag'])
+  const tagsRaw = firstParam(sp, ['tags'])
+  const tagSlugs = [
+    ...new Set([
+      ...splitList(tagsRaw),
+      ...(tagRaw && !tagRaw.includes(',') ? [slugifyFr(tagRaw.replace(/\+/g, ' '))] : splitList(tagRaw)),
+    ]),
+  ].filter((s) => s && s !== 'x')
+  const tagSlug = tagSlugs[0] ?? null
+
+  const materialsRaw = firstParam(sp, ['materiaux', 'materials', 'matieres'])
+  const materialSlugs = splitList(materialsRaw)
+
+  const lookRaw = firstParam(sp, ['look', 'cible'])
+  const lookSlug = lookRaw ? slugifyFr(lookRaw.replace(/\+/g, ' ')) : null
 
   return {
     page,
@@ -125,6 +144,9 @@ export function parseCatalogBrowseQuery(sp: URLSearchParams): CatalogBrowseQuery
     subSlug,
     newOnly,
     tagSlug,
+    tagSlugs,
+    materialSlugs,
+    lookSlug,
   }
 }
 
@@ -146,6 +168,15 @@ export function normalizeCatalogBrowseQuery(q: Partial<CatalogBrowseQuery> | Cat
     subSlug: typeof q.subSlug === 'string' && q.subSlug.trim() ? q.subSlug.trim() : null,
     newOnly: Boolean(q.newOnly),
     tagSlug: typeof q.tagSlug === 'string' && q.tagSlug.trim() ? q.tagSlug.trim() : null,
+    tagSlugs: Array.isArray(q.tagSlugs)
+      ? [...new Set(q.tagSlugs.filter((s) => typeof s === 'string' && s.trim()))].sort()
+      : typeof q.tagSlug === 'string' && q.tagSlug.trim()
+        ? [q.tagSlug.trim()]
+        : [],
+    materialSlugs: Array.isArray(q.materialSlugs)
+      ? [...new Set(q.materialSlugs.filter((s) => typeof s === 'string' && s.trim()))].sort()
+      : [],
+    lookSlug: typeof q.lookSlug === 'string' && q.lookSlug.trim() ? q.lookSlug.trim() : null,
   }
 }
 
@@ -163,7 +194,11 @@ export function serializeCatalogBrowseQuery(q: CatalogBrowseQuery): URLSearchPar
   if (n.segmentSlug && n.brandSlugs.length === 0) out.set('segment', n.segmentSlug)
   if (n.subSlug && n.categorySlugs.length === 0) out.set('categorie', n.subSlug)
   if (n.newOnly) out.set('new', '1')
-  if (n.tagSlug) out.set('tag', n.tagSlug)
+  const tags = n.tagSlugs.length > 0 ? n.tagSlugs : n.tagSlug ? [n.tagSlug] : []
+  if (tags.length === 1) out.set('tag', tags[0]!)
+  else if (tags.length > 1) out.set('tags', tags.join(','))
+  if (n.materialSlugs.length > 0) out.set('materiaux', n.materialSlugs.join(','))
+  if (n.lookSlug) out.set('look', n.lookSlug)
   return out
 }
 
