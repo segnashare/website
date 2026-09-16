@@ -96,13 +96,14 @@ function CatalogScrollCard({
       className={`${scrollStyles.slide} ${scrollStyles.slidePortrait}`}
       aria-hidden={decorative || undefined}
     >
-      {decorative || !onOpen ? (
+      {!onOpen ? (
         <div className={`${styles.catalogCard} ${styles.catalogCardButton}`}>{body}</div>
       ) : (
         <a
           href={catalogItemPagePath(item.id)}
           className={`${styles.catalogCard} ${styles.catalogCardButton}`}
-          aria-label={`Voir ${titleLine}`}
+          aria-label={decorative ? undefined : `Voir ${titleLine}`}
+          tabIndex={decorative ? -1 : undefined}
           onClick={(e) => {
             if (!shouldOpenCatalogItemModal(e)) return
             e.preventDefault()
@@ -151,7 +152,7 @@ export function CatalogScrollStrip({
             eager={eagerImages}
           />
         ),
-        cloneNode: <CatalogScrollCard item={item} decorative eager={eagerImages} />,
+        cloneNode: <CatalogScrollCard item={item} decorative eager={eagerImages} onOpen={setOpenItemId} />,
       })),
     [items, eagerImages],
   )
