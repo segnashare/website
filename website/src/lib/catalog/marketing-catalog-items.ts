@@ -613,10 +613,11 @@ export async function resolveItemGallerySlots(
       .map((url) => ({url, position: null}))
   }
 
-  const signed = await Promise.all(
+  const signed: Array<MarketingCatalogGallerySlot | null> = await Promise.all(
     slots.map(async (slot) => {
       const url = await resolveCachedCatalogGallerySignedUrlForStoragePath(slot.storagePath)
-      return url ? ({url, position: slot.position} satisfies MarketingCatalogGallerySlot) : null
+      if (!url) return null
+      return {url, position: slot.position}
     }),
   )
   return signed.filter((slot): slot is MarketingCatalogGallerySlot => slot != null)

@@ -79,7 +79,7 @@ async function loadCatalogItemStyleLooksUncached(itemId: string): Promise<Catalo
 
   const rows = (data ?? []) as StyleLookRow[]
 
-  const signed = await Promise.all(
+  const signed: Array<CatalogItemLookMedia | null> = await Promise.all(
     rows.map(async (row) => {
       const lookId = typeof row.id === 'string' ? row.id.trim() : ''
       if (!lookId) return null
@@ -111,7 +111,7 @@ async function loadCatalogItemStyleLooksUncached(itemId: string): Promise<Catalo
         mediaType,
         url,
         posterUrl,
-      } satisfies CatalogItemLookMedia
+      }
     }),
   )
 
