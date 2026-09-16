@@ -115,7 +115,7 @@ async function loadCatalogItemStyleLooksUncached(itemId: string): Promise<Catalo
     }),
   )
 
-  return signed.filter((row): row is CatalogItemLookMedia => Boolean(row))
+  return signed.filter((row): row is CatalogItemLookMedia => row != null)
 }
 
 /** Looks publiés liés à la pièce, avec la 1ʳᵉ media signée (service_role). */

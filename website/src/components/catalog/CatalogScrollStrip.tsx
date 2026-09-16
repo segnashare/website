@@ -134,9 +134,10 @@ export function CatalogScrollStrip({
 }: Props) {
   const [openItemId, setOpenItemId] = useState<string | null>(null)
 
-  // `auto_loop` anime le track en CSS `transform` : loading=lazy ne se déclenche pas
-  // (même bug que les bandeaux éditoriaux → eagerLoad).
-  const eagerImages = scrollMotion === 'auto_loop'
+  // Overflow-x:clip (fullBleed / scrollBlock) + scroller overflow-x:auto : le lazy-load
+  // navigateur / next/image n’observe pas les slides hors clip — elles restent grises
+  // même après un swipe. Même stratégie que les bandeaux éditoriaux (`eagerLoad`).
+  const eagerImages = true
 
   const slides: HorizontalScrollSlide[] = useMemo(
     () =>

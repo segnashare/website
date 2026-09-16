@@ -208,15 +208,15 @@ export function CatalogItemPhotoCover({
     <div ref={frameRef} className={frameClass}>
       {showImage && fillStyle ? (
         <div className={styles.fill} style={fillStyle} aria-hidden />
-      ) : showImage && useOptimizer ? (
+      ) : showImage && useOptimizer && !eager ? (
         <NextImage
           src={src}
           alt=""
           fill
           sizes={sizes}
           quality={75}
-          // `eager` seul ne suffit pas sur next/image (lazy par défaut) — bloqué sous marquee transform.
-          priority={priority || eager}
+          priority={priority}
+          loading={priority ? undefined : 'lazy'}
           ref={mediaRef}
           className={[styles.nextImg, ...imgClass].filter(Boolean).join(' ')}
           style={{objectFit, objectPosition: objectPos}}
@@ -227,7 +227,7 @@ export function CatalogItemPhotoCover({
           onError={() => setOptimizerFailed(true)}
         />
       ) : showImage ? (
-        // eslint-disable-next-line @next/next/no-img-element
+        // eslint-disable-next-line @next/next/no-img-element -- bandeau `eager` : next/image lazy/IO ignore les slides hors clip
         <img
           ref={mediaRef}
           src={src}

@@ -619,7 +619,7 @@ export async function resolveItemGallerySlots(
       return url ? ({url, position: slot.position} satisfies MarketingCatalogGallerySlot) : null
     }),
   )
-  return signed.filter((slot): slot is MarketingCatalogGallerySlot => Boolean(slot))
+  return signed.filter((slot): slot is MarketingCatalogGallerySlot => slot != null)
 }
 
 function parseMarketingCatalogRpcPayload(data: unknown): MarketingCatalogItemRow[] {
