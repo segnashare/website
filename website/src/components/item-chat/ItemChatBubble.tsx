@@ -1,6 +1,7 @@
 'use client'
 
-import {FormEvent, useEffect, useRef, useState} from 'react'
+import {FormEvent, useEffect, useLayoutEffect, useRef, useState} from 'react'
+import {createPortal} from 'react-dom'
 import {useItemChat} from '@/components/item-chat/ItemChatProvider'
 import {
   CHATBOT_AVATAR_URL,
@@ -110,9 +111,50 @@ export function ItemChatBubble() {
   const [listDraft, setListDraft] = useState('')
   const [expanded, setExpanded] = useState(false)
   const [browseEmptyList, setBrowseEmptyList] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const [host, setHost] = useState<HTMLElement | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
+  const dialogRef = useRef<HTMLDialogElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const listInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const el = document.createElement('div')
+    el.id = 'segna-chat-host'
+    document.body.appendChild(el)
+    setHost(el)
+    setMounted(true)
+    return () => {
+      el.remove()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!host || !panelOpen) return
+    document.body.appendChild(host)
+  }, [host, panelOpen])
+
+  useLayoutEffect(() => {
+    const el = dialogRef.current
+    if (!panelOpen || !el) return
+    if (!el.open) el.showModal()
+    return () => {
+      if (el.open) el.close()
+    }
+  }, [panelOpen])
+
+  useEffect(() => {
+    if (!panelOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      e.preventDefault()
+      e.stopImmediatePropagation()
+      setExpanded(false)
+      setPanelOpen(false)
+    }
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
+  }, [panelOpen, setPanelOpen])
 
   const awaitingUsefulness =
     Boolean(conversation?.usefulnessPromptedAt) && !conversation?.usefulnessRating
@@ -159,13 +201,23 @@ export function ItemChatBubble() {
     void startNewChat({initialMessage: text}).then(() => setListDraft(''))
   }
 
-  return (
-    <div className={`${styles.root} ${expanded ? styles.rootExpanded : ''}`}>
+  if (!mounted || !host) return null
+
+  return createPortal(
+    <div
+      className={`${styles.root} ${expanded ? styles.rootExpanded : ''}`}
+      style={{zIndex: 2147483000}}
+    >
       {panelOpen ? (
-        <div
+        <dialog
+          ref={dialogRef}
           className={`${styles.panel} ${expanded ? styles.panelExpanded : ''}`}
-          role="dialog"
           aria-label="Chat Segna"
+          onCancel={(e) => {
+            e.preventDefault()
+            setExpanded(false)
+            setPanelOpen(false)
+          }}
         >
           {view === 'list' ? (
             showEmptyWelcome ? (
@@ -523,7 +575,7 @@ export function ItemChatBubble() {
               </form>
             </>
           )}
-        </div>
+        </dialog>
       ) : null}
 
       <button
@@ -553,6 +605,7 @@ export function ItemChatBubble() {
           <span className={styles.badge}>{unreadCount > 9 ? '9+' : unreadCount}</span>
         ) : null}
       </button>
-    </div>
+    </div>,
+    host,
   )
 }

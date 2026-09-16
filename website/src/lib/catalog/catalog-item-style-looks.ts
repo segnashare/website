@@ -1,6 +1,7 @@
 import {SIGNED_URL_TTL_SEC} from '@/lib/catalog/catalog-cache'
 import {createSignedUrlForStoragePath} from '@/lib/catalog/storage-signed-url'
 import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
+import {cache} from 'react'
 
 export type CatalogItemLookMedia = {
   lookId: string
@@ -39,8 +40,7 @@ function parseMediaType(value: unknown): 'photo' | 'video' | 'dump' {
   return 'photo'
 }
 
-/** Looks publiés liés à la pièce, avec la 1ʳᵉ media signée (service_role). */
-export async function loadCatalogItemStyleLooks(itemId: string): Promise<CatalogItemLookMedia[]> {
+async function loadCatalogItemStyleLooksUncached(itemId: string): Promise<CatalogItemLookMedia[]> {
   const id = itemId.trim()
   if (!id) return []
 
@@ -78,41 +78,45 @@ export async function loadCatalogItemStyleLooks(itemId: string): Promise<Catalog
   }
 
   const rows = (data ?? []) as StyleLookRow[]
-  const out: CatalogItemLookMedia[] = []
 
-  for (const row of rows) {
-    const lookId = typeof row.id === 'string' ? row.id.trim() : ''
-    if (!lookId) continue
+  const signed = await Promise.all(
+    rows.map(async (row) => {
+      const lookId = typeof row.id === 'string' ? row.id.trim() : ''
+      if (!lookId) return null
 
-    const mediaType = parseMediaType(row.media_type)
-    const bucket =
-      typeof row.presentation_storage_bucket === 'string' && row.presentation_storage_bucket.trim()
-        ? row.presentation_storage_bucket.trim()
-        : 'bucket_cms_app'
-    const paths = parseMediaPaths(row.media_paths, row.presentation_storage_path)
-    const firstPath = paths[0]
-    if (!firstPath) continue
+      const mediaType = parseMediaType(row.media_type)
+      const bucket =
+        typeof row.presentation_storage_bucket === 'string' && row.presentation_storage_bucket.trim()
+          ? row.presentation_storage_bucket.trim()
+          : 'bucket_cms_app'
+      const paths = parseMediaPaths(row.media_paths, row.presentation_storage_path)
+      const firstPath = paths[0]
+      if (!firstPath) return null
 
-    const url = await createSignedUrlForStoragePath(supabase, firstPath, SIGNED_URL_TTL_SEC, {
-      explicitBucket: bucket,
-    })
-    if (!url) continue
+      const [url, posterUrl] = await Promise.all([
+        createSignedUrlForStoragePath(supabase, firstPath, SIGNED_URL_TTL_SEC, {
+          explicitBucket: bucket,
+        }),
+        typeof row.video_poster_path === 'string' && row.video_poster_path.trim()
+          ? createSignedUrlForStoragePath(supabase, row.video_poster_path, SIGNED_URL_TTL_SEC, {
+              explicitBucket: bucket,
+            })
+          : Promise.resolve(null),
+      ])
+      if (!url) return null
 
-    let posterUrl: string | null = null
-    if (typeof row.video_poster_path === 'string' && row.video_poster_path.trim()) {
-      posterUrl = await createSignedUrlForStoragePath(supabase, row.video_poster_path, SIGNED_URL_TTL_SEC, {
-        explicitBucket: bucket,
-      })
-    }
+      return {
+        lookId,
+        title: typeof row.title === 'string' ? row.title.trim() : '',
+        mediaType,
+        url,
+        posterUrl,
+      } satisfies CatalogItemLookMedia
+    }),
+  )
 
-    out.push({
-      lookId,
-      title: typeof row.title === 'string' ? row.title.trim() : '',
-      mediaType,
-      url,
-      posterUrl,
-    })
-  }
-
-  return out
+  return signed.filter((row): row is CatalogItemLookMedia => Boolean(row))
 }
+
+/** Looks publiés liés à la pièce, avec la 1ʳᵉ media signée (service_role). */
+export const loadCatalogItemStyleLooks = cache(loadCatalogItemStyleLooksUncached)

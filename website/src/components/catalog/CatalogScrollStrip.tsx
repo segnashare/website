@@ -8,6 +8,7 @@ import {
   type HorizontalScrollSlide,
 } from '@/components/page-sections/HorizontalScrollTrack'
 import scrollStyles from '@/components/page-sections/horizontalScrollCards.module.css'
+import {catalogItemPagePath, shouldOpenCatalogItemModal} from '@/lib/catalog/catalog-app-links'
 import {formatCatalogPurchasePriceShort} from '@/lib/catalog/catalog-borrow-price-label'
 import {formatCatalogCardSizeLabel} from '@/lib/catalog/format-catalog-card-size'
 import {prefetchCatalogItemDetailClient} from '@/lib/catalog/catalog-item-detail-client-fetch'
@@ -98,16 +99,20 @@ function CatalogScrollCard({
       {decorative || !onOpen ? (
         <div className={`${styles.catalogCard} ${styles.catalogCardButton}`}>{body}</div>
       ) : (
-        <button
-          type="button"
+        <a
+          href={catalogItemPagePath(item.id)}
           className={`${styles.catalogCard} ${styles.catalogCardButton}`}
           aria-label={`Voir ${titleLine}`}
-          onClick={() => onOpen(item.id)}
+          onClick={(e) => {
+            if (!shouldOpenCatalogItemModal(e)) return
+            e.preventDefault()
+            onOpen(item.id)
+          }}
           onMouseEnter={() => prefetchCatalogItemDetailClient(item.id)}
           onFocus={() => prefetchCatalogItemDetailClient(item.id)}
         >
           {body}
-        </button>
+        </a>
       )}
     </article>
   )

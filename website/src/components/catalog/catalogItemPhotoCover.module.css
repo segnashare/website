@@ -5,9 +5,17 @@
 }
 
 .fill {
+  position: relative;
+  z-index: 1;
   height: 100%;
   width: 100%;
   background-repeat: no-repeat;
+}
+
+.nextImg,
+.fallbackImg,
+.media {
+  z-index: 1;
 }
 
 .nextImg {
@@ -21,14 +29,10 @@
   object-position: center center;
 }
 
-.imgPending {
-  opacity: 0;
-}
-
 .placeholder {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  z-index: 0;
   background: #d4d4d4;
   pointer-events: none;
 }

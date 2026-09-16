@@ -10,6 +10,23 @@ type Props = {
   items: MarketingCatalogGridItem[]
 }
 
+export function CatalogItemRecommendedFallback() {
+  return (
+    <section className={styles.section} aria-hidden>
+      <div className={styles.titleInner}>
+        <h3 className={styles.heading}>Recommandées</h3>
+      </div>
+      <ul className={styles.grid}>
+        {Array.from({length: 12}, (_, i) => (
+          <li key={i} className={styles.card}>
+            <div className={styles.media} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
 export function CatalogItemRecommendedSection({items}: Props) {
   if (items.length === 0) return null
 

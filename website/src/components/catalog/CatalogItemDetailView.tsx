@@ -9,7 +9,10 @@ import {isMarketingCatalogItemReserved, isMarketingCatalogItemSold} from '@/lib/
 import {catalogItemPagePath, catalogSubscriptionHref} from '@/lib/catalog/catalog-app-links'
 import type {CatalogItemDetailPayload} from '@/lib/catalog/catalog-item-detail'
 import type {CatalogItemLookMedia} from '@/lib/catalog/catalog-item-style-looks'
-import {formatCatalogCardSizeLabel} from '@/lib/catalog/format-catalog-card-size'
+import {
+  CATALOG_ITEM_SIZE_RANGE_FIELD_LABEL,
+  formatCatalogItemSizeRangeValue,
+} from '@/lib/catalog/format-catalog-card-size'
 import {itemDescriptionToSafeHtml} from '@/lib/catalog/item-description-format'
 import {formatItemDimensionDisplayValue, formatItemEraLabel} from '@/lib/catalog/item-era-fitting-dimensions'
 import {addWebsiteCartItem, removeWebsiteCartItem} from '@/lib/cart/website-cart'
@@ -29,6 +32,8 @@ type Props = {
   layout?: 'modal' | 'page'
   /** Looks liés — grille sous les accordéons (page uniquement). */
   looks?: CatalogItemLookMedia[]
+  /** Slot RSC streamé (page) — prioritaire sur `looks`. */
+  looksSlot?: ReactNode
 }
 
 function TrustLine({children}: {children: string}) {
@@ -182,7 +187,7 @@ function SizeConditionCard({
       <div className={styles.sizeCardGrid}>
         <div>
           <p className={styles.sizeCardLabel}>
-            Taille étiquette
+            {CATALOG_ITEM_SIZE_RANGE_FIELD_LABEL}
             {hasSizeDetails ? (
               <button
                 ref={infoBtnRef}
@@ -374,6 +379,7 @@ function InfoPanel({
   sizeLine,
   subscriptionHref,
   looks,
+  looksSlot,
   addPending,
   inCart,
   onAddToCart,
@@ -386,6 +392,7 @@ function InfoPanel({
   sizeLine: string
   subscriptionHref: string
   looks: CatalogItemLookMedia[]
+  looksSlot?: ReactNode
   addPending: boolean
   inCart: boolean
   onAddToCart: () => void
@@ -530,7 +537,7 @@ function InfoPanel({
         </AppAccordion>
       </div>
 
-      {looks.length > 0 ? <CatalogItemLooksSection looks={looks} /> : null}
+      {looksSlot ?? (looks.length > 0 ? <CatalogItemLooksSection looks={looks} /> : null)}
     </>
   )
 }
@@ -563,7 +570,13 @@ function clearOpenCartDrawerIntent(itemId: string) {
   }
 }
 
-export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks = []}: Props) {
+export function CatalogItemDetailView({
+  detail,
+  titleId,
+  layout = 'modal',
+  looks = [],
+  looksSlot,
+}: Props) {
   const [photoIndex, setPhotoIndex] = useState(0)
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -579,7 +592,10 @@ export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks 
   const pointerStartX = useRef<number | null>(null)
   const pointerMoved = useRef(false)
   const slots = detail.gallery
-  const sizeLine = formatCatalogCardSizeLabel(detail.size_label, detail.size_code)
+  const sizeLine = formatCatalogItemSizeRangeValue(
+    detail.item_size_range_key || detail.size_label,
+    detail.size_code,
+  )
   const sold = isMarketingCatalogItemSold(detail.status)
   const reserved = isMarketingCatalogItemReserved(detail.status)
   const subscriptionHref = catalogSubscriptionHref()
@@ -607,7 +623,7 @@ export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks 
         brand_label: detail.brand_label,
         price_points: detail.price_points,
         imageUrl: detail.gallery[0]?.url ?? null,
-        size_label: detail.size_label,
+        size_label: detail.item_size_range_key || detail.size_label,
         size_code: detail.size_code,
       })
       // Depuis la modale catalogue : ouvrir la page pièce + volet panier dessus
@@ -823,6 +839,7 @@ export function CatalogItemDetailView({detail, titleId, layout = 'modal', looks 
               sizeLine={sizeLine}
               subscriptionHref={subscriptionHref}
               looks={looks}
+              looksSlot={looksSlot}
               addPending={addPending}
               inCart={inCart}
               onAddToCart={handleAddToCart}

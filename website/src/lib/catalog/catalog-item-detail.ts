@@ -5,6 +5,7 @@ import {
 } from '@/lib/catalog/marketing-catalog-items'
 import {itemDimensionsEntries} from '@/lib/catalog/item-era-fitting-dimensions'
 import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
+import {cache} from 'react'
 
 export type CatalogItemDetailPayload = {
   id: string
@@ -16,6 +17,8 @@ export type CatalogItemDetailPayload = {
   category_label: string | null
   size_label: string | null
   size_code: string | null
+  /** Range compact app (`XS/S/M`), prioritaire sur `size_label` unitaire. */
+  item_size_range_key: string | null
   color_label: string | null
   materials_label: string | null
   condition_label: string | null
@@ -27,21 +30,28 @@ export type CatalogItemDetailPayload = {
   gallery: MarketingCatalogGallerySlot[]
 }
 
-export async function loadCatalogItemDetail(itemId: string): Promise<CatalogItemDetailPayload | null> {
+async function loadCatalogItemDetailUncached(itemId: string): Promise<CatalogItemDetailPayload | null> {
   const supabase = getSupabaseServiceRoleClient()
   if (!supabase) return null
+
+  const extrasPromise = supabase
+    .from('items')
+    .select('item_era, item_fitting, item_dimensions, item_size_range_key')
+    .eq('id', itemId)
+    .maybeSingle()
 
   const rows = await fetchMarketingCatalogItemsByIds([itemId])
   const row = rows[0]
   if (!row) return null
 
-  const gallery = await resolveItemGallerySlots(supabase, row.photos)
+  const [gallery, extrasResult] = await Promise.all([
+    resolveItemGallerySlots(supabase, row.photos),
+    extrasPromise,
+  ])
+  const extras = extrasResult.data
 
-  const {data: extras} = await supabase
-    .from('items')
-    .select('item_era, item_fitting, item_dimensions')
-    .eq('id', itemId)
-    .maybeSingle()
+  const rangeKey =
+    typeof extras?.item_size_range_key === 'string' ? extras.item_size_range_key.trim() : ''
 
   return {
     id: row.id,
@@ -53,6 +63,7 @@ export async function loadCatalogItemDetail(itemId: string): Promise<CatalogItem
     category_label: row.category_label,
     size_label: row.size_label,
     size_code: row.size_code ?? null,
+    item_size_range_key: rangeKey || null,
     color_label: row.color_label,
     materials_label: row.materials_label,
     condition_label: row.condition_label,
@@ -67,3 +78,6 @@ export async function loadCatalogItemDetail(itemId: string): Promise<CatalogItem
     gallery,
   }
 }
+
+/** Déduplique metadata + page (et Strict Mode) dans la même requête. */
+export const loadCatalogItemDetail = cache(loadCatalogItemDetailUncached)

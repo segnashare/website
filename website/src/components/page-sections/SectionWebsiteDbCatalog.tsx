@@ -18,6 +18,14 @@ import styles from './websiteDbCatalog.module.css'
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
+const curatedDevWarnings = new Set<string>()
+
+function warnCuratedOnce(key: string, message: string) {
+  if (curatedDevWarnings.has(key)) return
+  curatedDevWarnings.add(key)
+  console.warn(message)
+}
+
 type Props = {
   section: WebsiteDbCatalogSection
   /** Resserre l’espacement quand un autre bandeau petit précède / suit. */
@@ -201,7 +209,8 @@ export async function SectionWebsiteDbCatalog({
 
   if (browseItems.length === 0) {
     if (process.env.NODE_ENV === 'development') {
-      console.warn(
+      warnCuratedOnce(
+        `${section._key}:empty`,
         `[website-db-catalog] curated empty: 0/${entries.length} rows for «${heading || section._key}» (UUID hors DB / hors filtres marketing)`,
       )
     }
@@ -209,7 +218,8 @@ export async function SectionWebsiteDbCatalog({
   }
 
   if (browseItems.length < entries.length && process.env.NODE_ENV === 'development') {
-    console.warn(
+    warnCuratedOnce(
+      `${section._key}:partial`,
       `[website-db-catalog] curated partial: ${browseItems.length}/${entries.length} for «${heading || section._key}»`,
     )
   }

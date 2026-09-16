@@ -23,6 +23,18 @@ export const CATALOG_CARD_COVER_TRANSFORM: StorageImageTransform = {
   format: 'webp',
 }
 
+/**
+ * Galerie modale / page pièce / lightbox.
+ * Sans transform, `next/image` télécharge le JPEG appareil (souvent > 5–10 Mo) et
+ * l’optimisation Vercel time-out → placeholders gris alors que le réseau est OK.
+ */
+export const CATALOG_GALLERY_PHOTO_TRANSFORM: StorageImageTransform = {
+  width: 1600,
+  quality: 75,
+  resize: 'contain',
+  format: 'webp',
+}
+
 export function normalizeStorageObjectPath(raw: string): string {
   let p = raw.trim().replace(/^\/+/, '')
   const lower = p.toLowerCase()

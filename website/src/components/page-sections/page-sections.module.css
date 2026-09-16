@@ -23,6 +23,16 @@
   padding-top: 0;
 }
 
+/*
+ * Premier bloc visible sous le hero : annuler le margin-top négatif des bandeaux
+ * « stackedAfter » (catalogue / scroll). Si le bandeau précédent ne rend rien
+ * (ex. curated vide), ce pull se collait sous le hero (z-index 30) et masquait le titre.
+ */
+.shellAfterFullBleed > *:first-child,
+.shellAfterFullBleed > *:first-child:empty + * {
+  margin-top: 0;
+}
+
 .shellOnDark {
   background: #0a0a0a;
   color: #f5f5f5;

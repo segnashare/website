@@ -20,6 +20,19 @@ const posthogAssetsHost = posthogHost.includes('eu.i.')
 const nextConfig: NextConfig = {
   skipTrailingSlashRedirect: true,
   transpilePackages: ['@segna/analytics'],
+  /**
+   * Évite de rebundler ces paquets à chaque compile Turbopack (gros graphe home + chat).
+   */
+  serverExternalPackages: ['@supabase/supabase-js', '@supabase/ssr', '@sanity/client'],
+  experimental: {
+    /**
+     * Le cache FS Turbopack gonfle (.next/dev ~2 Go) et plante en
+     * « Persisting failed: Another write batch or compaction is already active »,
+     * ce qui relance une compile froide de ~15 s. Mieux vaut recompiler en RAM.
+     */
+    turbopackFileSystemCacheForDev: false,
+    optimizePackageImports: ['framer-motion'],
+  },
   async rewrites() {
     // beforeFiles: sinon `/ingest` est capturé par la page marketing `[slug]`.
     return {

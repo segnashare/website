@@ -38,3 +38,23 @@ export function formatCatalogCardSizeLabel(
   const fromReferential = apparelDisplayLabelForCode(code, label)
   return prefixTaille(fromReferential || code)
 }
+
+/**
+ * Libellé champ taille sur la fiche pièce (modale + page), aligné app `ItemSizeConditionCard`.
+ * Espace avant/après le deux-points comme demandé.
+ */
+export const CATALOG_ITEM_SIZE_RANGE_FIELD_LABEL = 'Convient à du : '
+
+/**
+ * Valeur affichée sous ce libellé : range compact (`XS/S/M`) sans préfixe « Taille »,
+ * comme `normalizeItemSizeValue` côté app. « Taille unique » reste entier.
+ */
+export function formatCatalogItemSizeRangeValue(
+  sizeLabel: string | null | undefined,
+  sizeCode?: string | null | undefined,
+): string {
+  const line = formatCatalogCardSizeLabel(sizeLabel, sizeCode)
+  if (!line) return '—'
+  if (line === CATALOG_UNIQUE_SIZE_LABEL) return line
+  return line.replace(/^taille\s+/i, '')
+}

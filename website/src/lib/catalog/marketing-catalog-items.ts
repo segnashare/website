@@ -23,8 +23,10 @@ import {
 } from '@/lib/catalog/catalog-cache'
 import {
   CATALOG_CARD_COVER_TRANSFORM,
+  CATALOG_GALLERY_PHOTO_TRANSFORM,
   createSignedUrlForStoragePath,
   signedStorageImageIsMissing,
+  type StorageImageTransform,
   type StorageSignClient,
 } from '@/lib/catalog/storage-signed-url'
 import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
@@ -121,42 +123,30 @@ export type MarketingCatalogItemRow = {
 
 async function signStoragePathIfObjectExists(
   rawPath: string,
-  transform?: {transform: typeof CATALOG_CARD_COVER_TRANSFORM},
+  options?: {transform?: StorageImageTransform; skipMissingCheck?: boolean},
 ): Promise<string | null> {
   const supabase = getSupabaseServiceRoleClient()
   if (!supabase) return null
-  const url = await createSignedUrlForStoragePath(
-    supabase,
-    rawPath,
-    SIGNED_URL_TTL_SEC,
-    transform,
-  )
+  const url = await createSignedUrlForStoragePath(supabase, rawPath, SIGNED_URL_TTL_SEC, {
+    transform: options?.transform,
+  })
   if (!url) return null
-  if (await signedStorageImageIsMissing(url)) return null
+  // HEAD sur `/render/image` peut déclencher le resize Storage (plusieurs secondes / photo).
+  if (!options?.skipMissingCheck && (await signedStorageImageIsMissing(url))) return null
   return url
 }
-
-const getCachedSignedUrlForStoragePath = withDataCache(
-  async (rawPath: string): Promise<string | null> => signStoragePathIfObjectExists(rawPath),
-  ['marketing_catalog_signed_url_v3'],
-  {revalidate: SIGNED_URL_CACHE_REVALIDATE_SEC, tags: [CATALOG_CACHE_TAG]},
-)
 
 /** Covers cartes : signed URL + transform Storage (pas le JPEG original). */
 const getCachedCatalogCoverSignedUrlForStoragePath = withDataCache(
   async (rawPath: string): Promise<string | null> =>
-    signStoragePathIfObjectExists(rawPath, {transform: CATALOG_CARD_COVER_TRANSFORM}),
-  // v3 : ignore les chemins Storage qui 404 (signed URL stale / fichier remplacé).
-  ['marketing_catalog_cover_signed_url_v3'],
+    signStoragePathIfObjectExists(rawPath, {
+      transform: CATALOG_CARD_COVER_TRANSFORM,
+      skipMissingCheck: true,
+    }),
+  // v4 : plus de HEAD sur `/render/image` (déclenchait le resize Storage).
+  ['marketing_catalog_cover_signed_url_v4'],
   {revalidate: SIGNED_URL_CACHE_REVALIDATE_SEC, tags: [CATALOG_CACHE_TAG]},
 )
-
-async function resolveCachedSignedUrlForStoragePath(rawPath: string): Promise<string | null> {
-  const trimmed = rawPath.trim()
-  if (/^https?:\/\//i.test(trimmed)) return trimmed
-  if (!trimmed) return null
-  return getCachedSignedUrlForStoragePath(trimmed)
-}
 
 async function resolveCachedCatalogCoverSignedUrlForStoragePath(
   rawPath: string,
@@ -165,6 +155,25 @@ async function resolveCachedCatalogCoverSignedUrlForStoragePath(
   if (/^https?:\/\//i.test(trimmed)) return trimmed
   if (!trimmed) return null
   return getCachedCatalogCoverSignedUrlForStoragePath(trimmed)
+}
+
+const getCachedCatalogGallerySignedUrlForStoragePath = withDataCache(
+  async (rawPath: string): Promise<string | null> =>
+    signStoragePathIfObjectExists(rawPath, {
+      transform: CATALOG_GALLERY_PHOTO_TRANSFORM,
+      skipMissingCheck: true,
+    }),
+  ['marketing_catalog_gallery_signed_url_v2'],
+  {revalidate: SIGNED_URL_CACHE_REVALIDATE_SEC, tags: [CATALOG_CACHE_TAG]},
+)
+
+async function resolveCachedCatalogGallerySignedUrlForStoragePath(
+  rawPath: string,
+): Promise<string | null> {
+  const trimmed = rawPath.trim()
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+  if (!trimmed) return null
+  return getCachedCatalogGallerySignedUrlForStoragePath(trimmed)
 }
 
 function parseFacetOptions(raw: unknown): MarketingCatalogFacetOption[] {
@@ -592,24 +601,25 @@ export type MarketingCatalogGallerySlot = {
 }
 
 export async function resolveItemGallerySlots(
-  supabase: StorageSignClient,
+  _supabase: StorageSignClient,
   photos: unknown,
 ): Promise<MarketingCatalogGallerySlot[]> {
   const slots = collectPhotoSlotsFromItemPhotos(photos)
   if (slots.length === 0) {
     const paths = collectPhotoPathsFromItemPhotos(photos)
-    const signed = await signPhotoPaths(supabase, paths)
+    const signed = await signPhotoPaths(_supabase, paths)
     return signed
       .filter((u): u is string => Boolean(u))
       .map((url) => ({url, position: null}))
   }
 
-  const out: MarketingCatalogGallerySlot[] = []
-  for (const slot of slots) {
-    const url = await resolveCachedSignedUrlForStoragePath(slot.storagePath)
-    if (url) out.push({url, position: slot.position})
-  }
-  return out
+  const signed = await Promise.all(
+    slots.map(async (slot) => {
+      const url = await resolveCachedCatalogGallerySignedUrlForStoragePath(slot.storagePath)
+      return url ? ({url, position: slot.position} satisfies MarketingCatalogGallerySlot) : null
+    }),
+  )
+  return signed.filter((slot): slot is MarketingCatalogGallerySlot => Boolean(slot))
 }
 
 function parseMarketingCatalogRpcPayload(data: unknown): MarketingCatalogItemRow[] {
@@ -623,18 +633,6 @@ function parseMarketingCatalogRpcPayload(data: unknown): MarketingCatalogItemRow
       typeof (row as MarketingCatalogItemRow).id === 'string' &&
       typeof (row as MarketingCatalogItemRow).title === 'string',
   )
-}
-
-export async function fetchMarketingCatalogItemsByIds(
-  itemIds: string[],
-): Promise<MarketingCatalogItemRow[]> {
-  const idsKey = [
-    ...new Set(itemIds.map((id) => id.trim()).filter(Boolean)),
-  ]
-    .sort()
-    .join(',')
-  if (!idsKey) return []
-  return getCachedMarketingCatalogItemsByIdsKey(idsKey)
 }
 
 const getCachedMarketingCatalogItemsByIdsKey = withDataCache(
@@ -657,6 +655,21 @@ const getCachedMarketingCatalogItemsByIdsKey = withDataCache(
   ['marketing_catalog_items_by_ids_v4'],
   {revalidate: SIGNED_URL_CACHE_REVALIDATE_SEC, tags: [CATALOG_CACHE_TAG]},
 )
+
+/** Déduplique Strict Mode / metadata+page : `withDataCache` est un no-op en dev. */
+const fetchMarketingCatalogItemsByIdsRequest = cache(getCachedMarketingCatalogItemsByIdsKey)
+
+export async function fetchMarketingCatalogItemsByIds(
+  itemIds: string[],
+): Promise<MarketingCatalogItemRow[]> {
+  const idsKey = [
+    ...new Set(itemIds.map((id) => id.trim()).filter(Boolean)),
+  ]
+    .sort()
+    .join(',')
+  if (!idsKey) return []
+  return fetchMarketingCatalogItemsByIdsRequest(idsKey)
+}
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -871,14 +884,10 @@ export async function resolveCoverUrlsForItems(
 }
 
 export async function signPhotoPaths(
-  supabase: StorageSignClient,
+  _supabase: StorageSignClient,
   paths: string[],
 ): Promise<(string | null)[]> {
-  const out: (string | null)[] = []
-  for (const p of paths) {
-    out.push(await resolveCachedSignedUrlForStoragePath(p))
-  }
-  return out
+  return Promise.all(paths.map((p) => resolveCachedCatalogGallerySignedUrlForStoragePath(p)))
 }
 
 export async function resolveItemCoverSignedUrl(

@@ -35,6 +35,7 @@ import {
   CatalogCollectionTargeting,
 } from '@/components/catalog/CatalogCollectionTargeting'
 import {resolveCatalogFromQuery} from '@/lib/catalog/catalog-path-resolve'
+import {catalogItemPagePath, shouldOpenCatalogItemModal} from '@/lib/catalog/catalog-app-links'
 import {formatCatalogPurchasePriceShort} from '@/lib/catalog/catalog-borrow-price-label'
 import {formatCatalogCardSizeLabel} from '@/lib/catalog/format-catalog-card-size'
 import type {CatalogBrowseQuery} from '@/lib/catalog/catalog-search-params'
@@ -107,11 +108,15 @@ function GridCard({it, onOpen}: {it: MarketingCatalogGridItem; onOpen: (itemId: 
   const sizeLine = formatCatalogCardSizeLabel(it.size_label, it.size_code)
   const available = isMarketingCatalogItemAvailable(it.status)
   return (
-    <button
-      type="button"
+    <a
+      href={catalogItemPagePath(it.id)}
       className={`${styles.card} ${styles.cardButton}`}
       aria-label={`Voir ${titleLine}`}
-      onClick={() => onOpen(it.id)}
+      onClick={(e) => {
+        if (!shouldOpenCatalogItemModal(e)) return
+        e.preventDefault()
+        onOpen(it.id)
+      }}
       onMouseEnter={() => prefetchCatalogItemDetailClient(it.id)}
       onFocus={() => prefetchCatalogItemDetailClient(it.id)}
     >
@@ -135,7 +140,7 @@ function GridCard({it, onOpen}: {it: MarketingCatalogGridItem; onOpen: (itemId: 
           )}
         </div>
       </div>
-    </button>
+    </a>
   )
 }
 

@@ -15,6 +15,29 @@ export function catalogItemPagePath(itemId: string): string {
   return `/catalogue/piece/${itemId}`
 }
 
+/** Aligné sur les CSS catalogue (`@media (max-width: 767px)`). */
+export const CATALOG_MOBILE_MAX_PX = 767
+
+export function isCatalogMobileViewport(): boolean {
+  return typeof window !== 'undefined' && window.matchMedia(`(max-width: ${CATALOG_MOBILE_MAX_PX}px)`).matches
+}
+
+/**
+ * Desktop : la carte ouvre la modale.
+ * Mobile / clic modifié (nouvel onglet) : suivre le lien vers la page pièce.
+ */
+export function shouldOpenCatalogItemModal(event: {
+  button: number
+  metaKey: boolean
+  ctrlKey: boolean
+  shiftKey: boolean
+  altKey: boolean
+}): boolean {
+  if (event.button !== 0) return false
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return false
+  return !isCatalogMobileViewport()
+}
+
 export function catalogItemAppHref(itemId?: string | null): string {
   if (itemId?.trim()) return `${SEGNA_APP_BASE_URL}/shop?item=${encodeURIComponent(itemId.trim())}`
   return `${SEGNA_APP_BASE_URL}/shop`

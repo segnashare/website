@@ -541,6 +541,16 @@
     .stagedHeroRoot .stagedHeroContentLayer {
       padding-inline: max(clamp(0.7rem, 3vw, 1.15rem), env(safe-area-inset-left, 0px))
         max(clamp(0.7rem, 3vw, 1.15rem), env(safe-area-inset-right, 0px));
+      /* Air sous les CTAs : trop bas (0.25rem) + z-index 30 du hero masquait le H3 suivant. */
+      padding-bottom: 0.55rem;
+    }
+
+    .stagedHeroRoot .stagedHeroColumn {
+      gap: 1.7rem;
+    }
+
+    .stagedHeroRoot .stagedHeroLower {
+      padding-bottom: 0.7rem;
     }
   }
 

@@ -1,5 +1,6 @@
 import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
 import {catalogDataRevalidateSec, withDataCache} from '@/lib/sanity-cache'
+import {cache} from 'react'
 
 /** Statuts catalogue marketing (aligné RPC). */
 export const MARKETING_CATALOG_ITEM_STATUSES = [
@@ -89,9 +90,11 @@ const getCachedMarketingCatalogNewestIds = withDataCache(
   {revalidate: catalogDataRevalidateSec()},
 )
 
+const getMarketingCatalogNewestIdsRequest = cache(getCachedMarketingCatalogNewestIds)
+
 /** IDs « New » ordonnés par `created_at` desc (même pool que le badge carte). */
 export async function getMarketingCatalogNewestIds(): Promise<string[]> {
-  return getCachedMarketingCatalogNewestIds()
+  return getMarketingCatalogNewestIdsRequest()
 }
 
 export async function getMarketingCatalogNewestIdSet(): Promise<Set<string>> {

@@ -422,12 +422,23 @@ export function ItemChatProvider({children, source, apiBase = ''}: ProviderProps
   useEffect(() => {
     if (!local || claimedRef.current) return
     claimedRef.current = true
-    void (async () => {
-      await refreshList(local.visitorId)
-      if (local.conversationId) {
-        await refreshConversation(local.conversationId, local.visitorId)
-      }
-    })()
+    const visitorId = local.visitorId
+    const conversationId = local.conversationId
+    const run = () => {
+      void (async () => {
+        await refreshList(visitorId)
+        if (conversationId) {
+          await refreshConversation(conversationId, visitorId)
+        }
+      })()
+    }
+    // Ne pas compiler `/api/item-chat/*` pendant le 1er paint / compile Turbopack de la page.
+    if (typeof requestIdleCallback === 'function') {
+      const idle = requestIdleCallback(run, {timeout: 2500})
+      return () => cancelIdleCallback(idle)
+    }
+    const t = window.setTimeout(run, 600)
+    return () => window.clearTimeout(t)
   }, [local, refreshConversation, refreshList])
 
   useEffect(() => {

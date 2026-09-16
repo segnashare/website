@@ -89,16 +89,24 @@ export function CatalogItemPhotoCover({
   const frameRef = useRef<HTMLDivElement>(null)
   const [naturalSize, setNaturalSize] = useState<{w: number; h: number} | null>(null)
   const [loadFailed, setLoadFailed] = useState(false)
-  const [painted, setPainted] = useState(false)
+  const [optimizerFailed, setOptimizerFailed] = useState(false)
+  const [cropFailed, setCropFailed] = useState(false)
   const [box, setBox] = useState({w: 0, h: 0})
+  const mediaRef = useRef<HTMLImageElement | null>(null)
 
   const src = imageUrl?.trim() ?? ''
   const pos = position ?? null
-  const useBoCrop = Boolean(src) && !centerCover && Boolean(pos && !isDefaultItemPhotoPosition(pos))
+  const useBoCrop =
+    Boolean(src) && !centerCover && !cropFailed && Boolean(pos && !isDefaultItemPhotoPosition(pos))
   const alreadyResized = Boolean(src) && isSupabaseRenderImageUrl(src)
-  // Storage transform déjà à ~768px → pas de 2e passage Vercel Image Optimization.
+  // Storage transform déjà à ~768/1600px → pas de 2e passage Vercel Image Optimization.
   const useOptimizer =
-    Boolean(src) && !decorative && !useBoCrop && !alreadyResized && canUseNextImage(src)
+    Boolean(src) &&
+    !decorative &&
+    !useBoCrop &&
+    !alreadyResized &&
+    !optimizerFailed &&
+    canUseNextImage(src)
   const paintUrl =
     src && canUseNextImage(src) && (useBoCrop || decorative)
       ? alreadyResized
@@ -109,7 +117,8 @@ export function CatalogItemPhotoCover({
   useEffect(() => {
     setNaturalSize(null)
     setLoadFailed(false)
-    setPainted(false)
+    setOptimizerFailed(false)
+    setCropFailed(false)
   }, [imageUrl])
 
   useLayoutEffect(() => {
@@ -136,13 +145,16 @@ export function CatalogItemPhotoCover({
       if (cancelled) return
       if (img.naturalWidth > 0 && img.naturalHeight > 0) {
         setNaturalSize({w: img.naturalWidth, h: img.naturalHeight})
-        setPainted(true)
       }
     }
     img.onerror = () => {
-      if (!cancelled) setLoadFailed(true)
+      if (!cancelled) setCropFailed(true)
     }
     img.src = paintUrl
+    // Cached / already-complete : `onload` peut ne jamais se relancer.
+    if (img.complete && img.naturalWidth > 0 && img.naturalHeight > 0) {
+      setNaturalSize({w: img.naturalWidth, h: img.naturalHeight})
+    }
     return () => {
       cancelled = true
     }
@@ -176,15 +188,21 @@ export function CatalogItemPhotoCover({
   const frameClass = [styles.frame, className].filter(Boolean).join(' ')
   const objectPos = objectPosition ?? 'center center'
   const showImage = Boolean(src) && !loadFailed
-  const imageReady = painted || Boolean(fillStyle)
-  const showPlaceholder = !imageReady || loadFailed || !src
+  const showPlaceholder = !src || loadFailed
 
   const onImgReady = (w?: number, h?: number) => {
-    setPainted(true)
     if (w && h && w > 0 && h > 0) setNaturalSize({w, h})
   }
 
-  const imgClass = [painted ? null : styles.imgPending]
+  useLayoutEffect(() => {
+    const img = mediaRef.current
+    if (!img || !showImage) return
+    if (img.complete && img.naturalWidth > 0) {
+      onImgReady(img.naturalWidth, img.naturalHeight)
+    }
+  }, [showImage, src, useOptimizer, paintUrl])
+
+  const imgClass = [styles.media]
 
   return (
     <div ref={frameRef} className={frameClass}>
@@ -199,17 +217,19 @@ export function CatalogItemPhotoCover({
           quality={75}
           // `eager` seul ne suffit pas sur next/image (lazy par défaut) — bloqué sous marquee transform.
           priority={priority || eager}
+          ref={mediaRef}
           className={[styles.nextImg, ...imgClass].filter(Boolean).join(' ')}
           style={{objectFit, objectPosition: objectPos}}
           onLoad={(e) => {
             const img = e.currentTarget
             onImgReady(img.naturalWidth, img.naturalHeight)
           }}
-          onError={() => setLoadFailed(true)}
+          onError={() => setOptimizerFailed(true)}
         />
       ) : showImage ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
+          ref={mediaRef}
           src={src}
           alt=""
           className={[styles.fallbackImg, ...imgClass].filter(Boolean).join(' ')}
