@@ -41,6 +41,8 @@
   gap: 0;
   overflow-x: auto;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
 }
 
 .mosaic::-webkit-scrollbar {
@@ -48,10 +50,12 @@
 }
 
 .card {
+  /* 5 looks visibles max ; au-delà, scroll horizontal. Moins de 5 : elles s’étirent. */
   flex: 1 1 0;
+  min-width: 20%;
+  scroll-snap-align: start;
   display: flex;
   flex-direction: column;
-  min-width: 0;
   margin: 0;
   padding: 0;
   border: 0;
@@ -62,15 +66,9 @@
 }
 
 @media (max-width: 47.99rem) {
-  .mosaic {
-    -webkit-overflow-scrolling: touch;
-    scroll-snap-type: x proximity;
-  }
-
   .card {
     flex: 0 0 calc(100% / 3.5);
     min-width: calc(100% / 3.5);
-    scroll-snap-align: start;
   }
 }
 

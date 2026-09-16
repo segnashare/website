@@ -55,9 +55,10 @@ export function CatalogCollectionTargeting({looks, query, onSelectLook}: Props) 
                       src={look.imageUrl}
                       alt={look.imageAlt || displayCollectionLookTitle(look.title)}
                       fill
-                      sizes="(max-width: 48rem) 29vw, 25vw"
+                      sizes="(max-width: 48rem) 29vw, 20vw"
                       className={styles.photoImg}
                       style={look.objectPosition ? {objectPosition: look.objectPosition} : undefined}
+                      loading="eager"
                     />
                   ) : (
                     <span className={styles.photoFallback} aria-hidden />
