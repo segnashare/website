@@ -7,6 +7,7 @@ import {motion} from 'framer-motion'
 import type {WebsiteHeaderNavData} from '@/lib/sanity'
 import {normalizeHref} from '@/lib/normalize-href'
 import {visibleMobileMainNavItems} from '@/lib/mobileMainNav'
+import {resolveMarketingCtaLabel} from '@/lib/marketing-cta'
 import {AccountNavButton} from '@/components/auth/AccountNavButton'
 import {CartNavLink} from '@/components/cart/CartNavLink'
 import {CtaHrefLink} from './heroShared'
@@ -71,9 +72,9 @@ export function SiteNavChrome({
   ) : (
     <span className={styles.brand}>Segna</span>
   )
-  const primaryLabel = header?.primaryCta?.label || 'Essai gratuit'
+  const primaryLabel = resolveMarketingCtaLabel(header?.primaryCta?.label) || 'Essayer SegnaX dès 40€/mois'
   const primaryHref = normalizeHref(header?.primaryCta?.url)
-  const secondaryLabel = header?.secondaryCta?.label?.trim()
+  const secondaryLabel = resolveMarketingCtaLabel(header?.secondaryCta?.label)
   const secondaryHref = normalizeHref(header?.secondaryCta?.url)
   const showSecondaryCta = Boolean(secondaryLabel)
   const showNavDivider =

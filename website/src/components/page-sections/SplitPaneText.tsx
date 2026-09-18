@@ -1,6 +1,7 @@
 'use client'
 
 import {CtaHrefLink} from '@/components/home/heroShared'
+import {resolveMarketingCtaHref, resolveMarketingCtaLabel} from '@/lib/marketing-cta'
 import type {CSSProperties} from 'react'
 import {useMemo, useState} from 'react'
 import type {PortableTextBlock} from '@portabletext/types'
@@ -19,8 +20,8 @@ function blocksNonEmpty(value?: PortableTextBlock[] | null) {
 }
 
 function ctaPair(label?: string | null, href?: string | null) {
-  const l = label?.trim()
-  const h = href?.trim()
+  const l = resolveMarketingCtaLabel(label)
+  const h = resolveMarketingCtaHref(href, l ?? label)
   return l && h ? {label: l, href: h} : null
 }
 

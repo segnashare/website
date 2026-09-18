@@ -83,7 +83,7 @@ function SegnaXPromoCard() {
       <span className={cartStyles.segnaCardCopy}>
         <span className={cartStyles.segnaCardTitle}>
           Un accès premium et illimité
-          <span className={cartStyles.segnaCardPrice}>20&nbsp;€ le 1er mois, puis 40&nbsp;€/mois</span>
+          <span className={cartStyles.segnaCardPrice}>40&nbsp;€/mois</span>
         </span>
         <ul className={cartStyles.segnaCardBullets}>
           <li>Loue jusqu’à 400&nbsp;€ de pièces par mois</li>

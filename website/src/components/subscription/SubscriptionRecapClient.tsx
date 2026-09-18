@@ -139,7 +139,7 @@ export function SubscriptionRecapClient({
     } | null
 
     if (response.status === 401) {
-      setActivateError('Session expirée. Reconnecte-toi pour activer ton mois offert.')
+      setActivateError('Session expirée. Reconnecte-toi pour activer SegnaX.')
       return
     }
 
@@ -233,7 +233,7 @@ export function SubscriptionRecapClient({
       </p>
     ) : null
 
-  const primaryCtaContent = pending ? <WaveDotsLoader /> : 'Activer — 20 € le 1er mois'
+  const primaryCtaContent = pending ? <WaveDotsLoader /> : 'Essayer SegnaX dès 40€/mois'
   const secondaryLabel = embedded ? 'Retour au compte' : 'Continuer sans abonnement'
 
   return (
@@ -241,9 +241,9 @@ export function SubscriptionRecapClient({
       {/* —— Mobile : UI/UX alignée page package app —— */}
       <div className={styles.mobilePackage}>
         <header className={styles.mobileHeader}>
-          <h1 className={styles.mobileTitle}>Deviens membre SegnaX</h1>
+          <h1 className={styles.mobileTitle}>Des centaines de pièces à volonté</h1>
           <p className={styles.mobileLead}>
-            Votre offre −50&nbsp;% est prête — commencez à louer dès aujourd’hui.
+            Vous allez pouvoir commencer à louer vos prochaines pièces avec Segna dès aujourd’hui.
           </p>
         </header>
 
@@ -251,13 +251,11 @@ export function SubscriptionRecapClient({
           <section className={styles.offerRail} aria-label="Offre SegnaX">
             <div className={styles.offerRailTrack}>
               <article className={styles.offerCard} aria-pressed="true">
-                <div className={styles.offerCardBadge}>−50&nbsp;% le 1er mois</div>
+                <div className={styles.offerCardBadge}>Sans engagement</div>
                 <div className={styles.offerCardBody}>
                   <p className={styles.offerCardEyebrow}>SegnaX</p>
-                  <p className={styles.offerCardPrice}>20&nbsp;€</p>
-                  <p className={styles.offerCardDetail}>
-                    <strong>le 1er mois</strong>, puis 40&nbsp;€/mois · sans engagement
-                  </p>
+                  <p className={styles.offerCardPrice}>40&nbsp;€/mois</p>
+                  <p className={styles.offerCardDetail}>Tarif plein · résiliable à tout moment</p>
                 </div>
               </article>
             </div>
@@ -341,22 +339,10 @@ export function SubscriptionRecapClient({
       <div className={styles.shell}>
         <main className={styles.main}>
           <div className={styles.panel}>
-            <h1 className={styles.title}>Votre offre −50 % est prête</h1>
+            <h1 className={styles.title}>Des centaines de pièces à volonté</h1>
             <p className={styles.lead}>
               Vous allez pouvoir commencer à louer vos prochaines pièces avec Segna dès aujourd’hui.
             </p>
-
-            <div className={styles.priceGrid}>
-              <div>
-                <p className={styles.priceLabel}>Aujourd’hui</p>
-                <p className={styles.priceValue}>20&nbsp;€</p>
-              </div>
-              <div>
-                <p className={styles.priceLabel}>Ensuite</p>
-                <p className={styles.priceValue}>40&nbsp;€/mois</p>
-              </div>
-              <p className={styles.priceCommitment}>Sans engagement · −50 % le 1er mois</p>
-            </div>
 
             <p className={styles.benefitsIntro}>
               <span>Avec</span>

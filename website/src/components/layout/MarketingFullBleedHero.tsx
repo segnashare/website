@@ -10,6 +10,7 @@ import {objectPositionFromHotspot} from '@/lib/homeStagedPlacements'
 import {SiteNavChrome} from '@/components/home/SiteNavChrome'
 import {StagedHeroCycle} from '@/components/home/StagedHeroCycle'
 import {CtaHrefLink} from '@/components/home/heroShared'
+import {resolveMarketingCtaLabel, resolveMarketingPromoCopy} from '@/lib/marketing-cta'
 import styles from '@/components/home/homeHero.module.css'
 import staged from '@/components/home/homeStagedHero.module.css'
 import m from './marketingFullBleedHero.module.css'
@@ -52,6 +53,8 @@ export function MarketingFullBleedHero({marketing, headerNav, cta, children, tig
 
   const visualBg =
     marketing && !useMulti && !backgroundImageUrl ? {background: '#2d3748'} : undefined
+  const heroSubtitle = resolveMarketingPromoCopy(marketing?.heroSubtitle)
+  const ctaLabel = resolveMarketingCtaLabel(cta?.label) ?? cta?.label
 
   return (
     <main className={m.pageMain}>
@@ -95,7 +98,7 @@ export function MarketingFullBleedHero({marketing, headerNav, cta, children, tig
                   {marketing.heroTitle}
                 </motion.h1>
 
-                {marketing.heroSubtitle?.trim() || cta ? (
+                {heroSubtitle || cta ? (
                   <motion.div
                     className={staged.stagedHeroMeta}
                     initial="hidden"
@@ -106,13 +109,13 @@ export function MarketingFullBleedHero({marketing, headerNav, cta, children, tig
                     }}
                     transition={{duration: shouldReduceMotion ? 0 : 0.65, ease: [0.16, 1, 0.3, 1], delay: 0.11}}
                   >
-                    {marketing.heroSubtitle?.trim() ? (
-                      <p className={m.subtitle}>{marketing.heroSubtitle.trim()}</p>
+                    {heroSubtitle ? (
+                      <p className={m.subtitle}>{heroSubtitle}</p>
                     ) : null}
-                    {cta ? (
+                    {cta && ctaLabel ? (
                       <div className={m.ctaWrap}>
                         <CtaHrefLink href={cta.href} className={styles.downloadButton}>
-                          {cta.label}
+                          {ctaLabel}
                         </CtaHrefLink>
                       </div>
                     ) : null}

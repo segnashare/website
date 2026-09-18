@@ -66,7 +66,7 @@ export function CatalogItemRecommendedSection({items}: Props) {
           Explorez le catalogue
         </Link>
         <a href={segnaAppDownloadHref()} className={styles.ctaPrimary}>
-          1er mois Segna gratuit
+          Essayer SegnaX dès 40€/mois
         </a>
       </div>
     </section>

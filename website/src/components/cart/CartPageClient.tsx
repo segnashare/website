@@ -241,7 +241,7 @@ export function CartPageClient() {
                 <span className={styles.segnaCardTitle}>
                   Un accès premium et illimité
                   <span className={styles.segnaCardPrice}>
-                    20&nbsp;€ le 1er mois, puis 40&nbsp;€/mois
+                    40&nbsp;€/mois
                   </span>
                 </span>
                 <ul className={styles.segnaCardBullets}>

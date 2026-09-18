@@ -10,6 +10,7 @@ import type {HomePageData} from '@/lib/sanity'
 import {HomeHeroActionBlock} from './HomeHeroActionBlock'
 import {HeroTrustpilotRating} from './HeroTrustpilotRating'
 import {homeHeroActionFromPage} from '@/lib/home-hero-action'
+import {resolveMarketingCtaLabel, resolveMarketingPromoCopy} from '@/lib/marketing-cta'
 import {visibleMobileMainNavItems} from '@/lib/mobileMainNav'
 import {AccountNavButton} from '@/components/auth/AccountNavButton'
 import {CartNavLink} from '@/components/cart/CartNavLink'
@@ -60,9 +61,9 @@ export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeH
   ) : (
     <span className={styles.brand}>Segna</span>
   )
-  const primaryLabel = homePage.primaryCta?.label || 'Essai gratuit'
+  const primaryLabel = resolveMarketingCtaLabel(homePage.primaryCta?.label) || 'Essayer SegnaX dès 40€/mois'
   const primaryHref = homePage.primaryCta?.url?.trim() || '#'
-  const secondaryLabel = homePage.secondaryCta?.label?.trim()
+  const secondaryLabel = resolveMarketingCtaLabel(homePage.secondaryCta?.label)
   const secondaryHref = homePage.secondaryCta?.url?.trim() || '#'
   const showSecondaryCta = Boolean(secondaryLabel)
   const showNavDivider =
@@ -71,7 +72,7 @@ export function HomeHero({homePage, backgroundImageUrl, catalogSearchNav}: HomeH
   const catalogSearchPlaceholder =
     homePage.heroStagedSearchPlaceholder?.trim() || 'Marque ou catégorie…'
   const catalogSearchButtonLabel = homePage.heroStagedSearchButtonLabel?.trim() || 'Rechercher'
-  const heroSubtitle = homePage.heroSubtitle?.trim()
+  const heroSubtitle = resolveMarketingPromoCopy(homePage.heroSubtitle)
   const heroAction = homeHeroActionFromPage(homePage)
   const navElevated = useNavScrollElevated()
   const navRootClass = `${styles.navChromeRoot} ${navElevated ? styles.navChromeRootScrolled : ''}`

@@ -3,6 +3,7 @@ import {notFound} from 'next/navigation'
 import {PageSections} from '@/components/cms/PageSections'
 import {MarketingFullBleedHero} from '@/components/layout/MarketingFullBleedHero'
 import {heroTitlePlainText} from '@/lib/hero-title'
+import {resolveMarketingCtaHref, resolveMarketingCtaLabel} from '@/lib/marketing-cta'
 import {getHomePageData, getMarketingPageBySlug, getMarketingPageSlugs, getWebsiteHeaderNav, urlFor} from '@/lib/sanity'
 
 export const revalidate = 3600
@@ -48,10 +49,10 @@ export default async function MarketingDynamicPage({params}: PageProps) {
 
   const headerNav = homePage ?? siteNavFallback
 
+  const customCtaLabel = resolveMarketingCtaLabel(marketingPage.heroCtaLabel)
+  const customCtaHref = resolveMarketingCtaHref(marketingPage.heroCtaHref, customCtaLabel)
   const customCta =
-    marketingPage.heroCtaLabel?.trim() && marketingPage.heroCtaHref?.trim()
-      ? {label: marketingPage.heroCtaLabel.trim(), href: marketingPage.heroCtaHref.trim()}
-      : null
+    customCtaLabel && customCtaHref ? {label: customCtaLabel, href: customCtaHref} : null
 
   const primary = homePage?.primaryCta ?? siteNavFallback?.primaryCta
   const fallbackCta =

@@ -154,7 +154,6 @@ export function SubscriptionLandingClient() {
             <span className={styles.offerAmount}>40&nbsp;€</span>
             <span className={styles.offerPeriod}>/mois</span>
           </p>
-          <p className={styles.offerTrial}>−50&nbsp;% le 1er mois (20&nbsp;€)</p>
           <ul className={styles.offerList}>
             <li>Jusqu&apos;à 400&nbsp;€ de pièces en location</li>
             <li>Durée illimitée + 1 échange inclus / mois</li>
@@ -162,10 +161,10 @@ export function SubscriptionLandingClient() {
             <li>−20&nbsp;% sur l&apos;achat des pièces</li>
           </ul>
           <button type="button" className={styles.primaryCta} disabled={pending} onClick={() => void handleCta()}>
-            {pending ? <WaveDotsLoader /> : 'Commencer — 20 € le 1er mois'}
+            {pending ? <WaveDotsLoader /> : 'Essayer SegnaX dès 40€/mois'}
           </button>
           <p className={styles.offerFine}>
-            Puis 40&nbsp;€/mois. Résiliable depuis l&apos;app. Le suivi des locations se fait sur Segna.
+            Résiliable depuis l&apos;app. Le suivi des locations se fait sur Segna.
           </p>
         </div>
       </section>
@@ -219,7 +218,7 @@ export function SubscriptionLandingClient() {
           </li>
         </ol>
         <button type="button" className={styles.primaryCta} disabled={pending} onClick={() => void handleCta()}>
-          {pending ? <WaveDotsLoader /> : 'Activer — −50 % le 1er mois'}
+          {pending ? <WaveDotsLoader /> : 'Essayer SegnaX dès 40€/mois'}
         </button>
       </section>
 

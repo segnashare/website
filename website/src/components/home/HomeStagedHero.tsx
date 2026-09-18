@@ -9,6 +9,7 @@ import {urlFor} from '@/lib/sanity'
 import {HomeHeroActionBlock} from './HomeHeroActionBlock'
 import {HeroTrustpilotRating} from './HeroTrustpilotRating'
 import {homeHeroActionFromPage} from '@/lib/home-hero-action'
+import {resolveMarketingPromoCopy} from '@/lib/marketing-cta'
 import {StagedHeroCycle} from './StagedHeroCycle'
 import {SiteNavChrome} from './SiteNavChrome'
 import styles from './homeHero.module.css'
@@ -61,7 +62,7 @@ export function HomeStagedHero({homePage, catalogSearchNav}: Props) {
   const searchPlaceholder =
     homePage.heroStagedSearchPlaceholder?.trim() || 'Que souhaitez-vous porter ?'
   const searchButtonLabel = homePage.heroStagedSearchButtonLabel?.trim() || 'Rechercher'
-  const heroSubtitle = homePage.heroSubtitle?.trim()
+  const heroSubtitle = resolveMarketingPromoCopy(homePage.heroSubtitle)
   const heroAction = homeHeroActionFromPage(homePage)
 
   const stagedSizes =

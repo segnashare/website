@@ -7,6 +7,7 @@ import {
   type PageSection,
 } from '@/lib/sanity'
 import {SANITY_CACHE_TAG, withDataCache} from '@/lib/sanity-cache'
+import {resolveMarketingCtaHref, resolveMarketingCtaLabel, resolveMarketingPromoCopy} from '@/lib/marketing-cta'
 
 /** Fallback si la page Sanity `abonnement` n’existe pas encore. */
 export const ABONNEMENT_FALLBACK_MARKETING: MarketingPageData = {
@@ -15,9 +16,9 @@ export const ABONNEMENT_FALLBACK_MARKETING: MarketingPageData = {
   slug: {current: 'abonnement'},
   heroTitle: 'Louer avec SegnaX',
   heroSubtitle:
-    '−50 % le 1er mois (20 €), puis 40 €/mois — jusqu’à 400 € de pièces, échanges et assurance inclus.',
+    '40 €/mois — jusqu’à 400 € de pièces, échanges et assurance inclus.',
   heroPresentation: 'single_photo',
-  heroCtaLabel: 'Commencer — −50 % le 1er mois',
+  heroCtaLabel: 'Essayer SegnaX dès 40€/mois',
   heroCtaHref: '#offre-segnax',
 }
 
@@ -32,24 +33,29 @@ async function getAbonnementMarketingShellUncached() {
   const headerNav = homePage ?? siteNavFallback
   const fromCms = Boolean(marketingFromCms)
 
+  const customCtaLabel = resolveMarketingCtaLabel(marketingPage.heroCtaLabel)
+  const customCtaHref = resolveMarketingCtaHref(marketingPage.heroCtaHref, customCtaLabel)
   const customCta =
-    marketingPage.heroCtaLabel?.trim() && marketingPage.heroCtaHref?.trim()
-      ? {label: marketingPage.heroCtaLabel.trim(), href: marketingPage.heroCtaHref.trim()}
-      : null
+    customCtaLabel && customCtaHref ? {label: customCtaLabel, href: customCtaHref} : null
 
   const cta = customCta ?? {
-    label: 'Commencer — −50 % le 1er mois',
+    label: 'Essayer SegnaX dès 40€/mois',
     href: '#offre-segnax',
   }
 
   const sections: PageSection[] = marketingPage.sections ?? []
+  const marketingPageResolved: MarketingPageData = {
+    ...marketingPage,
+    heroSubtitle: resolveMarketingPromoCopy(marketingPage.heroSubtitle) ?? marketingPage.heroSubtitle,
+    heroCtaLabel: cta.label,
+  }
 
-  return {marketingPage, headerNav, cta, sections, fromCms}
+  return {marketingPage: marketingPageResolved, headerNav, cta, sections, fromCms}
 }
 
 /** Hero + sections page marketing « abonnement » (comme Location / Catalogue). */
 export const getAbonnementMarketingShell = cache(
-  withDataCache(getAbonnementMarketingShellUncached, ['abonnement_marketing_shell_v2'], {
+  withDataCache(getAbonnementMarketingShellUncached, ['abonnement_marketing_shell_v3'], {
     revalidate: 3600,
     tags: [SANITY_CACHE_TAG],
   }),

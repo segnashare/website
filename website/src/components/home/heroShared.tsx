@@ -3,6 +3,7 @@
 import {JoinClubCtaLink} from '@/components/home/JoinClubCtaLink'
 import {trackWebsiteEvent} from '@/lib/analytics/track'
 import {isAppDownloadCtaLabel, resolveAppDownloadHref} from '@/lib/catalog/catalog-app-links'
+import {resolveMarketingCtaLabel} from '@/lib/marketing-cta'
 import {normalizeHref} from '@/lib/normalize-href'
 import Link from 'next/link'
 import type {ReactNode} from 'react'
@@ -42,7 +43,10 @@ export function CtaHrefLink({
   tabIndex?: number
   placement?: string
 }) {
-  const ctaLabel = ariaLabel?.trim() || labelFromChildren(children)
+  const rawLabel = ariaLabel?.trim() || labelFromChildren(children)
+  const ctaLabel = resolveMarketingCtaLabel(rawLabel) ?? rawLabel
+  const displayChildren =
+    typeof children === 'string' ? (resolveMarketingCtaLabel(children) ?? children) : children
   const h = normalizeHref(resolveAppDownloadHref(href, ctaLabel) ?? href)
 
   const trackClick = () => {
@@ -65,7 +69,7 @@ export function CtaHrefLink({
         tabIndex={tabIndex}
         placement={placement}
       >
-        {children}
+        {displayChildren}
       </JoinClubCtaLink>
     )
   }
@@ -75,20 +79,20 @@ export function CtaHrefLink({
   if (h.startsWith('/')) {
     return (
       <Link href={h} className={className} onClick={trackClick} {...a11y} {...ti}>
-        {children}
+        {displayChildren}
       </Link>
     )
   }
   if (/^https?:\/\//i.test(h) || h.startsWith('//')) {
     return (
       <a href={h} className={className} rel="noopener noreferrer" onClick={trackClick} {...a11y} {...ti}>
-        {children}
+        {displayChildren}
       </a>
     )
   }
   return (
     <Link href={h} className={className} onClick={trackClick} {...a11y} {...ti}>
-      {children}
+      {displayChildren}
     </Link>
   )
 }

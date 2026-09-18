@@ -123,7 +123,7 @@ export async function saveOnboardingIdentity(
   const nameResult = await persistOnboardingNameFields(supabase, firstName, lastName)
   if (!nameResult.ok) return nameResult
 
-  // Tél en attente uniquement — validation OTP + unicité au moment « Activer mon mois offert ».
+  // Tél en attente uniquement — validation OTP + unicité au moment d’activer SegnaX.
   const phoneResult = await savePendingCheckoutPhone(supabase, phoneRaw)
   if (!phoneResult.ok) return phoneResult
 

@@ -4,9 +4,9 @@ import {SubscriptionRecapClient} from '@/components/subscription/SubscriptionRec
 import {RECAP_WALL_ITEMS} from '@/lib/subscription/recap-wall-items'
 
 export const metadata: Metadata = {
-  title: 'Votre mois offert | Segna',
+  title: 'Abonnement SegnaX | Segna',
   description:
-    'Activez votre abonnement Segna : −50 % le 1er mois (20 €), puis 40 €/mois. Annulation possible avant le renouvellement.',
+    'Activez votre abonnement SegnaX : 40 €/mois, jusqu’à 400 € de pièces. Annulation possible avant le renouvellement.',
 }
 
 export default function AbonnementRecapPage() {

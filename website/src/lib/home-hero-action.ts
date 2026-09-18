@@ -1,4 +1,5 @@
 import {resolveAppDownloadHref} from '@/lib/catalog/catalog-app-links'
+import {resolveMarketingCtaLabel} from '@/lib/marketing-cta'
 import type {HomePageDocumentData} from '@/lib/sanity'
 
 export type HeroActionLayout = 'search_only' | 'single_cta' | 'cta_and_search' | 'dual_cta'
@@ -24,7 +25,7 @@ type PageHeroActionFields = Pick<
 >
 
 function ctaPair(label?: string, href?: string): HeroCta | null {
-  const l = label?.trim()
+  const l = resolveMarketingCtaLabel(label?.trim()) ?? label?.trim()
   const h = resolveAppDownloadHref(href, l) ?? href?.trim()
   return l && h ? {label: l, href: h} : null
 }
