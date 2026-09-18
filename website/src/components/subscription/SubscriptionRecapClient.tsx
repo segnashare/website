@@ -198,7 +198,7 @@ export function SubscriptionRecapClient({
       </p>
     ) : null
 
-  const primaryCtaContent = pending ? <WaveDotsLoader /> : 'Essayer SegnaX dès 40€/mois'
+  const primaryCtaContent = pending ? <WaveDotsLoader /> : 'Essaye SegnaX'
   const secondaryLabel = embedded ? 'Retour au compte' : 'Continuer sans abonnement'
 
   return (
@@ -206,9 +206,9 @@ export function SubscriptionRecapClient({
       <div className={styles.shell}>
         <main className={styles.main}>
           <div className={styles.panel}>
-            <h1 className={styles.title}>Des centaines de pièces à volonté</h1>
+            <h1 className={styles.title}>Des centaines de pièces à porter à volonté&nbsp;!</h1>
             <p className={styles.lead}>
-              Vous allez pouvoir commencer à louer vos prochaines pièces avec Segna dès aujourd’hui.
+              Porte ce que tu veux, quand tu veux, où tu veux et sans contraintes, pour 40&nbsp;€/mois.
             </p>
 
             <p className={styles.benefitsIntro}>
