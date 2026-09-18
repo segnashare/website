@@ -1,5 +1,5 @@
 import {CatalogGridCardMedia} from '@/components/catalog/CatalogGridCardMedia'
-import {catalogItemPagePath, SEGNA_APP_BASE_URL} from '@/lib/catalog/catalog-app-links'
+import {catalogItemPagePath, segnaAppDownloadHref} from '@/lib/catalog/catalog-app-links'
 import {formatCatalogPurchasePriceShort} from '@/lib/catalog/catalog-borrow-price-label'
 import {formatCatalogCardSizeLabel} from '@/lib/catalog/format-catalog-card-size'
 import type {MarketingCatalogGridItem} from '@/lib/catalog/marketing-catalog-items'
@@ -65,7 +65,7 @@ export function CatalogItemRecommendedSection({items}: Props) {
         <Link href="/catalogue" className={styles.ctaSecondary}>
           Explorez le catalogue
         </Link>
-        <a href={SEGNA_APP_BASE_URL} className={styles.ctaPrimary}>
+        <a href={segnaAppDownloadHref()} className={styles.ctaPrimary}>
           1er mois Segna gratuit
         </a>
       </div>

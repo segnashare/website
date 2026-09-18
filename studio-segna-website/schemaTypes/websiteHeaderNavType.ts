@@ -16,11 +16,11 @@ export const websiteHeaderNavType = defineType({
     ],
     secondaryCta: {
       label: 'Se connecter',
-      url: 'https://app.segnashare.com/auth',
+      url: 'https://apps.apple.com/fr/app/segna/id6799780391',
     },
     primaryCta: {
       label: 'Essai gratuit',
-      url: 'https://app.segnashare.com/auth',
+      url: 'https://apps.apple.com/fr/app/segna/id6799780391',
     },
   },
   fields: [

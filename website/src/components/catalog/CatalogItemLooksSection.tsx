@@ -1,4 +1,4 @@
-import {SEGNA_APP_BASE_URL} from '@/lib/catalog/catalog-app-links'
+import {segnaAppDownloadHref} from '@/lib/catalog/catalog-app-links'
 import type {CatalogItemLookMedia} from '@/lib/catalog/catalog-item-style-looks'
 import styles from './catalogItemLooksSection.module.css'
 
@@ -22,7 +22,7 @@ export function CatalogItemLooksSection({looks}: Props) {
       <h3 className={styles.heading}>Porté dans ces looks</h3>
       <ul className={styles.grid}>
         {visible.map((look) => {
-          const href = `${SEGNA_APP_BASE_URL}/look/${encodeURIComponent(look.lookId)}`
+          const href = segnaAppDownloadHref()
           const src = thumbUrl(look)
           return (
             <li key={look.lookId} className={styles.cell}>

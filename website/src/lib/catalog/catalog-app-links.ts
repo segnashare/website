@@ -29,16 +29,29 @@ export function segnaAppDownloadHref(): string {
   return SEGNA_APP_STORE_URL
 }
 
+/** Href public vers l’app web membre (`app.segnashare.com`), à rediriger vers l’App Store. */
+export function isSegnaWebAppHref(href: string | null | undefined): boolean {
+  const h = href?.trim()
+  if (!h) return false
+  try {
+    const u = new URL(h, 'https://www.segnashare.com')
+    const host = u.hostname.toLowerCase()
+    if (host === 'app.segnashare.com' || host.endsWith('.app.segnashare.com')) return true
+  } catch {
+    return false
+  }
+  return false
+}
+
 /**
- * Si le libellé (ou le href déjà App Store) vise l’app native, renvoyer la fiche store.
- * Ne touche pas aux CTA signup / club qui pointent encore vers `app.segnashare.com/auth`.
+ * Tout lien public vers l’app web (ou un CTA « Télécharge l’app ») → fiche App Store iOS.
  */
 export function resolveAppDownloadHref(
   href: string | null | undefined,
   label?: string | null,
 ): string | null {
   const h = href?.trim()
-  if (isAppDownloadCtaLabel(label)) return SEGNA_APP_STORE_URL
+  if (isAppDownloadCtaLabel(label) || isSegnaWebAppHref(h)) return SEGNA_APP_STORE_URL
   if (!h) return null
   try {
     const u = new URL(h)
@@ -76,13 +89,12 @@ export function shouldOpenCatalogItemModal(event: {
   return !isCatalogMobileViewport()
 }
 
-export function catalogItemAppHref(itemId?: string | null): string {
-  if (itemId?.trim()) return `${SEGNA_APP_BASE_URL}/shop?item=${encodeURIComponent(itemId.trim())}`
-  return `${SEGNA_APP_BASE_URL}/shop`
+export function catalogItemAppHref(_itemId?: string | null): string {
+  return SEGNA_APP_STORE_URL
 }
 
 export function catalogAppSignupHref(): string {
-  return `${SEGNA_APP_BASE_URL}/auth/sign-up/email`
+  return SEGNA_APP_STORE_URL
 }
 
 /** Landing Location (CTAs SegnaX / abo historiques). */

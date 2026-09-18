@@ -43,10 +43,7 @@ export function CtaHrefLink({
   placement?: string
 }) {
   const ctaLabel = ariaLabel?.trim() || labelFromChildren(children)
-  const downloadHref = resolveAppDownloadHref(href, ctaLabel)
-  const h = normalizeHref(
-    isAppDownloadCtaLabel(ctaLabel) ? downloadHref : (downloadHref ?? href),
-  )
+  const h = normalizeHref(resolveAppDownloadHref(href, ctaLabel) ?? href)
 
   const trackClick = () => {
     trackWebsiteEvent('cta_clicked', {

@@ -3,7 +3,7 @@
 import {hasActivePaidSubscription} from '@/lib/auth/has-active-subscription'
 import {trackWebsiteEvent} from '@/lib/analytics/track'
 import {WEBSITE_LOCATION_PATH, WEBSITE_SUBSCRIPTION_RECAP_PATH} from '@/lib/cart/paths'
-import {SEGNA_APP_BASE_URL} from '@/lib/catalog/catalog-app-links'
+import {SEGNA_APP_BASE_URL, resolveAppDownloadHref} from '@/lib/catalog/catalog-app-links'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import Link from 'next/link'
 import {useRouter} from 'next/navigation'
@@ -26,7 +26,9 @@ function isSignupHref(href: string): boolean {
 }
 
 function guestDestination(href: string): string {
-  const h = href.trim() || WEBSITE_LOCATION_PATH
+  const remapped = resolveAppDownloadHref(href)?.trim()
+  const h = remapped || href.trim() || WEBSITE_LOCATION_PATH
+  if (/^https?:\/\//i.test(h) || h.startsWith('//')) return h
   if (isSignupHref(h)) {
     return `/signup?next=${encodeURIComponent(WEBSITE_SUBSCRIPTION_RECAP_PATH)}`
   }
@@ -111,6 +113,13 @@ export function JoinClubCtaLink({
         })
       }
       onClick?.()
+      const go = (dest: string) => {
+        if (/^https?:\/\//i.test(dest) || dest.startsWith('//')) {
+          window.location.assign(dest)
+          return
+        }
+        router.push(dest)
+      }
       try {
         const supabase = createSupabaseBrowserClient()
         const {
@@ -118,7 +127,7 @@ export function JoinClubCtaLink({
         } = await supabase.auth.getUser()
 
         if (!user) {
-          router.push(fallbackHref)
+          go(fallbackHref)
           return
         }
 
@@ -127,9 +136,9 @@ export function JoinClubCtaLink({
           return
         }
 
-        router.push(WEBSITE_SUBSCRIPTION_RECAP_PATH)
+        go(WEBSITE_SUBSCRIPTION_RECAP_PATH)
       } catch {
-        router.push(fallbackHref)
+        go(fallbackHref)
       }
     },
     [ariaLabel, fallbackHref, onClick, placement, router],

@@ -28,8 +28,7 @@ export function resolveMarketingCtaLabel(label: string | null | undefined): stri
 }
 
 /**
- * CTA « essai / -50 % » sous le tryptique : plus de deep link app auth,
- * on envoie vers signup (tunnel website).
+ * CTA sous le tryptique : `/signup` → tunnel website ; liens app web → App Store.
  */
 export function resolveThreeStepPrimaryCtaHref(
   href: string | null | undefined,
@@ -37,16 +36,6 @@ export function resolveThreeStepPrimaryCtaHref(
 ): string | null {
   const mappedLabelHref = resolveMarketingCtaHref(href, label)
   if (!mappedLabelHref) return null
-  try {
-    if (/^https?:\/\//i.test(mappedLabelHref)) {
-      const u = new URL(mappedLabelHref)
-      if (/(^|\.)segnashare\.com$/i.test(u.hostname) && u.pathname.startsWith('/auth')) {
-        return `/signup?next=${encodeURIComponent(WEBSITE_SUBSCRIPTION_RECAP_PATH)}`
-      }
-    }
-  } catch {
-    // keep mapped
-  }
   if (mappedLabelHref === '/signup' || mappedLabelHref.startsWith('/signup?')) {
     return `/signup?next=${encodeURIComponent(WEBSITE_SUBSCRIPTION_RECAP_PATH)}`
   }
