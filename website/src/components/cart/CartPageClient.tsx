@@ -10,7 +10,7 @@ import {
   formatCatalogPurchasePriceLabel,
 } from '@/lib/catalog/catalog-borrow-price-label'
 import {formatCatalogCardSizeLabel} from '@/lib/catalog/format-catalog-card-size'
-import {catalogItemAppHref, catalogItemPagePath} from '@/lib/catalog/catalog-app-links'
+import {catalogItemPagePath, segnaAppDownloadHref} from '@/lib/catalog/catalog-app-links'
 import {
   WEBSITE_CART_PATH,
   WEBSITE_CHECKOUT_PATH,
@@ -360,12 +360,12 @@ export function CartPageClient() {
             </section>
 
             <a
-              href={catalogItemAppHref(items[0]?.id)}
+              href={segnaAppDownloadHref()}
               className={styles.appPromo}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => {
-                const href = catalogItemAppHref(items[0]?.id)
+                const href = segnaAppDownloadHref()
                 trackWebsiteEvent('cta_clicked', {
                   cta_label: 'Découvrir Segna sur l’app',
                   cta_href: href,

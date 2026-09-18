@@ -2,9 +2,16 @@
 
 import {JoinClubCtaLink} from '@/components/home/JoinClubCtaLink'
 import {trackWebsiteEvent} from '@/lib/analytics/track'
+import {isAppDownloadCtaLabel, resolveAppDownloadHref} from '@/lib/catalog/catalog-app-links'
 import {normalizeHref} from '@/lib/normalize-href'
 import Link from 'next/link'
 import type {ReactNode} from 'react'
+
+function labelFromChildren(node: ReactNode): string {
+  if (typeof node === 'string' || typeof node === 'number') return String(node)
+  if (Array.isArray(node)) return node.map(labelFromChildren).join('')
+  return ''
+}
 
 function isAuthAwareClubHref(href: string): boolean {
   const h = href.trim()
@@ -35,19 +42,23 @@ export function CtaHrefLink({
   tabIndex?: number
   placement?: string
 }) {
-  const h = normalizeHref(href)
+  const ctaLabel = ariaLabel?.trim() || labelFromChildren(children)
+  const downloadHref = resolveAppDownloadHref(href, ctaLabel)
+  const h = normalizeHref(
+    isAppDownloadCtaLabel(ctaLabel) ? downloadHref : (downloadHref ?? href),
+  )
 
   const trackClick = () => {
     trackWebsiteEvent('cta_clicked', {
       cta_href: h,
-      cta_label: ariaLabel?.trim() || undefined,
+      cta_label: ctaLabel || undefined,
       placement,
     })
     onClick?.()
   }
 
   // Signup / abonnement : si déjà connecté → récap activation (pas la page signup).
-  if (h.startsWith('/') && isAuthAwareClubHref(h)) {
+  if (h.startsWith('/') && isAuthAwareClubHref(h) && !isAppDownloadCtaLabel(ctaLabel)) {
     return (
       <JoinClubCtaLink
         href={h}

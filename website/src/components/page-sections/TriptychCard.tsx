@@ -17,6 +17,7 @@ import {resolveTriptychImageSlotStyle} from '@/lib/triptychPlacements'
 import {PortableRichText} from '@/components/cms/PortableRichText'
 import {triptychCardImageSizes, urlFor, urlForStagedHeroImage} from '@/lib/sanity'
 import {CtaHrefLink} from '@/components/home/heroShared'
+import {isAppDownloadCtaLabel, segnaAppDownloadHref} from '@/lib/catalog/catalog-app-links'
 import {useHydrationSafeReducedMotion} from '@/components/home/useHydrationSafeReducedMotion'
 import styles from './triptych.module.css'
 
@@ -284,7 +285,7 @@ type Props = {
 export function TriptychCard({card, transitionMs}: Props) {
   const presentation = card.presentation === 'color_cycle' ? 'color_cycle' : 'static_image'
   const href = card.href?.trim() ?? ''
-  const hasLink = Boolean(href)
+  const hasLink = Boolean(href) || isAppDownloadCtaLabel(card.frameTitle)
 
   const frame = (
     <div className={styles.frameShell}>
@@ -332,7 +333,11 @@ export function TriptychCard({card, transitionMs}: Props) {
 
   if (hasLink) {
     return (
-      <CtaHrefLink href={href} className={styles.cardHit}>
+      <CtaHrefLink
+        href={href || segnaAppDownloadHref()}
+        className={styles.cardHit}
+        ariaLabel={card.frameTitle?.trim() || undefined}
+      >
         {body}
       </CtaHrefLink>
     )

@@ -1,9 +1,15 @@
 import {WEBSITE_LOCATION_PATH, WEBSITE_SUBSCRIPTION_RECAP_PATH} from '@/lib/cart/paths'
+import {isAppDownloadCtaLabel, resolveAppDownloadHref} from '@/lib/catalog/catalog-app-links'
 
 /** Normalise les CTA marketing website (`/abonnement` landing → location). */
 
-export function resolveMarketingCtaHref(href: string | null | undefined): string | null {
-  const h = href?.trim()
+export function resolveMarketingCtaHref(
+  href: string | null | undefined,
+  label?: string | null,
+): string | null {
+  const downloadHref = resolveAppDownloadHref(href, label)
+  if (isAppDownloadCtaLabel(label)) return downloadHref
+  const h = downloadHref ?? href?.trim()
   if (!h) return null
   if (h === '/abonnement/recap' || h.startsWith('/abonnement/recap?')) return h
   if (h === '/abonnement/succes' || h.startsWith('/abonnement/succes?')) return h
@@ -25,8 +31,11 @@ export function resolveMarketingCtaLabel(label: string | null | undefined): stri
  * CTA « essai / -50 % » sous le tryptique : plus de deep link app auth,
  * on envoie vers signup (tunnel website).
  */
-export function resolveThreeStepPrimaryCtaHref(href: string | null | undefined): string | null {
-  const mappedLabelHref = resolveMarketingCtaHref(href)
+export function resolveThreeStepPrimaryCtaHref(
+  href: string | null | undefined,
+  label?: string | null,
+): string | null {
+  const mappedLabelHref = resolveMarketingCtaHref(href, label)
   if (!mappedLabelHref) return null
   try {
     if (/^https?:\/\//i.test(mappedLabelHref)) {

@@ -8,6 +8,7 @@ import {
 } from '@/lib/sanity'
 import {objectPositionFromHotspot} from '@/lib/homeStagedPlacements'
 import {CtaHrefLink} from '@/components/home/heroShared'
+import {isAppDownloadCtaLabel, segnaAppDownloadHref} from '@/lib/catalog/catalog-app-links'
 import {CatalogPuzzleIntroFit} from '@/components/page-sections/CatalogPuzzleIntroFit'
 import {inferIntroToneFromBackground} from '@/lib/inferIntroToneFromBackground'
 import styles from './catalogPuzzle.module.css'
@@ -91,9 +92,13 @@ function CatalogPuzzleCard({
     </>
   )
 
-  if (href) {
+  if (href || isAppDownloadCtaLabel(title)) {
     return (
-      <CtaHrefLink href={href} className={`${styles.card} ${className}`}>
+      <CtaHrefLink
+        href={href || segnaAppDownloadHref()}
+        className={`${styles.card} ${className}`}
+        ariaLabel={title || undefined}
+      >
         {body}
       </CtaHrefLink>
     )

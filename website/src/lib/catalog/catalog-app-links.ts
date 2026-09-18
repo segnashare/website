@@ -4,12 +4,50 @@ export const SEGNA_APP_BASE_URL = (process.env.NEXT_PUBLIC_SEGNA_APP_URL || 'htt
   '',
 )
 
+/** Fiche App Store iOS (repli si `NEXT_PUBLIC_SEGNA_APP_STORE_URL` n’est pas défini). */
+export const DEFAULT_SEGNA_APP_STORE_URL = 'https://apps.apple.com/fr/app/segna/id6799780391'
+
 /**
- * URL App Store iOS — à renseigner quand l’app est publiée
- * (ex. `NEXT_PUBLIC_SEGNA_APP_STORE_URL=https://apps.apple.com/app/idXXXXXXXX`).
- * Vide pour l’instant → iOS ouvre directement l’app web.
+ * URL App Store iOS — CTAs « Télécharge l’app » / badges store.
+ * Surcharge possible : `NEXT_PUBLIC_SEGNA_APP_STORE_URL`.
  */
-export const SEGNA_APP_STORE_URL = (process.env.NEXT_PUBLIC_SEGNA_APP_STORE_URL || '').trim()
+export const SEGNA_APP_STORE_URL = (
+  process.env.NEXT_PUBLIC_SEGNA_APP_STORE_URL?.trim() || DEFAULT_SEGNA_APP_STORE_URL
+).replace(/\/+$/, '')
+
+const APP_DOWNLOAD_LABEL_RE =
+  /t[ée]l[ée]charg\w*\s+(l['’]app|l['’]application|segna)|app store|sur l['’]app/i
+
+/** Libellé CMS / bouton dont l’intention est d’ouvrir ou d’installer l’app. */
+export function isAppDownloadCtaLabel(label?: string | null): boolean {
+  const l = label?.trim() ?? ''
+  return l.length > 0 && APP_DOWNLOAD_LABEL_RE.test(l)
+}
+
+/** Lien public vers la fiche App Store (frames, badges, CTAs « Télécharge l’app »). */
+export function segnaAppDownloadHref(): string {
+  return SEGNA_APP_STORE_URL
+}
+
+/**
+ * Si le libellé (ou le href déjà App Store) vise l’app native, renvoyer la fiche store.
+ * Ne touche pas aux CTA signup / club qui pointent encore vers `app.segnashare.com/auth`.
+ */
+export function resolveAppDownloadHref(
+  href: string | null | undefined,
+  label?: string | null,
+): string | null {
+  const h = href?.trim()
+  if (isAppDownloadCtaLabel(label)) return SEGNA_APP_STORE_URL
+  if (!h) return null
+  try {
+    const u = new URL(h)
+    if (/(^|\.)apps\.apple\.com$/i.test(u.hostname)) return h
+  } catch {
+    // chemin interne ou URL relative
+  }
+  return h
+}
 
 export function catalogItemPagePath(itemId: string): string {
   return `/catalogue/piece/${itemId}`
@@ -53,9 +91,8 @@ export function catalogSubscriptionHref(): string {
 }
 
 /**
- * iOS : ouvre l’app web (ou universal link).
- * Si `NEXT_PUBLIC_SEGNA_APP_STORE_URL` est défini et que la page reste visible,
- * fallback App Store (réservé pour quand le lien existera).
+ * iOS : tente d’ouvrir l’app (universal link / handoff).
+ * Si la page reste au premier plan, fallback vers l’App Store.
  */
 export function openIosAppOrAppStore(appUrl: string, storeUrl: string = SEGNA_APP_STORE_URL): void {
   if (!storeUrl) {

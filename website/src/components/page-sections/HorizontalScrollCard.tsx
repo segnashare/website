@@ -7,6 +7,7 @@ import {horizontalScrollCardImageSizes, urlForCatalogPuzzleImage} from '@/lib/sa
 import {cardHasBackQuote} from '@/lib/horizontal-scroll-card-utils'
 import {objectPositionFromHotspot} from '@/lib/homeStagedPlacements'
 import {CtaHrefLink} from '@/components/home/heroShared'
+import {isAppDownloadCtaLabel, segnaAppDownloadHref} from '@/lib/catalog/catalog-app-links'
 import {FlipCardQuote} from '@/components/page-sections/FlipCardQuote'
 import styles from '@/components/page-sections/horizontalScrollCards.module.css'
 
@@ -242,9 +243,13 @@ export function HorizontalScrollCard({card, eagerLoad, visualClone, flipEnabled 
     )
   }
 
-  if (href) {
+  if (href || isAppDownloadCtaLabel(title)) {
     return (
-      <CtaHrefLink href={href} className={`${styles.slideLink} ${shellCls}`}>
+      <CtaHrefLink
+        href={href || segnaAppDownloadHref()}
+        className={`${styles.slideLink} ${shellCls}`}
+        ariaLabel={title || undefined}
+      >
         <div className={styles.editorialCard}>{inner}</div>
       </CtaHrefLink>
     )

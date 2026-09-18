@@ -2,7 +2,9 @@ import type {CSSProperties} from 'react'
 import Image from 'next/image'
 import type {PortableTextBlock} from '@portabletext/types'
 import {PortableRichText} from '@/components/cms/PortableRichText'
+import {CtaHrefLink} from '@/components/home/heroShared'
 import {SectionIntroCtas} from '@/components/page-sections/SectionIntroCtas'
+import {isAppDownloadCtaLabel, segnaAppDownloadHref} from '@/lib/catalog/catalog-app-links'
 import {
   resolveMarketingCtaLabel,
   resolveThreeStepPrimaryCtaHref,
@@ -45,9 +47,15 @@ export function SectionThreeStepCards({section}: Props) {
   const bareLayout = section.threeStepCardsLayout === 'bare'
 
   const primaryLabel = resolveMarketingCtaLabel(section.threeStepPrimaryCtaLabel)
-  const primaryHref = resolveThreeStepPrimaryCtaHref(section.threeStepPrimaryCtaHref)
+  const primaryHref = resolveThreeStepPrimaryCtaHref(
+    section.threeStepPrimaryCtaHref,
+    primaryLabel ?? section.threeStepPrimaryCtaLabel,
+  )
   const secondaryLabel = resolveMarketingCtaLabel(section.threeStepSecondaryCtaLabel)
-  const secondaryHref = resolveThreeStepPrimaryCtaHref(section.threeStepSecondaryCtaHref)
+  const secondaryHref = resolveThreeStepPrimaryCtaHref(
+    section.threeStepSecondaryCtaHref,
+    secondaryLabel ?? section.threeStepSecondaryCtaLabel,
+  )
 
   const title = section.threeStepTitle?.trim()
   if (!title) return null
@@ -90,8 +98,8 @@ export function SectionThreeStepCards({section}: Props) {
               .filter(Boolean)
               .join(' ')
 
-            return (
-              <article key={card._key} className={cardClass}>
+            const inner = (
+              <>
                 {hasImage && src ? (
                   <div
                     className={[styles.media, mediaClass(card.frameFormat), bareLayout ? styles.mediaBare : '']
@@ -123,6 +131,26 @@ export function SectionThreeStepCards({section}: Props) {
                     {card.description.trim()}
                   </p>
                 ) : null}
+              </>
+            )
+
+            if (isAppDownloadCtaLabel(card.title)) {
+              return (
+                <CtaHrefLink
+                  key={card._key}
+                  href={segnaAppDownloadHref()}
+                  className={cardClass}
+                  ariaLabel={card.title?.trim() || 'Télécharge l’app'}
+                  placement="three_step_app_frame"
+                >
+                  {inner}
+                </CtaHrefLink>
+              )
+            }
+
+            return (
+              <article key={card._key} className={cardClass}>
+                {inner}
               </article>
             )
           })}

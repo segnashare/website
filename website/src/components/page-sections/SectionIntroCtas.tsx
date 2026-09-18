@@ -6,7 +6,7 @@ type CtaPair = {label: string; href: string} | null
 
 function ctaPair(label?: string | null, href?: string | null): CtaPair {
   const l = resolveMarketingCtaLabel(label)
-  const h = resolveMarketingCtaHref(href)
+  const h = resolveMarketingCtaHref(href, l ?? label)
   return l && h ? {label: l, href: h} : null
 }
 

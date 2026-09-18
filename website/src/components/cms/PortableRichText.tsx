@@ -3,6 +3,7 @@ import Link from 'next/link'
 import {PortableText, type PortableTextComponents} from '@portabletext/react'
 import type {PortableTextBlock} from '@portabletext/types'
 import {urlFor} from '@/lib/sanity'
+import {resolveAppDownloadHref} from '@/lib/catalog/catalog-app-links'
 import './portableRichText.module.css'
 
 type PortableRichTextProps = {
@@ -55,15 +56,22 @@ function portableComponents(variant: 'default' | 'compact' | 'article'): Portabl
     link: ({value, children}) => {
       const href = typeof value?.href === 'string' ? value.href : ''
       if (!href) return <span>{children}</span>
-      const isExternal = /^https?:\/\//i.test(href)
+      const label =
+        typeof children === 'string'
+          ? children
+          : Array.isArray(children)
+            ? children.filter((c) => typeof c === 'string').join('')
+            : ''
+      const dest = resolveAppDownloadHref(href, label) ?? href
+      const isExternal = /^https?:\/\//i.test(dest)
       if (isExternal) {
         return (
-          <a href={href} rel="noopener noreferrer" target="_blank">
+          <a href={dest} rel="noopener noreferrer" target="_blank">
             {children}
           </a>
         )
       }
-      return <Link href={href}>{children}</Link>
+      return <Link href={dest}>{children}</Link>
     },
   },
   types: {

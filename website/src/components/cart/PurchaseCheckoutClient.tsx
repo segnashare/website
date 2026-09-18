@@ -17,7 +17,7 @@ import {
   catalogPurchasePriceCents,
   formatCatalogPurchasePriceLabel,
 } from '@/lib/catalog/catalog-borrow-price-label'
-import {catalogItemAppHref, SEGNA_APP_BASE_URL} from '@/lib/catalog/catalog-app-links'
+import {segnaAppDownloadHref} from '@/lib/catalog/catalog-app-links'
 import {formatCatalogCardSizeLabel} from '@/lib/catalog/format-catalog-card-size'
 import {WEBSITE_CART_PATH} from '@/lib/cart/paths'
 import {useWebsiteCart} from '@/lib/cart/use-website-cart'
@@ -642,7 +642,7 @@ export function PurchaseCheckoutClient() {
     normalizeFrenchLocalNumber(phoneLocal).length === 9 &&
     billingReady
 
-  const expressAppHref = `${SEGNA_APP_BASE_URL}/cart`
+  const expressAppHref = segnaAppDownloadHref()
   const expressCtaLabel = 'Livraison express (Télécharge Segna)'
 
   return (
@@ -1219,12 +1219,12 @@ export function PurchaseCheckoutClient() {
           </div>
 
           <a
-            href={catalogItemAppHref(items[0]?.id)}
+            href={segnaAppDownloadHref()}
             className={styles.appDiscountPromo}
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => {
-              const href = catalogItemAppHref(items[0]?.id)
+              const href = segnaAppDownloadHref()
               trackWebsiteEvent('cta_clicked', {
                 cta_label: 'Profite de −20 %',
                 cta_href: href,

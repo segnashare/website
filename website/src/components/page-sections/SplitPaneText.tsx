@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import {CtaHrefLink} from '@/components/home/heroShared'
 import type {CSSProperties} from 'react'
 import {useMemo, useState} from 'react'
 import type {PortableTextBlock} from '@portabletext/types'
@@ -128,15 +128,9 @@ export function SplitPaneText({pane, foregroundColor}: Props) {
         ) : null}
 
         {activeCta ? (
-          activeCta.href.startsWith('/') ? (
-            <Link href={activeCta.href} className={styles.cta}>
-              {activeCta.label}
-            </Link>
-          ) : (
-            <a href={activeCta.href} className={styles.cta}>
-              {activeCta.label}
-            </a>
-          )
+          <CtaHrefLink href={activeCta.href} className={styles.cta}>
+            {activeCta.label}
+          </CtaHrefLink>
         ) : null}
 
         <FaqAccordion items={pane.helpArticleRefs} />

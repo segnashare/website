@@ -1,3 +1,4 @@
+import {resolveAppDownloadHref} from '@/lib/catalog/catalog-app-links'
 import type {HomePageDocumentData} from '@/lib/sanity'
 
 export type HeroActionLayout = 'search_only' | 'single_cta' | 'cta_and_search' | 'dual_cta'
@@ -24,7 +25,7 @@ type PageHeroActionFields = Pick<
 
 function ctaPair(label?: string, href?: string): HeroCta | null {
   const l = label?.trim()
-  const h = href?.trim()
+  const h = resolveAppDownloadHref(href, l) ?? href?.trim()
   return l && h ? {label: l, href: h} : null
 }
 
