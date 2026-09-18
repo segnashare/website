@@ -5,9 +5,7 @@ import type {CheckoutOnboardingStep} from '@/lib/auth/checkout-onboarding-resume
 import {resolveCheckoutOnboardingResume} from '@/lib/auth/checkout-onboarding-resume'
 import {trackWebsiteEvent} from '@/lib/analytics/track'
 import {WEBSITE_SUBSCRIPTION_RECAP_PATH} from '@/lib/cart/paths'
-import {openIosAppOrAppStore, SEGNA_APP_BASE_URL} from '@/lib/catalog/catalog-app-links'
-import {detectClientPlatform, type ClientPlatform} from '@/lib/platform/client-platform'
-import {SEGNAX_COMPARE_ROWS} from '@/lib/subscription/segnax-compare'
+import {segnaAppDownloadHref} from '@/lib/catalog/catalog-app-links'
 import type {RecapWallItem} from '@/lib/subscription/recap-wall-types'
 import {WaveDotsLoader} from '@/components/ui/WaveDotsLoader'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
@@ -18,7 +16,7 @@ import {RecapPiecesWall} from './RecapPiecesWall'
 import styles from './subscriptionRecap.module.css'
 
 const BENEFITS = [
-  '400 € de pièces à louer',
+  '400 € de pièces à louer (sans limites de temps)',
   'Livraison à domicile partout en France',
   'Pressing inclus',
   'Assurance incluse',
@@ -47,11 +45,6 @@ export function SubscriptionRecapClient({
   const [onboardingEmail, setOnboardingEmail] = useState<string | null>(null)
   const [onboardingInitialStep, setOnboardingInitialStep] = useState<CheckoutOnboardingStep>(1)
   const [phoneVerifyE164, setPhoneVerifyE164] = useState<string | null>(null)
-  const [platform, setPlatform] = useState<ClientPlatform>('desktop')
-
-  useEffect(() => {
-    setPlatform(detectClientPlatform())
-  }, [])
 
   useEffect(() => {
     if (resumeHandledRef.current) return
@@ -88,24 +81,6 @@ export function SubscriptionRecapClient({
       }
     })()
   }, [router])
-
-  const buildAppHandoffUrl = useCallback(async (type: string): Promise<string> => {
-    const supabase = createSupabaseBrowserClient()
-    const {data} = await supabase.auth.getSession()
-    const accessToken = data.session?.access_token
-    const refreshToken = data.session?.refresh_token
-    if (accessToken && refreshToken) {
-      const target = new URL('/auth/handoff', SEGNA_APP_BASE_URL)
-      target.hash = new URLSearchParams({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-        token_type: 'bearer',
-        type,
-      }).toString()
-      return target.toString()
-    }
-    return `${SEGNA_APP_BASE_URL}/auth/login?from=member`
-  }, [])
 
   const startStripeCheckout = useCallback(async () => {
     const supabase = createSupabaseBrowserClient()
@@ -201,29 +176,19 @@ export function SubscriptionRecapClient({
       router.push('/profil')
       return
     }
-    setPending(true)
-    try {
-      const appUrl = await buildAppHandoffUrl('website_skip_subscription')
-      trackWebsiteEvent('app_open_intent', {
-        destination: platform === 'ios' ? 'app_store' : 'app_handoff',
-        href: appUrl,
-        placement: 'abonnement_recap_secondary',
-      })
-      if (platform === 'ios') {
-        openIosAppOrAppStore(appUrl)
-        return
-      }
-      window.location.assign(appUrl)
-    } catch {
-      if (platform === 'ios') {
-        openIosAppOrAppStore(`${SEGNA_APP_BASE_URL}/auth/login?from=member`)
-        return
-      }
-      window.location.assign(`${SEGNA_APP_BASE_URL}/auth/login?from=member`)
-    } finally {
-      setPending(false)
-    }
-  }, [buildAppHandoffUrl, embedded, pending, platform, router])
+    const href = segnaAppDownloadHref()
+    trackWebsiteEvent('cta_clicked', {
+      cta_label: 'Continuer sans abonnement',
+      cta_href: href,
+      placement: 'abonnement_recap_secondary',
+    })
+    trackWebsiteEvent('app_open_intent', {
+      destination: 'app_store',
+      href,
+      placement: 'abonnement_recap_secondary',
+    })
+    window.location.assign(href)
+  }, [embedded, pending, router])
 
   const statusBlock =
     activateError || activatedNote ? (
@@ -238,104 +203,6 @@ export function SubscriptionRecapClient({
 
   return (
     <div className={[styles.page, embedded ? styles.pageEmbedded : ''].filter(Boolean).join(' ')}>
-      {/* —— Mobile : UI/UX alignée page package app —— */}
-      <div className={styles.mobilePackage}>
-        <header className={styles.mobileHeader}>
-          <h1 className={styles.mobileTitle}>Des centaines de pièces à volonté</h1>
-          <p className={styles.mobileLead}>
-            Vous allez pouvoir commencer à louer vos prochaines pièces avec Segna dès aujourd’hui.
-          </p>
-        </header>
-
-        <div className={styles.mobileBody}>
-          <section className={styles.offerRail} aria-label="Offre SegnaX">
-            <div className={styles.offerRailTrack}>
-              <article className={styles.offerCard} aria-pressed="true">
-                <div className={styles.offerCardBadge}>Sans engagement</div>
-                <div className={styles.offerCardBody}>
-                  <p className={styles.offerCardEyebrow}>SegnaX</p>
-                  <p className={styles.offerCardPrice}>40&nbsp;€/mois</p>
-                  <p className={styles.offerCardDetail}>Tarif plein · résiliable à tout moment</p>
-                </div>
-              </article>
-            </div>
-          </section>
-
-          <section className={styles.compare} aria-labelledby="recap-compare-heading">
-            <h2 id="recap-compare-heading" className={styles.srOnly}>
-              Comparaison Guest et SegnaX
-            </h2>
-            <div className={styles.compareTable} role="table" aria-label="Comparaison Guest et SegnaX">
-              <div className={styles.compareRow} role="row">
-                <div className={styles.compareCorner} role="columnheader">
-                  <span className={styles.srOnly}>Critère</span>
-                </div>
-                <div className={styles.compareGuestHead} role="columnheader">
-                  Guest
-                </div>
-                <div className={styles.compareMemberHead} role="columnheader">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/brand/segnaX_logo_blanc.png"
-                    alt="SegnaX"
-                    className={styles.compareMemberLogo}
-                    width={120}
-                    height={39}
-                  />
-                </div>
-              </div>
-              {SEGNAX_COMPARE_ROWS.map((row, index) => {
-                const isLast = index === SEGNAX_COMPARE_ROWS.length - 1
-                return (
-                  <div key={row.label} className={styles.compareRow} role="row">
-                    <div
-                      className={`${styles.compareLabel}${isLast ? ` ${styles.compareCellLast}` : ''}`}
-                      role="rowheader"
-                    >
-                      {row.label}
-                    </div>
-                    <div
-                      className={`${styles.compareGuest}${isLast ? ` ${styles.compareCellLast}` : ''}`}
-                      role="cell"
-                    >
-                      {row.guest}
-                    </div>
-                    <div
-                      className={`${styles.compareMember}${isLast ? ` ${styles.compareMemberLast}` : ''}`}
-                      role="cell"
-                    >
-                      {row.member}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </section>
-
-          {statusBlock}
-        </div>
-
-        <footer className={styles.mobileFooter}>
-          <button
-            type="button"
-            className={styles.mobileCta}
-            disabled={pending}
-            onClick={() => void handleActivate()}
-          >
-            {primaryCtaContent}
-          </button>
-          <button
-            type="button"
-            className={styles.mobileCancel}
-            disabled={pending}
-            onClick={() => void handleSecondaryCta()}
-          >
-            {secondaryLabel}
-          </button>
-        </footer>
-      </div>
-
-      {/* —— Desktop : layout existant (panneau + mur) —— */}
       <div className={styles.shell}>
         <main className={styles.main}>
           <div className={styles.panel}>

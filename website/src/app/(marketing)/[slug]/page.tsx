@@ -1,10 +1,12 @@
 import type {Metadata} from 'next'
 import {notFound} from 'next/navigation'
 import {PageSections} from '@/components/cms/PageSections'
+import {SiteNavChrome} from '@/components/home/SiteNavChrome'
 import {MarketingFullBleedHero} from '@/components/layout/MarketingFullBleedHero'
 import {heroTitlePlainText} from '@/lib/hero-title'
 import {resolveMarketingCtaHref, resolveMarketingCtaLabel} from '@/lib/marketing-cta'
 import {getHomePageData, getMarketingPageBySlug, getMarketingPageSlugs, getWebsiteHeaderNav, urlFor} from '@/lib/sanity'
+import styles from './marketingPage.module.css'
 
 export const revalidate = 3600
 
@@ -48,6 +50,17 @@ export default async function MarketingDynamicPage({params}: PageProps) {
   if (!marketingPage) notFound()
 
   const headerNav = homePage ?? siteNavFallback
+
+  if (slug === 'location') {
+    return (
+      <div className={styles.root}>
+        <SiteNavChrome header={headerNav} mobileNavId="mobile-nav-location" surface="light" />
+        <main className={styles.main}>
+          <PageSections sections={marketingPage.sections} />
+        </main>
+      </div>
+    )
+  }
 
   const customCtaLabel = resolveMarketingCtaLabel(marketingPage.heroCtaLabel)
   const customCtaHref = resolveMarketingCtaHref(marketingPage.heroCtaHref, customCtaLabel)
