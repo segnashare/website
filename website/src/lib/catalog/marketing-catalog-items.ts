@@ -22,11 +22,8 @@ import {
   SIGNED_URL_TTL_SEC,
 } from '@/lib/catalog/catalog-cache'
 import {
-  CATALOG_CARD_COVER_TRANSFORM,
-  CATALOG_GALLERY_PHOTO_TRANSFORM,
   createSignedUrlForStoragePath,
   signedStorageImageIsMissing,
-  type StorageImageTransform,
   type StorageSignClient,
 } from '@/lib/catalog/storage-signed-url'
 import {getSupabaseServiceRoleClient} from '@/lib/supabase/service-role-client'
@@ -123,28 +120,24 @@ export type MarketingCatalogItemRow = {
 
 async function signStoragePathIfObjectExists(
   rawPath: string,
-  options?: {transform?: StorageImageTransform; skipMissingCheck?: boolean},
+  options?: {skipMissingCheck?: boolean},
 ): Promise<string | null> {
   const supabase = getSupabaseServiceRoleClient()
   if (!supabase) return null
-  const url = await createSignedUrlForStoragePath(supabase, rawPath, SIGNED_URL_TTL_SEC, {
-    transform: options?.transform,
-  })
+  const url = await createSignedUrlForStoragePath(supabase, rawPath, SIGNED_URL_TTL_SEC)
   if (!url) return null
-  // HEAD sur `/render/image` peut déclencher le resize Storage (plusieurs secondes / photo).
   if (!options?.skipMissingCheck && (await signedStorageImageIsMissing(url))) return null
   return url
 }
 
-/** Covers cartes : signed URL + transform Storage (pas le JPEG original). */
+/** Covers cartes : signed URL originale — resize via `next/image`, pas Storage Image Transformations. */
 const getCachedCatalogCoverSignedUrlForStoragePath = withDataCache(
   async (rawPath: string): Promise<string | null> =>
     signStoragePathIfObjectExists(rawPath, {
-      transform: CATALOG_CARD_COVER_TRANSFORM,
       skipMissingCheck: true,
     }),
-  // v4 : plus de HEAD sur `/render/image` (déclenchait le resize Storage).
-  ['marketing_catalog_cover_signed_url_v4'],
+  // v5 : plus de transform Storage (facturation Image Transformations).
+  ['marketing_catalog_cover_signed_url_v5'],
   {revalidate: SIGNED_URL_CACHE_REVALIDATE_SEC, tags: [CATALOG_CACHE_TAG]},
 )
 
@@ -160,10 +153,9 @@ async function resolveCachedCatalogCoverSignedUrlForStoragePath(
 const getCachedCatalogGallerySignedUrlForStoragePath = withDataCache(
   async (rawPath: string): Promise<string | null> =>
     signStoragePathIfObjectExists(rawPath, {
-      transform: CATALOG_GALLERY_PHOTO_TRANSFORM,
       skipMissingCheck: true,
     }),
-  ['marketing_catalog_gallery_signed_url_v2'],
+  ['marketing_catalog_gallery_signed_url_v3'],
   {revalidate: SIGNED_URL_CACHE_REVALIDATE_SEC, tags: [CATALOG_CACHE_TAG]},
 )
 

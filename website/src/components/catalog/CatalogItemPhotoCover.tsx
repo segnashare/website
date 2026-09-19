@@ -70,7 +70,7 @@ function nextOptimizedSrc(url: string, width: number, quality = 75): string {
 
 /**
  * Couverture catalogue : paint immédiat + `next/image` (resize Vercel) hors crop BO.
- * Crop BO : image optimisée (`/_next/image` ou URL Storage déjà transformée) + moteur crop.
+ * Crop BO : image optimisée (`/_next/image`) + moteur crop.
  * Clone décoratif : fond CSS (évite le double fetch marquee).
  */
 export function CatalogItemPhotoCover({
@@ -99,20 +99,16 @@ export function CatalogItemPhotoCover({
   const useBoCrop =
     Boolean(src) && !centerCover && !cropFailed && Boolean(pos && !isDefaultItemPhotoPosition(pos))
   const alreadyResized = Boolean(src) && isSupabaseRenderImageUrl(src)
-  // Storage transform déjà à ~768/1600px → pas de 2e passage Vercel Image Optimization.
-  const useOptimizer =
-    Boolean(src) &&
-    !decorative &&
-    !useBoCrop &&
-    !alreadyResized &&
-    !optimizerFailed &&
-    canUseNextImage(src)
+  const useVercelResize =
+    Boolean(src) && !alreadyResized && !optimizerFailed && canUseNextImage(src)
+  const useOptimizer = Boolean(src) && !decorative && !useBoCrop && useVercelResize
   const paintUrl =
     src && canUseNextImage(src) && (useBoCrop || decorative)
-      ? alreadyResized
+      ? alreadyResized || optimizerFailed
         ? src
         : nextOptimizedSrc(src, optimizedWidth)
       : src
+  const fallbackSrc = useVercelResize ? nextOptimizedSrc(src, optimizedWidth) : src
 
   useEffect(() => {
     setNaturalSize(null)
@@ -230,7 +226,7 @@ export function CatalogItemPhotoCover({
         // eslint-disable-next-line @next/next/no-img-element -- bandeau `eager` : next/image lazy/IO ignore les slides hors clip
         <img
           ref={mediaRef}
-          src={src}
+          src={fallbackSrc}
           alt=""
           className={[styles.fallbackImg, ...imgClass].filter(Boolean).join(' ')}
           decoding="async"
@@ -241,7 +237,10 @@ export function CatalogItemPhotoCover({
             const img = e.currentTarget
             onImgReady(img.naturalWidth, img.naturalHeight)
           }}
-          onError={() => setLoadFailed(true)}
+          onError={() => {
+            if (useVercelResize) setOptimizerFailed(true)
+            else setLoadFailed(true)
+          }}
         />
       ) : null}
       {showPlaceholder ? <div className={styles.placeholder} aria-hidden /> : null}
