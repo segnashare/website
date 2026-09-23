@@ -3,7 +3,7 @@ import {SEGNA_APP_BASE_URL} from '@/lib/catalog/catalog-app-links'
 import {NextResponse} from 'next/server'
 
 /**
- * Proxy website → app Stripe Checkout SegnaX (tarif plein + empreinte).
+ * Proxy website → app Stripe Checkout SegnaX (carte enregistrée, sans empreinte).
  * Auth : `Authorization: Bearer <access_token>` (session Supabase website).
  */
 export async function POST(request: Request) {
@@ -24,7 +24,6 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({
         planCode: 'segna_x',
-        bankHold: true,
         cancelReturnPath,
       }),
       cache: 'no-store',

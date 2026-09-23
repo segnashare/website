@@ -2,7 +2,7 @@ import {SEGNA_APP_BASE_URL} from '@/lib/catalog/catalog-app-links'
 import {NextResponse} from 'next/server'
 
 /**
- * Proxy website → app : confirme le Checkout Session Stripe (entitlements + empreinte).
+ * Proxy website → app : confirme le Checkout Session Stripe (entitlements).
  * Auth : `Authorization: Bearer <access_token>`.
  */
 export async function POST(request: Request) {
