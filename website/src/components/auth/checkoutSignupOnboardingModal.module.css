@@ -428,9 +428,9 @@
   padding: 0;
   font-family: var(--font-playfair-display), Georgia, 'Times New Roman', serif;
   font-size: clamp(1.125rem, 5vw, 1.5rem);
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.2;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   color: #14110f;
   outline: none;
   caret-color: #18181b;
@@ -444,7 +444,8 @@
 .framedInput input::placeholder {
   font-family: var(--font-playfair-display), Georgia, 'Times New Roman', serif;
   font-style: normal;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0;
   color: #999;
   opacity: 1;
 }

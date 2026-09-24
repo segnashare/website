@@ -61,12 +61,21 @@ export function isValidFrenchMobileLocal(value: string): boolean {
   return local.length === 9 && /^[67]\d{8}$/.test(local)
 }
 
-/** +33781234567 → affichage « 07 81 23 45 67 ». */
+/** Saisie nationale à côté de +33 : « 6 12 34 56 78 » (1er chiffre isolé, puis paires). */
+export function formatFrenchNationalGrouped(raw: string): string {
+  const digits = normalizeFrenchLocalNumber(raw).slice(0, 9)
+  if (!digits) return ''
+  const parts = [digits[0]]
+  for (let i = 1; i < digits.length; i += 2) {
+    parts.push(digits.slice(i, i + 2))
+  }
+  return parts.join(' ')
+}
+
+/** +33781234567 → affichage « +33 6 12 34 56 78 ». */
 export function formatFrenchPhoneDisplay(e164: string | null | undefined): string {
   const normalized = normalizeFrenchPhoneToE164(e164)
   if (!normalized) return ''
-  const national = normalized.replace(/^\+33/, '0')
-  const m = national.match(/^(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/)
-  if (!m) return national
-  return `${m[1]} ${m[2]} ${m[3]} ${m[4]} ${m[5]}`
+  const grouped = formatFrenchNationalGrouped(normalized.replace(/^\+33/, ''))
+  return grouped ? `+33 ${grouped}` : ''
 }

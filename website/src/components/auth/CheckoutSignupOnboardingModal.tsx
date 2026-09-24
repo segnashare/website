@@ -1,10 +1,6 @@
 'use client'
 
-import {
-  isBanAddressSelectionValid,
-  searchBanAddresses,
-  type BanAddressSuggestion,
-} from '@/lib/auth/ban-address-search'
+import {isBanAddressSelectionValid, type BanAddressSuggestion} from '@/lib/auth/ban-address-search'
 import {bootstrapUserAfterSignup} from '@/lib/auth/bootstrap-user'
 import {
   isValidBirthDate,
@@ -16,7 +12,8 @@ import {resolveCheckoutOnboardingResume} from '@/lib/auth/checkout-onboarding-re
 import type {CheckoutOnboardingStep} from '@/lib/auth/checkout-onboarding-resume'
 import {APPAREL_SIZE_BANDS} from '@/lib/catalog/apparel-size-referential'
 import {buildMapEmbedSrc, getDefaultMapCenter} from '@/lib/maps/google-maps-embed'
-import {normalizeFrenchLocalNumber} from '@/lib/phone/fr-mobile'
+import {resolveDeliveryAddressSelection, searchDeliveryAddresses} from '@/lib/maps/search-delivery-addresses'
+import {formatFrenchNationalGrouped, normalizeFrenchLocalNumber} from '@/lib/phone/fr-mobile'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import {WaveDotsLoader} from '@/components/ui/WaveDotsLoader'
 import {trackWebsiteEvent} from '@/lib/analytics/track'
@@ -223,14 +220,23 @@ export function CheckoutSignupOnboardingModal({
   }, [onComplete])
 
   const selectLocationSuggestion = useCallback((suggestion: BanAddressSuggestion) => {
-    setLocationQuery(suggestion.label)
-    setSelectedLocation(suggestion)
-    setMapCenter({lat: suggestion.lat, lon: suggestion.lon})
-    setShowLocationSuggestions(false)
-    setActiveLocationIndex(-1)
-    setLocationSuggestions([])
-    setLocationError(false)
-    setError(null)
+    void (async () => {
+      try {
+        const next = await resolveDeliveryAddressSelection(suggestion)
+        setLocationQuery(next.label)
+        setSelectedLocation(next)
+        if (Number.isFinite(next.lat) && Number.isFinite(next.lon)) {
+          setMapCenter({lat: next.lat, lon: next.lon})
+        }
+        setShowLocationSuggestions(false)
+        setActiveLocationIndex(-1)
+        setLocationSuggestions([])
+        setLocationError(false)
+        setError(null)
+      } catch {
+        setError('Impossible de localiser cette adresse. Réessaie.')
+      }
+    })()
   }, [])
 
   const handleLocateMe = useCallback(() => {
@@ -365,7 +371,7 @@ export function CheckoutSignupOnboardingModal({
       void (async () => {
         setLocationLoading(true)
         try {
-          const next = await searchBanAddresses(query, controller.signal)
+          const next = await searchDeliveryAddresses(query, controller.signal)
           setLocationSuggestions(next)
           setActiveLocationIndex(next.length > 0 ? 0 : -1)
         } catch {
@@ -844,15 +850,15 @@ export function CheckoutSignupOnboardingModal({
                     inputMode="numeric"
                     pattern="[0-9]*"
                     autoComplete="tel-national"
-                    placeholder="Numéro de téléphone"
-                    maxLength={10}
-                    value={phoneLocal}
+                    placeholder="6 12 34 56 78"
+                    maxLength={13}
+                    value={formatFrenchNationalGrouped(phoneLocal)}
                     aria-invalid={identityErrors.phone}
                     disabled={pending}
                     required
                     onChange={(e) => {
                       setError(null)
-                      setPhoneLocal(e.target.value.replace(/\D/g, '').slice(0, 10))
+                      setPhoneLocal(normalizeFrenchLocalNumber(e.target.value).slice(0, 9))
                       if (identityErrors.phone) {
                         setIdentityErrors((prev) => ({...prev, phone: false}))
                       }
@@ -894,6 +900,7 @@ export function CheckoutSignupOnboardingModal({
                     loading="lazy"
                     referrerPolicy="strict-origin-when-cross-origin"
                     allowFullScreen
+                    data-cookieconsent="ignore"
                   />
                   <button
                     type="button"

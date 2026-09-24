@@ -9,6 +9,7 @@ import {
   verifyCheckoutPhoneOtp,
 } from '@/lib/auth/checkout-phone'
 import {
+  formatFrenchNationalGrouped,
   formatFrenchPhoneDisplay,
   normalizeFrenchLocalNumber,
   normalizeFrenchPhoneToE164,
@@ -555,13 +556,13 @@ export function DetailsSecurityPageClient() {
                       inputMode="numeric"
                       autoComplete="tel-national"
                       placeholder="6 12 34 56 78"
-                      maxLength={10}
-                      value={phoneLocal}
+                      maxLength={13}
+                      value={formatFrenchNationalGrouped(phoneLocal)}
                       disabled={pending}
                       autoFocus
                       onChange={(e) => {
                         setModalError(null)
-                        setPhoneLocal(e.target.value.replace(/\D/g, '').slice(0, 10))
+                        setPhoneLocal(normalizeFrenchLocalNumber(e.target.value).slice(0, 9))
                       }}
                     />
                   </div>

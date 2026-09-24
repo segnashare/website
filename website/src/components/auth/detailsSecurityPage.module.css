@@ -252,9 +252,10 @@
   border-radius: 0.25rem;
   background: #fff;
   color: #18181b;
-  font: inherit;
+  font-family: var(--font-playfair-display), Georgia, 'Times New Roman', serif;
   font-size: 0.95rem;
-  font-weight: 500;
+  font-weight: 700;
+  letter-spacing: 0;
   box-sizing: border-box;
 }
 
@@ -381,8 +382,10 @@
 
 .phonePrefix {
   flex-shrink: 0;
+  font-family: var(--font-playfair-display), Georgia, 'Times New Roman', serif;
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0;
   color: #52525b;
 }
 
