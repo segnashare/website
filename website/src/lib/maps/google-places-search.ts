@@ -96,31 +96,31 @@ export async function searchGooglePlacePredictions(
   if (!response.ok) return []
 
   const data = (await response.json()) as PlacesAutocompleteResponse
-  return (data.suggestions ?? [])
-    .map((row) => {
-      const prediction = row.placePrediction
-      const placeId = prediction?.placeId?.trim()
-      if (!placeId) return null
-      const street = prediction.structuredFormat?.mainText?.text?.trim() || prediction.text?.text?.trim() || q
-      const secondary = prediction.structuredFormat?.secondaryText?.text?.trim() || ''
-      const label = prediction.text?.text?.trim() || [street, secondary].filter(Boolean).join(', ')
-      return {
-        id: placeId,
-        placeId,
-        label,
-        street,
-        secondary,
-        hasStreet: hasStreetFromTypes(prediction.types) || /[0-9]/.test(street),
-        city: null,
-        postcode: null,
-        region: null,
-        relativeCity: null,
-        timezone: 'Europe/Paris',
-        lat: Number.NaN,
-        lon: Number.NaN,
-      } satisfies BanAddressSuggestion
+  const results: BanAddressSuggestion[] = []
+  for (const row of data.suggestions ?? []) {
+    const prediction = row.placePrediction
+    const placeId = prediction?.placeId?.trim()
+    if (!placeId) continue
+    const street = prediction.structuredFormat?.mainText?.text?.trim() || prediction.text?.text?.trim() || q
+    const secondary = prediction.structuredFormat?.secondaryText?.text?.trim() || ''
+    const label = prediction.text?.text?.trim() || [street, secondary].filter(Boolean).join(', ')
+    results.push({
+      id: placeId,
+      placeId,
+      label,
+      street,
+      secondary,
+      hasStreet: hasStreetFromTypes(prediction.types) || /[0-9]/.test(street),
+      city: null,
+      postcode: null,
+      region: null,
+      relativeCity: null,
+      timezone: 'Europe/Paris',
+      lat: Number.NaN,
+      lon: Number.NaN,
     })
-    .filter((row): row is BanAddressSuggestion => Boolean(row))
+  }
+  return results
 }
 
 export async function resolveGooglePlaceDetails(
