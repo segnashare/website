@@ -31,11 +31,13 @@ import {
   websitePurchasePromoGrantsFreeShipping,
 } from '@/lib/cart/website-purchase-promo-codes'
 import {buildMapEmbedSrc, getDefaultMapCenter} from '@/lib/maps/google-maps-embed'
+import {resolveDeliveryAddressSelection, searchDeliveryAddresses} from '@/lib/maps/search-delivery-addresses'
 import {normalizeFrenchLocalNumber} from '@/lib/phone/fr-mobile'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import Link from 'next/link'
 import {useRouter} from 'next/navigation'
-import {FormEvent, useEffect, useMemo, useState} from 'react'
+import {FormEvent, useEffect, useMemo, useRef, useState} from 'react'
+import {scrollFieldAboveKeyboard, useVisualViewportBox} from '@/lib/ui/use-visual-viewport-box'
 import styles from './purchaseCheckout.module.css'
 
 function formatEuroSummary(cents: number): string {
@@ -131,6 +133,10 @@ export function PurchaseCheckoutClient() {
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [activeSuggestion, setActiveSuggestion] = useState(-1)
   const [mapCenter, setMapCenter] = useState(getDefaultMapCenter)
+  const addressInputRef = useRef<HTMLInputElement | null>(null)
+  const billingAddressInputRef = useRef<HTMLInputElement | null>(null)
+  const viewportBox = useVisualViewportBox()
+  const keyboardOpen = viewportBox.keyboardOpen
   const [promoCode, setPromoCode] = useState('')
   const [promoNote, setPromoNote] = useState<string | null>(null)
   const [promoNoteTone, setPromoNoteTone] = useState<'ok' | 'error' | null>(null)
@@ -328,7 +334,7 @@ export function PurchaseCheckoutClient() {
       void (async () => {
         setLocationLoading(true)
         try {
-          const next = await searchBanAddresses(query, controller.signal)
+          const next = await searchDeliveryAddresses(query, controller.signal)
           setSuggestions(next)
           setActiveSuggestion(next.length > 0 ? 0 : -1)
         } catch {
@@ -366,7 +372,7 @@ export function PurchaseCheckoutClient() {
       void (async () => {
         setBillingLocationLoading(true)
         try {
-          const next = await searchBanAddresses(query, controller.signal)
+          const next = await searchDeliveryAddresses(query, controller.signal)
           setBillingSuggestions(next)
           setBillingActiveSuggestion(next.length > 0 ? 0 : -1)
         } catch {
@@ -383,13 +389,15 @@ export function PurchaseCheckoutClient() {
     }
   }, [billingStreet, billingSelectedLocation, billingSameAsShipping])
 
-  function selectSuggestion(suggestion: BanAddressSuggestion) {
+  function applyShippingSuggestion(suggestion: BanAddressSuggestion) {
     setSelectedLocation(suggestion)
     setAddressQuery(streetFromSuggestion(suggestion))
     setSuggestions([])
     setShowSuggestions(false)
     setActiveSuggestion(-1)
-    setMapCenter({lat: suggestion.lat, lon: suggestion.lon})
+    if (Number.isFinite(suggestion.lat) && Number.isFinite(suggestion.lon)) {
+      setMapCenter({lat: suggestion.lat, lon: suggestion.lon})
+    }
     const parsed = parsePostcodeCity(suggestion)
     setCity(parsed.city)
     setPostcode(parsed.postcode)
@@ -397,7 +405,13 @@ export function PurchaseCheckoutClient() {
     setFieldErrors((prev) => ({...prev, address: false, city: false, postcode: false}))
   }
 
-  function selectBillingSuggestion(suggestion: BanAddressSuggestion) {
+  function selectSuggestion(suggestion: BanAddressSuggestion) {
+    void resolveDeliveryAddressSelection(suggestion)
+      .then(applyShippingSuggestion)
+      .catch(() => applyShippingSuggestion(suggestion))
+  }
+
+  function applyBillingSuggestion(suggestion: BanAddressSuggestion) {
     setBillingSelectedLocation(suggestion)
     setBillingStreet(streetFromSuggestion(suggestion))
     setBillingSuggestions([])
@@ -413,6 +427,12 @@ export function PurchaseCheckoutClient() {
       billingCity: false,
       billingPostcode: false,
     }))
+  }
+
+  function selectBillingSuggestion(suggestion: BanAddressSuggestion) {
+    void resolveDeliveryAddressSelection(suggestion)
+      .then(applyBillingSuggestion)
+      .catch(() => applyBillingSuggestion(suggestion))
   }
 
   function openDistinctBillingAddress() {
@@ -646,7 +666,10 @@ export function PurchaseCheckoutClient() {
   const expressCtaLabel = 'Livraison express (Télécharge Segna)'
 
   return (
-    <main className={styles.page}>
+    <main
+      className={styles.page}
+      style={keyboardOpen ? {paddingBottom: 'max(8rem, env(safe-area-inset-bottom))'} : undefined}
+    >
       <div className={styles.layout}>
         <section className={styles.formCol} aria-labelledby="delivery-heading">
           <div className={styles.headerRow}>
@@ -724,7 +747,7 @@ export function PurchaseCheckoutClient() {
               />
             </label>
 
-            <div className={styles.mapBlock}>
+            <div className={`${styles.mapBlock} ${keyboardOpen ? styles.mapBlockCompact : ''}`}>
               <iframe
                 title="Carte de localisation"
                 src={mapSrc}
@@ -732,6 +755,7 @@ export function PurchaseCheckoutClient() {
                 loading="lazy"
                 referrerPolicy="strict-origin-when-cross-origin"
                 allowFullScreen
+                data-cookieconsent="ignore"
               />
             </div>
 
@@ -739,13 +763,17 @@ export function PurchaseCheckoutClient() {
               <span className={styles.label}>Adresse *</span>
               <div className={styles.addressWrap}>
                 <input
+                  ref={addressInputRef}
                   className={`${styles.input} ${fieldErrors.address ? styles.inputError : ''}`}
                   value={addressQuery}
                   autoComplete="street-address"
                   placeholder="Saisissez le début de votre adresse pour afficher les résultats"
                   aria-autocomplete="list"
                   aria-expanded={showSuggestions}
-                  onFocus={() => setShowSuggestions(true)}
+                  onFocus={() => {
+                    setShowSuggestions(true)
+                    scrollFieldAboveKeyboard(addressInputRef.current)
+                  }}
                   onBlur={() => {
                     window.setTimeout(() => setShowSuggestions(false), 140)
                   }}
@@ -985,6 +1013,7 @@ export function PurchaseCheckoutClient() {
                     <span className={styles.label}>Adresse de facturation *</span>
                     <div className={styles.addressWrap}>
                       <input
+                        ref={billingAddressInputRef}
                         className={`${styles.input} ${
                           fieldErrors.billingStreet ? styles.inputError : ''
                         }`}
@@ -993,7 +1022,10 @@ export function PurchaseCheckoutClient() {
                         placeholder="Numéro et rue"
                         aria-autocomplete="list"
                         aria-expanded={showBillingSuggestions}
-                        onFocus={() => setShowBillingSuggestions(true)}
+                        onFocus={() => {
+                          setShowBillingSuggestions(true)
+                          scrollFieldAboveKeyboard(billingAddressInputRef.current)
+                        }}
                         onBlur={() => {
                           window.setTimeout(() => setShowBillingSuggestions(false), 140)
                         }}

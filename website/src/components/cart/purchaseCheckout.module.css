@@ -276,6 +276,19 @@
   border: 0;
 }
 
+.mapBlockCompact {
+  aspect-ratio: auto;
+  max-height: 6rem;
+}
+
+@media (max-width: 767px) {
+  .suggestions {
+    position: relative;
+    top: 0.35rem;
+    max-height: min(12rem, 38vh);
+  }
+}
+
 .phoneRow {
   display: grid;
   grid-template-columns: auto 1fr;

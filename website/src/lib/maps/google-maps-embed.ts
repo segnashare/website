@@ -1,7 +1,10 @@
 const DEFAULT_CENTER = {lat: 48.8566, lon: 2.3522}
 const MAP_DELTA = 0.18
 
-const GOOGLE_MAPS_EMBED_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY?.trim() || null
+const GOOGLE_MAPS_EMBED_API_KEY =
+  process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY?.trim() ||
+  process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY?.trim() ||
+  null
 
 export function getDefaultMapCenter() {
   return DEFAULT_CENTER

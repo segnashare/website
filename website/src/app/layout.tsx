@@ -1,4 +1,4 @@
-import type {Metadata} from 'next'
+import type {Metadata, Viewport} from 'next'
 import {Montserrat, Playfair_Display} from 'next/font/google'
 import {GoogleAnalyticsHeadScripts} from '@/components/analytics/GoogleAnalytics'
 import {PostHogProvider} from '@/components/analytics/PostHogProvider'
@@ -33,6 +33,12 @@ export const metadata: Metadata = {
     shortcut: '/segna-icon.png',
     apple: '/segna-icon.png',
   },
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  interactiveWidget: 'resizes-content',
 }
 
 export const revalidate = 3600

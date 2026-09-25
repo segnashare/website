@@ -13,6 +13,7 @@ import type {CheckoutOnboardingStep} from '@/lib/auth/checkout-onboarding-resume
 import {APPAREL_SIZE_BANDS} from '@/lib/catalog/apparel-size-referential'
 import {buildMapEmbedSrc, getDefaultMapCenter} from '@/lib/maps/google-maps-embed'
 import {resolveDeliveryAddressSelection, searchDeliveryAddresses} from '@/lib/maps/search-delivery-addresses'
+import {scrollFieldAboveKeyboard, useVisualViewportBox} from '@/lib/ui/use-visual-viewport-box'
 import {formatFrenchNationalGrouped, normalizeFrenchLocalNumber} from '@/lib/phone/fr-mobile'
 import {createSupabaseBrowserClient} from '@/lib/supabase/browser-client'
 import {WaveDotsLoader} from '@/components/ui/WaveDotsLoader'
@@ -190,6 +191,9 @@ export function CheckoutSignupOnboardingModal({
   const [activeLocationIndex, setActiveLocationIndex] = useState(-1)
   const [selectedLocation, setSelectedLocation] = useState<BanAddressSuggestion | null>(null)
   const [mapCenter, setMapCenter] = useState(getDefaultMapCenter)
+  const locationInputRef = useRef<HTMLInputElement | null>(null)
+  const viewportBox = useVisualViewportBox()
+  const keyboardOpen = viewportBox.keyboardOpen
   const [topSelected, setTopSelected] = useState<Set<string>>(new Set())
   const [bottomSelected, setBottomSelected] = useState<Set<string>>(new Set())
   const [shoesSelected, setShoesSelected] = useState<Set<string>>(new Set())
@@ -720,14 +724,19 @@ export function CheckoutSignupOnboardingModal({
 
   const dialog = (
     <div
-      className={styles.backdrop}
+      className={`${styles.backdrop} ${keyboardOpen ? styles.backdropKeyboard : ''}`}
       role="presentation"
+      style={
+        keyboardOpen && viewportBox.height > 0
+          ? {top: viewportBox.top, height: viewportBox.height, bottom: 'auto'}
+          : undefined
+      }
       onClick={() => {
         if (!pending) onClose()
       }}
     >
       <div
-        className={`${styles.dialog} ${step === 3 ? styles.dialogWithMap : ''}`}
+        className={`${styles.dialog} ${step === 3 ? styles.dialogWithMap : ''} ${keyboardOpen ? styles.dialogKeyboard : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
@@ -892,7 +901,7 @@ export function CheckoutSignupOnboardingModal({
           {step === 3 ? (
             <form id="checkout-onboarding-form" onSubmit={(e) => void submitStep(e)} noValidate>
               <div className={styles.addressStep}>
-                <div className={styles.mapBlock}>
+                <div className={`${styles.mapBlock} ${keyboardOpen ? styles.mapBlockCompact : ''}`}>
                   <iframe
                     title="Carte de localisation"
                     src={mapSrc}
@@ -924,6 +933,7 @@ export function CheckoutSignupOnboardingModal({
                 <div className={styles.addressWrap}>
                   <div className={`${styles.framedInput} ${locationError ? styles.framedInputInvalid : ''}`}>
                     <input
+                      ref={locationInputRef}
                       type="text"
                       autoComplete="street-address"
                       placeholder="Adresse"
@@ -933,7 +943,10 @@ export function CheckoutSignupOnboardingModal({
                       aria-invalid={locationError}
                       aria-autocomplete="list"
                       aria-expanded={showLocationSuggestions}
-                      onFocus={() => setShowLocationSuggestions(true)}
+                      onFocus={() => {
+                        setShowLocationSuggestions(true)
+                        scrollFieldAboveKeyboard(locationInputRef.current)
+                      }}
                       onBlur={() => {
                         window.setTimeout(() => setShowLocationSuggestions(false), 120)
                       }}
