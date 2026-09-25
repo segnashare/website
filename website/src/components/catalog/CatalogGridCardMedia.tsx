@@ -3,7 +3,7 @@
 import type {MarketingCatalogGridItem} from '@/lib/catalog/marketing-catalog-items'
 
 import {CatalogCardBadges} from './CatalogCardBadges'
-import {CatalogItemPhotoCover} from './CatalogItemPhotoCover'
+import {CATALOG_GRID_IMAGE_SIZES, CatalogItemPhotoCover} from './CatalogItemPhotoCover'
 
 type CatalogGridCardMediaProps = {
   item: Pick<
@@ -16,7 +16,7 @@ type CatalogGridCardMediaProps = {
   eager?: boolean
   /** Clone marquee — pas de 2e next/image. */
   decorative?: boolean
-  /** `sizes` next/image — défaut carte small (~207px). */
+  /** `sizes` next/image — défaut grille 2–6 colonnes. */
   sizes?: string
 }
 
@@ -27,7 +27,7 @@ export function CatalogGridCardMedia({
   priority = false,
   eager = false,
   decorative = false,
-  sizes = '(max-width: 768px) 28vw, 210px',
+  sizes = CATALOG_GRID_IMAGE_SIZES,
 }: CatalogGridCardMediaProps) {
   return (
     <>

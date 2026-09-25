@@ -11,7 +11,18 @@ import {isDefaultItemPhotoPosition} from '@/lib/items/item-photo-frame'
 import styles from './catalogItemPhotoCover.module.css'
 
 /** Largeurs autorisées par `next.config` images.imageSizes / deviceSizes. */
-const DEFAULT_OPTIMIZED_WIDTH = 384
+const ALLOWED_OPTIMIZED_WIDTHS = [128, 256, 384, 640, 828, 1200, 1920] as const
+/** Carte catalogue Retina (~250 px CSS × 2). 384 px était trop petit et flou. */
+const DEFAULT_OPTIMIZED_WIDTH = 640
+
+/** Aligné sur `.grid` catalogue : 2 / 3 / 4 / 5 / 6 colonnes. */
+export const CATALOG_GRID_IMAGE_SIZES =
+  '(max-width: 47.99rem) 50vw, (max-width: 63.99rem) 33vw, (max-width: 79.99rem) 25vw, (max-width: 95.99rem) 20vw, 16vw'
+
+function snapOptimizedWidth(cssPx: number, dpr: number): number {
+  const needed = Math.ceil(Math.max(cssPx, 1) * Math.min(Math.max(dpr, 1), 3))
+  return ALLOWED_OPTIMIZED_WIDTHS.find((width) => width >= needed) ?? ALLOWED_OPTIMIZED_WIDTHS[ALLOWED_OPTIMIZED_WIDTHS.length - 1]
+}
 
 type CatalogItemPhotoCoverProps = {
   imageUrl: string | null | undefined
@@ -39,7 +50,7 @@ type CatalogItemPhotoCoverProps = {
   decorative?: boolean
   /**
    * Largeur max demandée à `/_next/image` pour crop BO / clone CSS.
-   * Doit être dans imageSizes/deviceSizes (défaut 384 = carte).
+   * Doit être dans imageSizes/deviceSizes (défaut : 640, ou snap Retina du cadre).
    */
   optimizedWidth?: number
 }
@@ -80,11 +91,11 @@ export function CatalogItemPhotoCover({
   objectPosition,
   centerCover = false,
   objectFit = 'cover',
-  sizes = '(max-width: 768px) 50vw, 280px',
+  sizes = CATALOG_GRID_IMAGE_SIZES,
   priority = false,
   eager = false,
   decorative = false,
-  optimizedWidth = DEFAULT_OPTIMIZED_WIDTH,
+  optimizedWidth,
 }: CatalogItemPhotoCoverProps) {
   const frameRef = useRef<HTMLDivElement>(null)
   const [naturalSize, setNaturalSize] = useState<{w: number; h: number} | null>(null)
@@ -102,13 +113,18 @@ export function CatalogItemPhotoCover({
   const useVercelResize =
     Boolean(src) && !alreadyResized && !optimizerFailed && canUseNextImage(src)
   const useOptimizer = Boolean(src) && !decorative && !useBoCrop && useVercelResize
+  const resolvedOptimizedWidth =
+    optimizedWidth ??
+    (box.w > 0 && typeof window !== 'undefined'
+      ? snapOptimizedWidth(box.w, window.devicePixelRatio || 1)
+      : DEFAULT_OPTIMIZED_WIDTH)
   const paintUrl =
     src && canUseNextImage(src) && (useBoCrop || decorative)
       ? alreadyResized || optimizerFailed
         ? src
-        : nextOptimizedSrc(src, optimizedWidth)
+        : nextOptimizedSrc(src, resolvedOptimizedWidth)
       : src
-  const fallbackSrc = useVercelResize ? nextOptimizedSrc(src, optimizedWidth) : src
+  const fallbackSrc = useVercelResize ? nextOptimizedSrc(src, resolvedOptimizedWidth) : src
 
   useEffect(() => {
     setNaturalSize(null)
