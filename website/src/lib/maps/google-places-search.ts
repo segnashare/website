@@ -99,7 +99,8 @@ export async function searchGooglePlacePredictions(
   const results: BanAddressSuggestion[] = []
   for (const row of data.suggestions ?? []) {
     const prediction = row.placePrediction
-    const placeId = prediction?.placeId?.trim()
+    if (!prediction) continue
+    const placeId = prediction.placeId?.trim()
     if (!placeId) continue
     const street = prediction.structuredFormat?.mainText?.text?.trim() || prediction.text?.text?.trim() || q
     const secondary = prediction.structuredFormat?.secondaryText?.text?.trim() || ''
