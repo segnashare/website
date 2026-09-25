@@ -16,6 +16,8 @@ export type BanAddressSuggestion = {
   timezone: string
   lat: number
   lon: number
+  /** Présent si la suggestion vient de Google Places (détails à résoudre au clic). */
+  placeId?: string
 }
 
 /** Context BAN : « 75, Paris, Île-de-France » → région = dernier segment. */
@@ -47,6 +49,21 @@ function formatArrondissementLabel(cityLabel: string, arrondissement: number) {
   return `${cityLabel} ${ordinal} arrondissement`
 }
 
+export function relativeCityFromPostcode(city: string | null, postcode: string | null): string | null {
+  if (!city) return null
+  const code = postcode ?? ''
+  if (/^Paris$/i.test(city) && /^750(0[1-9]|1[0-9]|20)$/.test(code)) {
+    return formatArrondissementLabel('Paris', Number(code.slice(3)))
+  }
+  if (/^Lyon$/i.test(city) && /^6900[1-9]$/.test(code)) {
+    return formatArrondissementLabel('Lyon', Number(code.slice(3)))
+  }
+  if (/^Marseille$/i.test(city) && /^130(0[1-9]|1[0-6])$/.test(code)) {
+    return formatArrondissementLabel('Marseille', Number(code.slice(3)))
+  }
+  return city
+}
+
 export function toBanAddressSuggestion(feature: AdresseApiFeature): BanAddressSuggestion {
   const [lon, lat] = feature.geometry.coordinates
   const cityPart = [feature.properties.postcode, feature.properties.city].filter(Boolean).join(' ')
@@ -65,16 +82,7 @@ export function toBanAddressSuggestion(feature: AdresseApiFeature): BanAddressSu
   const postcode = feature.properties.postcode ?? ''
   const city = feature.properties.city ?? null
 
-  let relativeCity: string | null = city
-  if (city) {
-    if (/^Paris$/i.test(city) && /^750(0[1-9]|1[0-9]|20)$/.test(postcode)) {
-      relativeCity = formatArrondissementLabel('Paris', Number(postcode.slice(3)))
-    } else if (/^Lyon$/i.test(city) && /^6900[1-9]$/.test(postcode)) {
-      relativeCity = formatArrondissementLabel('Lyon', Number(postcode.slice(3)))
-    } else if (/^Marseille$/i.test(city) && /^130(0[1-9]|1[0-6])$/.test(postcode)) {
-      relativeCity = formatArrondissementLabel('Marseille', Number(postcode.slice(3)))
-    }
-  }
+  const relativeCity = relativeCityFromPostcode(city, postcode || null)
 
   return {
     id: feature.properties.id,
@@ -116,6 +124,8 @@ export function isBanAddressSelectionValid(
   return (
     selected !== null &&
     selected.hasStreet &&
+    Number.isFinite(selected.lat) &&
+    Number.isFinite(selected.lon) &&
     query.trim() === selected.label &&
     query.includes(',')
   )

@@ -82,7 +82,7 @@ const nextConfig: NextConfig = {
     qualities: [75, 85, 90],
     minimumCacheTTL: 86400,
     deviceSizes: [640, 828, 1200, 1920],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 640, 828],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     remotePatterns: [
       {
         protocol: 'https',
