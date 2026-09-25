@@ -12,8 +12,11 @@ import styles from './catalogItemPhotoCover.module.css'
 
 /** Largeurs autorisées par `next.config` images.imageSizes / deviceSizes. */
 const ALLOWED_OPTIMIZED_WIDTHS = [128, 256, 384, 640, 828, 1200, 1920] as const
-/** Carte catalogue Retina (~250 px CSS × 2). 384 px était trop petit et flou. */
-const DEFAULT_OPTIMIZED_WIDTH = 640
+/** Carte sans crop : ~250 px CSS × 2. */
+const DEFAULT_OPTIMIZED_WIDTH = 828
+/** Crop BO : le zoom affiche une fraction de la source — il faut plus de pixels. */
+const CROP_COVER_SLACK = 1.4
+const CATALOG_IMAGE_QUALITY = 85
 
 /** Aligné sur `.grid` catalogue : 2 / 3 / 4 / 5 / 6 colonnes. */
 export const CATALOG_GRID_IMAGE_SIZES =
@@ -22,6 +25,10 @@ export const CATALOG_GRID_IMAGE_SIZES =
 function snapOptimizedWidth(cssPx: number, dpr: number): number {
   const needed = Math.ceil(Math.max(cssPx, 1) * Math.min(Math.max(dpr, 1), 3))
   return ALLOWED_OPTIMIZED_WIDTHS.find((width) => width >= needed) ?? ALLOWED_OPTIMIZED_WIDTHS[ALLOWED_OPTIMIZED_WIDTHS.length - 1]
+}
+
+function cropOptimizedWidth(cssPx: number, zoom: number, dpr: number): number {
+  return snapOptimizedWidth(Math.max(cssPx, 200) * Math.max(zoom, 1) * CROP_COVER_SLACK, dpr)
 }
 
 type CatalogItemPhotoCoverProps = {
@@ -50,7 +57,7 @@ type CatalogItemPhotoCoverProps = {
   decorative?: boolean
   /**
    * Largeur max demandée à `/_next/image` pour crop BO / clone CSS.
-   * Doit être dans imageSizes/deviceSizes (défaut : 640, ou snap Retina du cadre).
+   * Doit être dans imageSizes/deviceSizes (défaut : 828, ou snap Retina × zoom crop).
    */
   optimizedWidth?: number
 }
@@ -75,7 +82,7 @@ function isSupabaseRenderImageUrl(url: string): boolean {
 }
 
 /** URL Image Optimization Next — pour CSS background / preload crop BO (URLs non transformées). */
-function nextOptimizedSrc(url: string, width: number, quality = 75): string {
+function nextOptimizedSrc(url: string, width: number, quality = CATALOG_IMAGE_QUALITY): string {
   return `/_next/image?url=${encodeURIComponent(url)}&w=${width}&q=${quality}`
 }
 
@@ -113,11 +120,14 @@ export function CatalogItemPhotoCover({
   const useVercelResize =
     Boolean(src) && !alreadyResized && !optimizerFailed && canUseNextImage(src)
   const useOptimizer = Boolean(src) && !decorative && !useBoCrop && useVercelResize
+  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 2
   const resolvedOptimizedWidth =
     optimizedWidth ??
-    (box.w > 0 && typeof window !== 'undefined'
-      ? snapOptimizedWidth(box.w, window.devicePixelRatio || 1)
-      : DEFAULT_OPTIMIZED_WIDTH)
+    (useBoCrop
+      ? cropOptimizedWidth(box.w || 250, pos?.zoom ?? 1, dpr)
+      : box.w > 0
+        ? snapOptimizedWidth(box.w, dpr)
+        : DEFAULT_OPTIMIZED_WIDTH)
   const paintUrl =
     src && canUseNextImage(src) && (useBoCrop || decorative)
       ? alreadyResized || optimizerFailed
@@ -226,7 +236,7 @@ export function CatalogItemPhotoCover({
           alt=""
           fill
           sizes={sizes}
-          quality={75}
+          quality={CATALOG_IMAGE_QUALITY}
           priority={priority}
           loading={priority ? undefined : 'lazy'}
           ref={mediaRef}
