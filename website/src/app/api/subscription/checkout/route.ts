@@ -21,6 +21,8 @@ export async function POST(request: Request) {
       headers: {
         Authorization: auth,
         'Content-Type': 'application/json',
+        /** Analytics : le backend stocke la surface d'origine dans la metadata Stripe. */
+        'X-Segna-Surface': 'website',
       },
       body: JSON.stringify({
         planCode: 'segna_x',

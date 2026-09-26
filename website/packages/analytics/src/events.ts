@@ -140,6 +140,8 @@ export type AnalyticsEventProperties = {
     missing_credits_mods?: number;
     borrow_duration_days?: number;
     borrow_duration_label?: string;
+    /** `purchase` = achat de pièce, `rental` = location, `buyout` = rachat d'une pièce louée. */
+    order_kind?: "purchase" | "rental" | "buyout";
   };
   item_draft_started: {
     item_id: string;

@@ -10,3 +10,9 @@ export {
   type FunnelInsight,
   type FunnelStep,
 } from "./funnels";
+export {
+  ANALYTICS_OBJECTIVES,
+  resolveAnalyticsObjective,
+  withAnalyticsObjective,
+  type AnalyticsObjective,
+} from "./objectives";

@@ -198,13 +198,12 @@ export const POSTHOG_FUNNEL_INSIGHTS = [
   {
     id: "mobile_onboarding_signup",
     name: "Mobile : onboarding signup",
-    description: "Démarrage signup → étapes → téléphone → fin onboarding",
+    description: "Démarrage signup → étapes → fin onboarding (téléphone au paiement)",
     scope: "mobile",
     windowDays: 7,
     steps: [
       "auth_sign_up_started",
       "onboarding_signup_step_reached",
-      "phone_verified",
       "onboarding_completed",
     ],
   },

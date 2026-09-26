@@ -100,6 +100,7 @@ export function PurchaseSuccessClient() {
             {
               cart_id: id,
               checkout_mode: 'stripe',
+              order_kind: 'purchase',
             },
             {insertId: `order_confirmed:${id}`},
           )

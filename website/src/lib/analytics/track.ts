@@ -1,7 +1,9 @@
 import {
   ANALYTICS_SURFACES,
+  withAnalyticsObjective,
   type AnalyticsEventName,
   type AnalyticsEventProperties,
+  type AnalyticsObjective,
 } from '@segna/analytics'
 import posthog from 'posthog-js'
 
@@ -9,17 +11,21 @@ const SIGNED_UP_GUARD_KEY = 'segna:ph:signed_up'
 
 export function trackWebsiteEvent<E extends AnalyticsEventName>(
   event: E,
-  properties?: AnalyticsEventProperties[E],
+  properties?: AnalyticsEventProperties[E] & {objective?: AnalyticsObjective},
   options?: {insertId?: string},
 ): void {
   if (typeof window === 'undefined') return
   if (!process.env.NEXT_PUBLIC_POSTHOG_KEY?.trim()) return
   if (!posthog.__loaded) return
-  posthog.capture(event, {
-    surface: ANALYTICS_SURFACES.website,
-    ...(properties ?? {}),
-    ...(options?.insertId ? {$insert_id: options.insertId} : {}),
-  })
+  // `objective` (subscription | purchase | app) est déduit automatiquement.
+  posthog.capture(
+    event,
+    withAnalyticsObjective(event, {
+      surface: ANALYTICS_SURFACES.website,
+      ...(properties ?? {}),
+      ...(options?.insertId ? {$insert_id: options.insertId} : {}),
+    }),
+  )
 }
 
 /** Fire at most once per browser tab (signup). */
