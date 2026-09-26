@@ -18,14 +18,13 @@ export function trackWebsiteEvent<E extends AnalyticsEventName>(
   if (!process.env.NEXT_PUBLIC_POSTHOG_KEY?.trim()) return
   if (!posthog.__loaded) return
   // `objective` (subscription | purchase | app) est déduit automatiquement.
-  posthog.capture(
-    event,
-    withAnalyticsObjective(event, {
-      surface: ANALYTICS_SURFACES.website,
+  posthog.capture(event, {
+    surface: ANALYTICS_SURFACES.website,
+    ...withAnalyticsObjective(event, {
       ...(properties ?? {}),
       ...(options?.insertId ? {$insert_id: options.insertId} : {}),
-    }),
-  )
+    } as Record<string, unknown>),
+  })
 }
 
 /** Fire at most once per browser tab (signup). */
