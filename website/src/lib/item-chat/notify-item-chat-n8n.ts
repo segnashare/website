@@ -128,7 +128,8 @@ export async function notifyItemChatN8n(
     conversation_id: conv.id,
     message_id: input.messageId,
     is_first_visitor_message: input.isFirstVisitorMessage,
-    discord_thread_id: conv.discord_thread_id,
+    /** Fil déjà supprimé : ne pas réutiliser l’id (404 Discord). Vide → n8n crée un fil. */
+    discord_thread_id: conv.discord_thread_deleted_at ? null : conv.discord_thread_id,
     body: input.body,
     body_text: bodyText,
     photo_urls: photoUrls,

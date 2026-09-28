@@ -378,6 +378,7 @@ export async function appendVisitorMessage(params: {
     }
   }
 
+  const threadDeleted = Boolean(conversation.discord_thread_deleted_at)
   const {data: convData} = await admin
     .from('item_chat_conversations' as never)
     .update({
@@ -385,6 +386,8 @@ export async function appendVisitorMessage(params: {
       updated_at: lastAt,
       usefulness_prompted_at: null,
       usefulness_rating: null,
+      ...(conversation.status === 'closed' ? {status: 'open' as const} : {}),
+      ...(threadDeleted ? {discord_thread_id: null} : {}),
     } as never)
     .eq('id', conversation.id)
     .select('*')
@@ -525,6 +528,8 @@ export async function bindDiscordThread(params: {
     .from('item_chat_conversations' as never)
     .update({
       discord_thread_id: discordThreadId.trim(),
+      discord_thread_deleted_at: null,
+      status: 'open',
       updated_at: now,
     } as never)
     .eq('id', conversationId)
