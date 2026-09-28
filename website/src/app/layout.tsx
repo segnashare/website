@@ -1,6 +1,7 @@
 import type {Metadata, Viewport} from 'next'
 import {Montserrat, Playfair_Display} from 'next/font/google'
 import {GoogleAnalyticsHeadScripts} from '@/components/analytics/GoogleAnalytics'
+import {MetaPixel} from '@/components/analytics/MetaPixel'
 import {PostHogProvider} from '@/components/analytics/PostHogProvider'
 import {CookiebotScript} from '@/components/consent/Cookiebot'
 import {GoogleConsentModeDefault} from '@/components/consent/GoogleConsentModeDefault'
@@ -47,10 +48,11 @@ export default function RootLayout({children}: Readonly<{children: React.ReactNo
   return (
     <html lang="fr" className={`${playfairDisplay.variable} ${montserrat.variable}`}>
       <body>
-        {/* Consent : Consent Mode → Cookiebot (beforeInteractive). GA/PostHog gated côté client. */}
+        {/* Consent : Consent Mode → Cookiebot (beforeInteractive). GA/PostHog/Meta gated côté client. */}
         <GoogleConsentModeDefault />
         <CookiebotScript />
         <GoogleAnalyticsHeadScripts />
+        <MetaPixel />
         <SupabasePublicAuthEnvScript />
         <PostHogProvider>
           <PasswordRecoveryBridge />
