@@ -6,6 +6,7 @@ import {
   type AnalyticsObjective,
 } from '@segna/analytics'
 import posthog from 'posthog-js'
+import {trackMetaCompleteRegistration} from '@/lib/analytics/meta-pixel'
 
 const SIGNED_UP_GUARD_KEY = 'segna:ph:signed_up'
 
@@ -39,6 +40,7 @@ export function trackWebsiteSignupOnce(
     // ignore
   }
   trackWebsiteEvent('user_signed_up', properties)
+  trackMetaCompleteRegistration()
 }
 
 export function identifyWebsiteUser(userId: string, email?: string | null): void {

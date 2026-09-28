@@ -12,6 +12,7 @@ import {useSearchParams} from 'next/navigation'
 import {useCallback, useEffect, useRef, useState} from 'react'
 import {WebsitePageLoading} from '@/components/ui/WebsitePageLoading'
 import {WaveDotsLoader} from '@/components/ui/WaveDotsLoader'
+import {trackMetaSubscribe} from '@/lib/analytics/meta-pixel'
 import {trackWebsiteEvent} from '@/lib/analytics/track'
 import {RecapPiecesWall} from './RecapPiecesWall'
 import styles from './subscriptionRecap.module.css'
@@ -88,6 +89,7 @@ export function SubscriptionSuccessClient({wallItems}: Props) {
           checkout_mode: 'stripe',
           stripe_session_id: sessionId,
         })
+        trackMetaSubscribe({eventId: sessionId, planCode, valueCents: 4000})
         setConfirmState('ready')
       } catch (error) {
         setErrorMessage(error instanceof Error ? error.message : 'Impossible de confirmer l’abonnement.')

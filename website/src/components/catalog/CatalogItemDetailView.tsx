@@ -4,7 +4,7 @@ import {AddToCartModal} from '@/components/cart/AddToCartModal'
 import {CatalogItemLooksSection} from '@/components/catalog/CatalogItemLooksSection'
 import {CatalogItemPhotoCover} from '@/components/catalog/CatalogItemPhotoCover'
 import {openItemChat} from '@/lib/item-chat/client-storage'
-import {formatCatalogPurchasePriceLabel} from '@/lib/catalog/catalog-borrow-price-label'
+import {catalogPurchasePriceCents, formatCatalogPurchasePriceLabel} from '@/lib/catalog/catalog-borrow-price-label'
 import {isMarketingCatalogItemReserved, isMarketingCatalogItemSold} from '@/lib/catalog/catalog-card-badges'
 import {catalogItemPagePath, catalogSubscriptionHref} from '@/lib/catalog/catalog-app-links'
 import type {CatalogItemDetailPayload} from '@/lib/catalog/catalog-item-detail'
@@ -17,6 +17,7 @@ import {itemDescriptionToSafeHtml} from '@/lib/catalog/item-description-format'
 import {formatItemDimensionDisplayValue, formatItemEraLabel} from '@/lib/catalog/item-era-fitting-dimensions'
 import {addWebsiteCartItem, removeWebsiteCartItem} from '@/lib/cart/website-cart'
 import {useWebsiteCart} from '@/lib/cart/use-website-cart'
+import {trackMetaViewContent} from '@/lib/analytics/meta-pixel'
 import {trackWebsiteEvent} from '@/lib/analytics/track'
 import {useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type UIEvent} from 'react'
 import {createPortal} from 'react-dom'
@@ -603,6 +604,8 @@ export function CatalogItemDetailView({
 
   photoIndexRef.current = photoIndex
 
+  const viewedItemRef = useRef<string | null>(null)
+
   useEffect(() => {
     trackWebsiteEvent('item_viewed', {
       item_id: detail.id,
@@ -610,6 +613,18 @@ export function CatalogItemDetailView({
       title: detail.title,
       brand_label: detail.brand_label ?? undefined,
       price_points: detail.price_points ?? undefined,
+    })
+    if (viewedItemRef.current === detail.id) return
+    viewedItemRef.current = detail.id
+    const valueCents =
+      typeof detail.price_points === 'number' && Number.isFinite(detail.price_points)
+        ? catalogPurchasePriceCents(detail.price_points)
+        : undefined
+    trackMetaViewContent({
+      itemId: detail.id,
+      name: detail.title,
+      brand: detail.brand_label ?? undefined,
+      valueCents,
     })
   }, [detail.brand_label, detail.id, detail.price_points, detail.title, layout])
 

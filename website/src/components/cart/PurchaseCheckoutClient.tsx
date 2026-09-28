@@ -23,6 +23,11 @@ import {WEBSITE_CART_PATH} from '@/lib/cart/paths'
 import {useWebsiteCart} from '@/lib/cart/use-website-cart'
 import {trackWebsiteEvent} from '@/lib/analytics/track'
 import {
+  clearMetaPendingPurchase,
+  rememberMetaPendingPurchase,
+  trackMetaInitiateCheckout,
+} from '@/lib/analytics/meta-pixel'
+import {
   WEBSITE_PURCHASE_FREE_SHIPPING_THRESHOLD_CENTS,
   websiteChronopostHomeOutboundTtcCents,
 } from '@/lib/cart/website-cart-shipping'
@@ -305,10 +310,23 @@ export function PurchaseCheckoutClient() {
     }
   }, [bootstrapping, count, router])
 
+  const checkoutTrackedRef = useRef(false)
+
+  useEffect(() => {
+    if (bootstrapping || count === 0 || checkoutTrackedRef.current) return
+    checkoutTrackedRef.current = true
+    trackMetaInitiateCheckout({
+      contentIds: items.map((item) => item.id),
+      numItems: count,
+      valueCents: totalCents,
+    })
+  }, [bootstrapping, count, items, totalCents])
+
   useEffect(() => {
     if (typeof window === 'undefined') return
     const params = new URLSearchParams(window.location.search)
     if (params.get('checkout') !== 'cancelled') return
+    clearMetaPendingPurchase()
     setError('Paiement annulé. Tu peux relancer la commande quand tu veux.')
     params.delete('checkout')
     const next = params.toString()
@@ -631,6 +649,11 @@ export function PurchaseCheckoutClient() {
         // ignore
       }
 
+      rememberMetaPendingPurchase({
+        contentIds: items.map((item) => item.id),
+        valueCents: totalCents,
+        numItems: items.length,
+      })
       window.location.href = checkoutPayload.url
       return
     } catch {

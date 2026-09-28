@@ -2,6 +2,7 @@
 
 import {OrderSuccessDownloadAppModal} from '@/components/cart/OrderSuccessDownloadAppModal'
 import {WebsitePageLoading} from '@/components/ui/WebsitePageLoading'
+import {takeMetaPendingPurchase, trackMetaPurchase} from '@/lib/analytics/meta-pixel'
 import {trackWebsiteEvent} from '@/lib/analytics/track'
 import {clearWebsiteCart} from '@/lib/cart/website-cart'
 import {bumpWebsiteOrderBadge} from '@/lib/orders/website-order-badge'
@@ -81,11 +82,12 @@ export function PurchaseSuccessClient() {
         if (!response.ok) {
           const msg = payload?.message ?? 'Impossible de confirmer la commande.'
           if (isAlreadyConfirmedRace(msg)) {
+            const id = payload?.cartId?.trim() || sessionId
             if (payload?.cartId?.trim()) {
-              const id = payload.cartId.trim()
               setCartId(id)
               bumpWebsiteOrderBadge(id)
             }
+            trackMetaPurchase(id, takeMetaPendingPurchase())
             setState('ready')
             return
           }
@@ -105,6 +107,7 @@ export function PurchaseSuccessClient() {
             {insertId: `order_confirmed:${id}`},
           )
         }
+        trackMetaPurchase(payload?.cartId?.trim() || sessionId, takeMetaPendingPurchase())
         setState('ready')
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Impossible de confirmer la commande.')

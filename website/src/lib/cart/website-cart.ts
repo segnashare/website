@@ -117,6 +117,19 @@ export function addWebsiteCartItem(item: WebsiteCartItem): {
         item_count: written.length,
       })
     })
+    void import('@/lib/analytics/meta-pixel').then(({trackMetaAddToCart}) => {
+      void import('@/lib/catalog/catalog-borrow-price-label').then(({catalogPurchasePriceCents}) => {
+        const valueCents =
+          typeof item.price_points === 'number' && Number.isFinite(item.price_points)
+            ? catalogPurchasePriceCents(item.price_points)
+            : undefined
+        trackMetaAddToCart({
+          itemId: item.id,
+          name: item.title,
+          valueCents,
+        })
+      })
+    })
   }
   return {items: written, added: true, alreadyInCart: false}
 }
